@@ -18,5 +18,6 @@ public class FastPrintfImplTest {
   @Test
   public void test1() {
     System.out.printf("%x%n", new BigInteger("-12345678901234567890"));
+    System.out.printf("%.3s%n", "1234567890");
   }
 }

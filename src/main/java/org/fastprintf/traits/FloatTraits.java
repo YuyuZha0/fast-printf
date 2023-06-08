@@ -1,6 +1,6 @@
 package org.fastprintf.traits;
 
-public final class FloatTraits extends AbstractTraits {
+public final class FloatTraits extends AbstractNumericTraits {
 
   private final float value;
 
@@ -14,7 +14,7 @@ public final class FloatTraits extends AbstractTraits {
   }
 
   @Override
-  public String asString() {
+  public String asCharSequence() {
     return Float.toString(value);
   }
 

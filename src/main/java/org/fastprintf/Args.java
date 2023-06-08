@@ -40,11 +40,17 @@ public interface Args extends Iterable<FormatTraits> {
 
   Args putDouble(double value);
 
-  Args putString(Object value);
+  default Args putString(String value) {
+    return putCharSequence(value);
+  }
+
+  Args putCharSequence(CharSequence value);
 
   Args putBigInteger(BigInteger value);
 
   Args putBigDecimal(BigDecimal value);
+
+  Args putAny(Object value);
 
   default Args put(Object value) {
     if (value == null) {
@@ -65,14 +71,14 @@ public interface Args extends Iterable<FormatTraits> {
       return putFloat((Float) value);
     } else if (value instanceof Double) {
       return putDouble((Double) value);
-    } else if (value instanceof String) {
-      return putString(value);
+    } else if (value instanceof CharSequence) {
+      return putCharSequence((CharSequence) value);
     } else if (value instanceof BigInteger) {
       return putBigInteger((BigInteger) value);
     } else if (value instanceof BigDecimal) {
       return putBigDecimal((BigDecimal) value);
     } else {
-      return putString(value);
+      return putAny(value);
     }
   }
 }

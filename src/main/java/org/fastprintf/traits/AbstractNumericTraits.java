@@ -8,9 +8,18 @@ import sun.misc.DoubleConsts;
 import sun.misc.FormattedFloatingDecimal;
 
 @SuppressWarnings("DuplicatedCode")
-abstract class AbstractTraits implements FormatTraits {
+abstract class AbstractNumericTraits implements FormatTraits {
 
   private static final double SCALE_UP = Math.scalb(1.0, 54);
+
+  static Seq nan(boolean upperCase) {
+    return Seq.wrap(upperCase ? "NAN" : "NaN");
+  }
+
+  static Seq infinity(boolean upperCase, boolean negative, FormatContext context) {
+    Seq seq = Seq.wrap(upperCase ? "INFINITY" : "Infinity");
+    return handleSign(seq, negative, context);
+  }
 
   static Seq addZeros(Seq v, int prec) {
     // Look for the dot.  If we don't find one, the we'll need to add
@@ -98,7 +107,7 @@ abstract class AbstractTraits implements FormatTraits {
       case HEXADECIMAL_FLOATING_POINT_UPPERCASE:
         return forHexadecimalFloatingPoint(context, true);
       case STRING:
-        return Seq.wrap(asString());
+        return forString(context);
       case CHARACTER:
         return forCharacter();
       case PERCENT_SIGN:
@@ -139,7 +148,7 @@ abstract class AbstractTraits implements FormatTraits {
     Seq seq = upper ? Seq.upperCase(s) : Seq.wrap(s);
     seq = handleDigitNumber(seq, precision);
     if (context.hasFlag(Flag.ALTERNATE)) {
-      return upper ? seq.prepend(Seq.wrap("0X")) : seq.prepend(Seq.wrap("0x"));
+      return seq.prepend(Seq.wrap(upper ? "0X" : "0x"));
     }
     return seq;
   }
@@ -160,12 +169,8 @@ abstract class AbstractTraits implements FormatTraits {
 
   Seq forDecimalFloatingPoint(FormatContext context, boolean upper) {
     double value0 = asDouble();
-    if (Double.isNaN(value0)) return upper ? Seq.wrap("NAN") : Seq.wrap("NaN");
-    if (Double.isInfinite(value0)) {
-      Seq seq = upper ? Seq.wrap("INFINITY") : Seq.wrap("Infinity");
-      return handleSign(seq, isNegative(), context);
-    }
-
+    if (Double.isNaN(value0)) return nan(upper);
+    if (Double.isInfinite(value0)) return infinity(upper, isNegative(), context);
     double value = Math.abs(value0);
     int precision = context.getPrecision();
     int prec = (precision == -1 ? 6 : precision);
@@ -182,11 +187,8 @@ abstract class AbstractTraits implements FormatTraits {
 
   Seq forScientificNotation(FormatContext context, boolean upper) {
     double value0 = asDouble();
-    if (Double.isNaN(value0)) return upper ? Seq.wrap("NAN") : Seq.wrap("NaN");
-    if (Double.isInfinite(value0)) {
-      Seq seq = upper ? Seq.wrap("INFINITY") : Seq.wrap("Infinity");
-      return handleSign(seq, isNegative(), context);
-    }
+    if (Double.isNaN(value0)) return nan(upper);
+    if (Double.isInfinite(value0)) return infinity(upper, isNegative(), context);
     // Create a new FormattedFloatingDecimal with the desired
     // precision.
     int precision = context.getPrecision();
@@ -209,11 +211,8 @@ abstract class AbstractTraits implements FormatTraits {
 
   Seq forUseShortestPresentation(FormatContext context, boolean upper) {
     double value0 = asDouble();
-    if (Double.isNaN(value0)) return upper ? Seq.wrap("NAN") : Seq.wrap("NaN");
-    if (Double.isInfinite(value0)) {
-      Seq seq = upper ? Seq.wrap("INFINITY") : Seq.wrap("Infinity");
-      return handleSign(seq, isNegative(), context);
-    }
+    if (Double.isNaN(value0)) return nan(upper);
+    if (Double.isInfinite(value0)) return infinity(upper, isNegative(), context);
     int precision = context.getPrecision();
     int prec = precision;
     if (precision == -1) prec = 6;
@@ -256,11 +255,8 @@ abstract class AbstractTraits implements FormatTraits {
 
   Seq forHexadecimalFloatingPoint(FormatContext context, boolean upper) {
     double value0 = asDouble();
-    if (Double.isNaN(value0)) return upper ? Seq.wrap("NAN") : Seq.wrap("NaN");
-    if (Double.isInfinite(value0)) {
-      Seq seq = upper ? Seq.wrap("INFINITY") : Seq.wrap("Infinity");
-      return handleSign(seq, isNegative(), context);
-    }
+    if (Double.isNaN(value0)) return nan(upper);
+    if (Double.isInfinite(value0)) return infinity(upper, isNegative(), context);
     int precision0 = context.getPrecision();
     int prec = precision0;
     if (precision0 == -1)
@@ -345,8 +341,19 @@ abstract class AbstractTraits implements FormatTraits {
     }
   }
 
+  Seq forString(FormatContext context) {
+    int precision = context.getPrecision();
+    CharSequence cs = asCharSequence();
+    int length = cs.length();
+    if (precision == -1 || precision >= length) {
+      return Seq.wrap(cs);
+    } else {
+      return Seq.wrap(cs.subSequence(0, precision));
+    }
+  }
+
   Seq forCharacter() {
-    int value = (int) asLong();
+    int value = asInt();
     if (value < 0) {
       throw new IllegalArgumentException("character value must be non-negative");
     }

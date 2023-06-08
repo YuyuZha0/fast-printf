@@ -26,6 +26,38 @@ public final class FixedStringAppender implements Appender {
 
   @Override
   public String toString() {
-    return '`' + value + '`';
+    int length = value.length();
+    StringBuilder sb = new StringBuilder(length + 5);
+    sb.append('"');
+    for (int i = 0; i < length; ++i) {
+      char c = value.charAt(i);
+      switch (c) {
+        case '\n':
+          sb.append("\\n");
+          break;
+        case '\r':
+          sb.append("\\r");
+          break;
+        case '\t':
+          sb.append("\\t");
+          break;
+        case '\b':
+          sb.append("\\b");
+          break;
+        case '\f':
+          sb.append("\\f");
+          break;
+        case '\\':
+          sb.append("\\\\");
+          break;
+        case '"':
+          sb.append("\\\"");
+          break;
+        default:
+          sb.append(c);
+      }
+    }
+    sb.append('"');
+    return sb.toString();
   }
 }

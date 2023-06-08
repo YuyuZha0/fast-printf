@@ -14,7 +14,7 @@ public class IntTraitsTest {
   @Test
   public void test() {
     IntTraits intTraits = new IntTraits(-123456789);
-    assertEquals("-123456789", intTraits.asString());
+    assertEquals("-123456789", intTraits.asCharSequence());
     assertEquals(-123456789, intTraits.asInt());
     assertEquals(4171510507L, intTraits.asUnsignedLong());
     assertEquals(-123456789D, intTraits.asDouble(), 0.0000001);

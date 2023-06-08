@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.regex.PatternSyntaxException;
 
 final class Compiler {
 
@@ -80,7 +79,7 @@ final class Compiler {
 
   private void checkSource() {
     if (endOfSource()) {
-      throw new PatternSyntaxException("Unexpected end of source", source, lookahead);
+      throw new PrintfSyntaxException("Unexpected end of source", source, lookahead);
     }
   }
 
@@ -129,7 +128,7 @@ final class Compiler {
     }
     String p = source.substring(start, lookahead);
     if (p.isEmpty()) {
-      throw new PatternSyntaxException("Invalid precision", source, lookahead);
+      throw new PrintfSyntaxException("Invalid precision", source, lookahead);
     }
     return Integer.parseInt(p);
   }
@@ -138,7 +137,7 @@ final class Compiler {
     checkSource();
     Specifier specifier = Specifier.valueOf(source.charAt(lookahead));
     if (specifier == null) {
-      throw new PatternSyntaxException("Invalid specifier", source, lookahead);
+      throw new PrintfSyntaxException("Invalid specifier", source, lookahead);
     }
     lookahead++;
     return specifier;

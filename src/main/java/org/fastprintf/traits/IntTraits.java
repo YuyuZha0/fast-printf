@@ -1,6 +1,6 @@
 package org.fastprintf.traits;
 
-public final class IntTraits extends AbstractTraits implements FormatTraits {
+public final class IntTraits extends AbstractNumericTraits implements FormatTraits {
 
   private final int value;
 
@@ -34,7 +34,7 @@ public final class IntTraits extends AbstractTraits implements FormatTraits {
   }
 
   @Override
-  public String asString() {
+  public String asCharSequence() {
     return Integer.toString(value);
   }
 }

@@ -1,6 +1,6 @@
 package org.fastprintf.traits;
 
-public final class CharacterTraits extends AbstractTraits {
+public final class CharacterTraits extends AbstractNumericTraits {
 
   private final char value;
 
@@ -35,7 +35,7 @@ public final class CharacterTraits extends AbstractTraits {
   }
 
   @Override
-  public String asString() {
+  public String asCharSequence() {
     return Character.toString(value);
   }
 }

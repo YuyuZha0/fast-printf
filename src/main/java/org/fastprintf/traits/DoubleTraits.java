@@ -1,6 +1,6 @@
 package org.fastprintf.traits;
 
-public final class DoubleTraits extends AbstractTraits {
+public final class DoubleTraits extends AbstractNumericTraits {
 
   private final double value;
 
@@ -34,7 +34,7 @@ public final class DoubleTraits extends AbstractTraits {
   }
 
   @Override
-  public String asString() {
+  public String asCharSequence() {
     return Double.toString(value);
   }
 }

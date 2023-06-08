@@ -67,6 +67,40 @@ public final class DefaultAppender implements Appender {
 
   @Override
   public String toString() {
-    return context + "|" + specifier;
+    StringBuilder builder = new StringBuilder();
+    builder.append('%');
+    for (Flag flag : context.getFlags()) {
+      switch (flag) {
+        case ALTERNATE:
+          builder.append('#');
+          break;
+        case PLUS:
+          builder.append('+');
+          break;
+        case LEFT_JUSTIFY:
+          builder.append('-');
+          break;
+        case ZERO_PAD:
+          builder.append('0');
+          break;
+        case LEADING_SPACE:
+          builder.append(' ');
+          break;
+      }
+    }
+    int width = context.getWidth();
+    if (width == FormatContext.PRECEDING) {
+      builder.append('*');
+    } else if (width != FormatContext.UNSET) {
+      builder.append(width);
+    }
+    int precision = context.getPrecision();
+    if (precision == FormatContext.PRECEDING) {
+      builder.append(".*");
+    } else if (precision != FormatContext.UNSET) {
+      builder.append('.').append(precision);
+    }
+    builder.append(specifier);
+    return builder.toString();
   }
 }

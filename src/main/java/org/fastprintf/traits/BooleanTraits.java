@@ -1,6 +1,6 @@
 package org.fastprintf.traits;
 
-public final class BooleanTraits extends AbstractTraits {
+public final class BooleanTraits extends AbstractNumericTraits {
 
   private final boolean value;
 
@@ -34,7 +34,7 @@ public final class BooleanTraits extends AbstractTraits {
   }
 
   @Override
-  public String asString() {
+  public String asCharSequence() {
     return Boolean.toString(value);
   }
 }

@@ -1,6 +1,6 @@
 package org.fastprintf.traits;
 
-public final class ByteTraits extends AbstractTraits {
+public final class ByteTraits extends AbstractNumericTraits {
 
   private final byte value;
 
@@ -14,7 +14,7 @@ public final class ByteTraits extends AbstractTraits {
   }
 
   @Override
-  public String asString() {
+  public String asCharSequence() {
     return Byte.toString(value);
   }
 

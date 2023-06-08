@@ -2,6 +2,7 @@ package org.fastprintf;
 
 import org.fastprintf.traits.BooleanTraits;
 import org.fastprintf.traits.ByteTraits;
+import org.fastprintf.traits.CharSequenceTraits;
 import org.fastprintf.traits.CharacterTraits;
 import org.fastprintf.traits.DoubleTraits;
 import org.fastprintf.traits.FloatTraits;
@@ -9,8 +10,8 @@ import org.fastprintf.traits.FormatTraits;
 import org.fastprintf.traits.IntTraits;
 import org.fastprintf.traits.LongTraits;
 import org.fastprintf.traits.NullTraits;
+import org.fastprintf.traits.ObjectTraits;
 import org.fastprintf.traits.ShortTraits;
-import org.fastprintf.traits.StringTraits;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -90,8 +91,8 @@ final class ArgsImpl implements Args {
   }
 
   @Override
-  public Args putString(Object value) {
-    return addTraits(new StringTraits(value));
+  public Args putCharSequence(CharSequence value) {
+    return addTraits(new CharSequenceTraits(value));
   }
 
   @Override
@@ -107,5 +108,13 @@ final class ArgsImpl implements Args {
   @Override
   public Iterator<FormatTraits> iterator() {
     return traits.iterator();
+  }
+
+  @Override
+  public Args putAny(Object value) {
+    if (value instanceof FormatTraits) {
+      return addTraits((FormatTraits) value);
+    }
+    return addTraits(new ObjectTraits(value));
   }
 }

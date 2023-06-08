@@ -18,7 +18,7 @@ public final class NullTraits implements FormatTraits {
 
   @Override
   public Seq seqForSpecifier(Specifier specifier, FormatContext context) {
-    return Seq.wrap(asString());
+    return Seq.wrap(asCharSequence());
   }
 
   @Override
@@ -42,7 +42,7 @@ public final class NullTraits implements FormatTraits {
   }
 
   @Override
-  public String asString() {
+  public String asCharSequence() {
     return "null";
   }
 }

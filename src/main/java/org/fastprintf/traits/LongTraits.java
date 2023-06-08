@@ -1,6 +1,6 @@
 package org.fastprintf.traits;
 
-public final class LongTraits extends AbstractTraits {
+public final class LongTraits extends AbstractNumericTraits {
 
   private final long value;
 
@@ -34,7 +34,7 @@ public final class LongTraits extends AbstractTraits {
   }
 
   @Override
-  public String asString() {
+  public String asCharSequence() {
     return Long.toString(value);
   }
 }

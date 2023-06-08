@@ -28,7 +28,7 @@ public interface FormatTraits {
     throw new UnsupportedOperationException("asDouble");
   }
 
-  default String asString() {
-    throw new UnsupportedOperationException("asString");
+  default CharSequence asCharSequence() {
+    throw new UnsupportedOperationException("asCharSequence");
   }
 }
