@@ -1,6 +1,9 @@
 package org.fastprintf.traits;
 
-public final class DoubleTraits extends AbstractNumericTraits {
+import org.fastprintf.box.FloatFamily;
+import org.fastprintf.box.IntFamily;
+
+public final class DoubleTraits implements FormatTraits {
 
   private final double value;
 
@@ -9,32 +12,22 @@ public final class DoubleTraits extends AbstractNumericTraits {
   }
 
   @Override
-  public boolean isNegative() {
-    return Double.compare(value, 0.0) < 0;
+  public IntFamily asIntFamily() {
+    return IntFamily.valueOf(Math.round(value));
   }
 
   @Override
-  public long asLong() {
-    return Math.round(value);
+  public FloatFamily asFloatFamily() {
+    return FloatFamily.valueOf(value);
   }
 
   @Override
-  public long asUnsignedLong() {
-    return Math.round(value);
-  }
-
-  @Override
-  public double asDouble() {
-    return value;
+  public String asString() {
+    return Double.toString(value);
   }
 
   @Override
   public int asInt() {
     return (int) Math.round(value);
-  }
-
-  @Override
-  public String asCharSequence() {
-    return Double.toString(value);
   }
 }

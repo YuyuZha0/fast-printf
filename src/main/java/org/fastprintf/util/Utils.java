@@ -55,4 +55,8 @@ public final class Utils {
   public static boolean isDigit(char c) {
     return (c >= '0') && (c <= '9');
   }
+
+  public static boolean isNotDigit(char c) {
+    return !isDigit(c);
+  }
 }

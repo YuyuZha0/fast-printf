@@ -1,6 +1,9 @@
 package org.fastprintf.traits;
 
-public final class LongTraits extends AbstractNumericTraits {
+import org.fastprintf.box.FloatFamily;
+import org.fastprintf.box.IntFamily;
+
+public final class LongTraits implements FormatTraits {
 
   private final long value;
 
@@ -9,32 +12,22 @@ public final class LongTraits extends AbstractNumericTraits {
   }
 
   @Override
-  public boolean isNegative() {
-    return value < 0;
+  public IntFamily asIntFamily() {
+    return IntFamily.valueOf(value);
   }
 
   @Override
-  public long asLong() {
-    return value;
+  public FloatFamily asFloatFamily() {
+    return FloatFamily.valueOf(value);
   }
 
   @Override
-  public long asUnsignedLong() {
-    return value;
-  }
-
-  @Override
-  public double asDouble() {
-    return value;
+  public String asString() {
+    return Long.toString(value);
   }
 
   @Override
   public int asInt() {
     return (int) value;
-  }
-
-  @Override
-  public String asCharSequence() {
-    return Long.toString(value);
   }
 }

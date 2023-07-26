@@ -1,8 +1,8 @@
 package org.fastprintf.seq;
 
 import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -29,6 +29,7 @@ public interface Seq extends CharSequence {
 
   static Seq wrap(CharSequence cs) {
     if (cs instanceof Seq) return (Seq) cs;
+    if (cs.length() == 0) return empty();
     return new Wrapper(cs);
   }
 
@@ -41,15 +42,15 @@ public interface Seq extends CharSequence {
   }
 
   static Seq concat(Seq... seqs) {
-    if (seqs.length == 0) return EmptySeq.INSTANCE;
+    if (seqs.length == 0) return empty();
     if (seqs.length == 1) return seqs[0];
-    Deque<Seq> sequences = new ArrayDeque<>(seqs.length);
+    List<Seq> sequences = new ArrayList<>(seqs.length);
     for (Seq seq : seqs) {
       if (seq instanceof Concat) {
         Concat concat = (Concat) seq;
         sequences.addAll(concat.getSequences());
       } else {
-        sequences.addLast(seq);
+        sequences.add(seq);
       }
     }
     return new Concat(sequences);
@@ -63,8 +64,7 @@ public interface Seq extends CharSequence {
     if (seq.length() == 0) return this;
     if (seq instanceof Concat) {
       Concat concat = (Concat) seq;
-      concat.append(this);
-      return concat;
+      return concat.append(this);
     }
     return concat(seq, this);
   }
@@ -73,8 +73,7 @@ public interface Seq extends CharSequence {
     if (seq.length() == 0) return this;
     if (seq instanceof Concat) {
       Concat concat = (Concat) seq;
-      concat.prepend(this);
-      return concat;
+      return concat.prepend(this);
     }
     return concat(this, seq);
   }

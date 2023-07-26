@@ -1,14 +1,14 @@
 package org.fastprintf.traits;
 
-import org.fastprintf.FormatContext;
-import org.fastprintf.Specifier;
-import org.fastprintf.seq.Seq;
+import org.fastprintf.box.FloatFamily;
+import org.fastprintf.box.IntFamily;
 
 public final class NullTraits implements FormatTraits {
 
-  @Override
-  public boolean isNegative() {
-    return false;
+  private static final NullTraits INSTANCE = new NullTraits();
+
+  public static NullTraits getInstance() {
+    return INSTANCE;
   }
 
   @Override
@@ -17,32 +17,22 @@ public final class NullTraits implements FormatTraits {
   }
 
   @Override
-  public Seq seqForSpecifier(Specifier specifier, FormatContext context) {
-    return Seq.wrap(asCharSequence());
+  public IntFamily asIntFamily() {
+    throw new UnsupportedOperationException();
   }
 
   @Override
-  public long asLong() {
-    return 0;
+  public FloatFamily asFloatFamily() {
+    throw new UnsupportedOperationException();
   }
 
   @Override
-  public long asUnsignedLong() {
-    return 0;
+  public String asString() {
+    return "null";
   }
 
   @Override
   public int asInt() {
-    return 0;
-  }
-
-  @Override
-  public double asDouble() {
-    return 0D;
-  }
-
-  @Override
-  public String asCharSequence() {
-    return "null";
+    throw new UnsupportedOperationException();
   }
 }

@@ -6,7 +6,6 @@ import org.fastprintf.Specifier;
 import org.fastprintf.seq.Seq;
 import org.fastprintf.traits.FormatTraits;
 
-import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -20,18 +19,6 @@ public final class DefaultAppender implements Appender {
   public DefaultAppender(Specifier specifier, FormatContext context) {
     this.specifier = Objects.requireNonNull(specifier, "specifier");
     this.context = Objects.requireNonNull(context, "context");
-  }
-
-  private static Seq justify(EnumSet<Flag> flags, int width, Seq seq) {
-    int length = seq.length();
-    if (length >= width) {
-      return seq;
-    }
-    char pad = flags.contains(Flag.ZERO_PAD) ? '0' : ' ';
-    if (flags.contains(Flag.LEFT_JUSTIFY)) {
-      return seq.append(Seq.repeated(pad, width - length));
-    }
-    return seq.prepend(Seq.repeated(pad, width - length));
   }
 
   private int nextInt(Iterator<FormatTraits> iterator) {
@@ -53,8 +40,48 @@ public final class DefaultAppender implements Appender {
       throw new NoSuchElementException("Missing argument for specifier: " + specifier);
     }
     FormatTraits traits = traitsIterator.next();
-    Seq seq = traits.seqForSpecifier(specifier, context);
-    collect.add(justify(context.getFlags(), context.getWidth(), seq));
+    collect.add(format(traits));
+  }
+
+  private Seq format(FormatTraits traits) {
+    switch (specifier) {
+      case SIGNED_DECIMAL_INTEGER:
+        return SeqFormatter.d(context, traits.asIntFamily());
+      case UNSIGNED_DECIMAL_INTEGER:
+        return SeqFormatter.u(context, traits.asIntFamily());
+      case UNSIGNED_HEXADECIMAL_INTEGER:
+        return SeqFormatter.x(context, traits.asIntFamily());
+      case UNSIGNED_HEXADECIMAL_INTEGER_UPPERCASE:
+        return SeqFormatter.x(context, traits.asIntFamily()).upperCase();
+      case UNSIGNED_OCTAL_INTEGER:
+        return SeqFormatter.o(context, traits.asIntFamily());
+      case DECIMAL_FLOATING_POINT:
+        return SeqFormatter.f(context, traits.asFloatFamily());
+      case DECIMAL_FLOATING_POINT_UPPERCASE:
+        return SeqFormatter.f(context, traits.asFloatFamily()).upperCase();
+      case SCIENTIFIC_NOTATION:
+        return SeqFormatter.e(context, traits.asFloatFamily());
+      case SCIENTIFIC_NOTATION_UPPERCASE:
+        return SeqFormatter.e(context, traits.asFloatFamily()).upperCase();
+      case USE_SHORTEST_PRESENTATION:
+        return SeqFormatter.g(context, traits.asFloatFamily());
+      case USE_SHORTEST_PRESENTATION_UPPERCASE:
+        return SeqFormatter.g(context, traits.asFloatFamily()).upperCase();
+      case HEXADECIMAL_FLOATING_POINT:
+        return SeqFormatter.a(context, traits.asFloatFamily());
+      case HEXADECIMAL_FLOATING_POINT_UPPERCASE:
+        return SeqFormatter.a(context, traits.asFloatFamily()).upperCase();
+      case STRING:
+        return SeqFormatter.s(context, traits);
+      case STRING_UPPERCASE:
+        return SeqFormatter.s(context, traits).upperCase();
+      case CHARACTER:
+        return SeqFormatter.c(context, traits);
+      case PERCENT_SIGN:
+        return Seq.singleChar('%');
+      default:
+        return Seq.empty();
+    }
   }
 
   public Specifier getSpecifier() {

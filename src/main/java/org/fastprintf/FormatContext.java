@@ -28,12 +28,20 @@ public final class FormatContext {
     this.width = width;
   }
 
+  public boolean isWidthSet() {
+    return width != UNSET;
+  }
+
   public int getPrecision() {
     return precision;
   }
 
   public void setPrecision(int precision) {
     this.precision = precision;
+  }
+
+  public boolean isPrecisionSet() {
+    return precision != UNSET;
   }
 
   public boolean isPrecedingWidth() {

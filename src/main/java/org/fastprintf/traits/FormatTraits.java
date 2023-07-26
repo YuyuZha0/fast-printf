@@ -1,34 +1,19 @@
 package org.fastprintf.traits;
 
-import org.fastprintf.FormatContext;
-import org.fastprintf.Specifier;
-import org.fastprintf.seq.Seq;
+import org.fastprintf.box.FloatFamily;
+import org.fastprintf.box.IntFamily;
 
 public interface FormatTraits {
 
-  boolean isNegative();
-
-  boolean isNull();
-
-  Seq seqForSpecifier(Specifier specifier, FormatContext context);
-
-  default int asInt() {
-    throw new UnsupportedOperationException("asInt");
+  default boolean isNull() {
+    return false;
   }
 
-  default long asLong() {
-    throw new UnsupportedOperationException("asLong");
-  }
+  IntFamily asIntFamily();
 
-  default long asUnsignedLong() {
-    throw new UnsupportedOperationException("asUnsignedLong");
-  }
+  FloatFamily asFloatFamily();
 
-  default double asDouble() {
-    throw new UnsupportedOperationException("asDouble");
-  }
+  String asString();
 
-  default CharSequence asCharSequence() {
-    throw new UnsupportedOperationException("asCharSequence");
-  }
+  int asInt();
 }

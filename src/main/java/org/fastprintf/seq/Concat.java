@@ -1,19 +1,55 @@
 package org.fastprintf.seq;
 
 import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public final class Concat implements Seq {
 
-  private final Deque<Seq> sequences;
+  private final Seq[] sequences;
 
-  Concat(Deque<Seq> sequences) {
+  Concat(List<Seq> sequences) {
+    this.sequences = sequences.toArray(new Seq[0]);
+  }
+
+  private Concat(Seq[] sequences) {
     this.sequences = sequences;
   }
 
-  Deque<Seq> getSequences() {
-    return sequences;
+  private static Seq[] concat(Seq[] a, Seq[] b) {
+    if (a.length == 1 && b.length == 1) {
+      return new Seq[] {a[0], b[0]};
+    }
+    if (a.length == 1) {
+      return concat(a[0], b);
+    }
+    if (b.length == 1) {
+      return concat(a, b[0]);
+    }
+    Seq[] c = new Seq[a.length + b.length];
+    System.arraycopy(a, 0, c, 0, a.length);
+    System.arraycopy(b, 0, c, a.length, b.length);
+    return c;
+  }
+
+  private static Seq[] concat(Seq a0, Seq[] b) {
+    Seq[] c = new Seq[b.length + 1];
+    c[0] = a0;
+    System.arraycopy(b, 0, c, 1, b.length);
+    return c;
+  }
+
+  private static Seq[] concat(Seq[] a, Seq b0) {
+    Seq[] c = new Seq[a.length + 1];
+    System.arraycopy(a, 0, c, 0, a.length);
+    c[a.length] = b0;
+    return c;
+  }
+
+  List<Seq> getSequences() {
+    return Collections.unmodifiableList(Arrays.asList(sequences));
   }
 
   @Override
@@ -42,15 +78,15 @@ public final class Concat implements Seq {
     int length = length();
     if (start < 0 || end > length || start > end) throw new IllegalArgumentException();
     if (start == end) return Seq.empty();
-    Deque<Seq> deque = new ArrayDeque<>(sequences.size());
+    List<Seq> list = new ArrayList<>(sequences.length);
     for (Seq seq : sequences) {
       int seqLength = seq.length();
       if (start < seqLength) {
         if (end <= seqLength) {
-          deque.addLast(seq.subSequence(start, end));
+          list.add(seq.subSequence(start, end));
           break;
         }
-        deque.addLast(seq.subSequence(start, seqLength));
+        list.add(seq.subSequence(start, seqLength));
         start = 0;
         end -= seqLength;
       } else {
@@ -58,7 +94,7 @@ public final class Concat implements Seq {
         end -= seqLength;
       }
     }
-    return new Concat(deque);
+    return new Concat(list);
   }
 
   @Override
@@ -75,11 +111,9 @@ public final class Concat implements Seq {
     if (seq.length() == 0) return this;
     if (seq instanceof Concat) {
       Concat concat = (Concat) seq;
-      concat.sequences.addAll(sequences);
-      return seq;
+      return new Concat(concat(concat.sequences, sequences));
     }
-    sequences.addFirst(seq);
-    return this;
+    return new Concat(concat(seq, sequences));
   }
 
   @Override
@@ -87,26 +121,23 @@ public final class Concat implements Seq {
     if (seq.length() == 0) return this;
     if (seq instanceof Concat) {
       Concat concat = (Concat) seq;
-      sequences.addAll(concat.sequences);
-      return this;
+      return new Concat(concat(sequences, concat.sequences));
     }
-    sequences.addLast(seq);
-    return this;
+    return new Concat(concat(sequences, seq));
   }
 
   @Override
   public Seq dup() {
-    Deque<Seq> deque = new ArrayDeque<>(sequences);
-    return new Concat(deque);
+    return new Concat(sequences.clone());
   }
 
   @Override
   public Seq upperCase() {
-    Deque<Seq> deque = new ArrayDeque<>(sequences.size());
-    for (Seq seq : sequences) {
-      deque.addLast(seq.upperCase());
+    Seq[] seqs = new Seq[sequences.length];
+    for (int i = 0; i < seqs.length; ++i) {
+      seqs[i] = sequences[i].upperCase();
     }
-    return new Concat(deque);
+    return new Concat(seqs);
   }
 
   @Override

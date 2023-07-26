@@ -2,7 +2,6 @@ package org.fastprintf;
 
 import org.fastprintf.traits.BooleanTraits;
 import org.fastprintf.traits.ByteTraits;
-import org.fastprintf.traits.CharSequenceTraits;
 import org.fastprintf.traits.CharacterTraits;
 import org.fastprintf.traits.DoubleTraits;
 import org.fastprintf.traits.FloatTraits;
@@ -16,6 +15,7 @@ import org.fastprintf.traits.ShortTraits;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -41,8 +41,8 @@ final class ArgsImpl implements Args {
   }
 
   @Override
-  public int size() {
-    return traits.size();
+  public List<FormatTraits> asList() {
+    return Collections.unmodifiableList(traits);
   }
 
   @Override
@@ -92,7 +92,7 @@ final class ArgsImpl implements Args {
 
   @Override
   public Args putCharSequence(CharSequence value) {
-    return addTraits(new CharSequenceTraits(value));
+    return addTraits(new ObjectTraits(value));
   }
 
   @Override

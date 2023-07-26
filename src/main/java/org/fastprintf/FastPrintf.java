@@ -12,4 +12,8 @@ public interface FastPrintf {
   default String format(Args args) {
     return format(new StringBuilder(), args).toString();
   }
+
+  default String format(Object... values) {
+    return format(Args.of(values));
+  }
 }

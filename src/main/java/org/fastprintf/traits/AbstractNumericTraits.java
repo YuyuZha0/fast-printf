@@ -2,13 +2,12 @@ package org.fastprintf.traits;
 
 import org.fastprintf.Flag;
 import org.fastprintf.FormatContext;
-import org.fastprintf.Specifier;
 import org.fastprintf.seq.Seq;
 import sun.misc.DoubleConsts;
 import sun.misc.FormattedFloatingDecimal;
 
 @SuppressWarnings("DuplicatedCode")
-abstract class AbstractNumericTraits implements FormatTraits {
+abstract class AbstractNumericTraits {
 
   private static final double SCALE_UP = Math.scalb(1.0, 54);
 
@@ -72,99 +71,28 @@ abstract class AbstractNumericTraits implements FormatTraits {
     }
   }
 
-  @Override
-  public final boolean isNull() {
+  static Seq handleZeroPadding(Seq seq, int reservedLen, FormatContext context) {
+    int len = seq.length() + reservedLen;
+    if (context.hasFlag(Flag.ZERO_PAD) && !context.hasFlag(Flag.LEFT_JUSTIFY)) {
+      int width = context.getWidth();
+      if (width > len) {
+        return seq.prepend(Seq.repeated('0', width - len));
+      }
+    }
+    return seq;
+  }
+
+  static Seq handleSignAndZeroPadding(Seq seq, boolean isNegative, FormatContext context) {
+    return handleSign(handleZeroPadding(seq, isNegative ? 1 : 0, context), isNegative, context);
+  }
+
+
+  double asDouble(){
+    return 0.0;
+  }
+
+  boolean isNegative(){
     return false;
-  }
-
-  @Override
-  public final Seq seqForSpecifier(Specifier specifier, FormatContext context) {
-    switch (specifier) {
-      case SIGNED_DECIMAL_INTEGER:
-        return forSignedDecimalInteger(context);
-      case UNSIGNED_DECIMAL_INTEGER:
-        return forUnsignedDecimalInteger(context);
-      case UNSIGNED_HEXADECIMAL_INTEGER:
-        return forUnsignedHexadecimalInteger(context, false);
-      case UNSIGNED_HEXADECIMAL_INTEGER_UPPERCASE:
-        return forUnsignedHexadecimalInteger(context, true);
-      case UNSIGNED_OCTAL_INTEGER:
-        return forUnsignedOctalInteger(context);
-      case DECIMAL_FLOATING_POINT:
-        return forDecimalFloatingPoint(context, false);
-      case DECIMAL_FLOATING_POINT_UPPERCASE:
-        return forDecimalFloatingPoint(context, true);
-      case SCIENTIFIC_NOTATION:
-        return forScientificNotation(context, false);
-      case SCIENTIFIC_NOTATION_UPPERCASE:
-        return forScientificNotation(context, true);
-      case USE_SHORTEST_PRESENTATION:
-        return forUseShortestPresentation(context, false);
-      case USE_SHORTEST_PRESENTATION_UPPERCASE:
-        return forUseShortestPresentation(context, true);
-      case HEXADECIMAL_FLOATING_POINT:
-        return forHexadecimalFloatingPoint(context, false);
-      case HEXADECIMAL_FLOATING_POINT_UPPERCASE:
-        return forHexadecimalFloatingPoint(context, true);
-      case STRING:
-        return forString(context);
-      case CHARACTER:
-        return forCharacter();
-      case PERCENT_SIGN:
-        return Seq.singleChar('%');
-      default:
-        return Seq.empty();
-    }
-  }
-
-  Seq forSignedDecimalInteger(FormatContext context) {
-    long value = asLong();
-    int precision = context.getPrecision();
-    if (value == 0 && precision == 0) {
-      return Seq.empty();
-    }
-    return handleSign(
-        handleDigitNumber(Seq.wrap(Long.toString(Math.abs(value))), precision),
-        isNegative(),
-        context);
-  }
-
-  Seq forUnsignedDecimalInteger(FormatContext context) {
-    long value = asUnsignedLong();
-    int precision = context.getPrecision();
-    if (value == 0 && precision == 0) {
-      return Seq.empty();
-    }
-    return handleDigitNumber(Seq.wrap(Long.toUnsignedString(value)), precision);
-  }
-
-  Seq forUnsignedHexadecimalInteger(FormatContext context, boolean upper) {
-    long value = asUnsignedLong();
-    int precision = context.getPrecision();
-    if (value == 0 && precision == 0) {
-      return Seq.empty();
-    }
-    String s = Long.toHexString(value);
-    Seq seq = upper ? Seq.upperCase(s) : Seq.wrap(s);
-    seq = handleDigitNumber(seq, precision);
-    if (context.hasFlag(Flag.ALTERNATE)) {
-      return seq.prepend(Seq.wrap(upper ? "0X" : "0x"));
-    }
-    return seq;
-  }
-
-  Seq forUnsignedOctalInteger(FormatContext context) {
-    long value = asUnsignedLong();
-    int precision = context.getPrecision();
-    if (value == 0 && precision == 0) {
-      return Seq.empty();
-    }
-    Seq seq = Seq.wrap(Long.toOctalString(value));
-    seq = handleDigitNumber(seq, precision);
-    if (context.hasFlag(Flag.ALTERNATE)) {
-      return seq.prepend(Seq.singleChar('0'));
-    }
-    return seq;
   }
 
   Seq forDecimalFloatingPoint(FormatContext context, boolean upper) {
@@ -182,7 +110,7 @@ abstract class AbstractNumericTraits implements FormatTraits {
     // If the precision is zero and the '#' flag is set, add the
     // requested decimal point.
     if (context.hasFlag(Flag.ALTERNATE) && (prec == 0)) mant = addDot(mant);
-    return handleSign(upper ? Seq.upperCase(mant) : mant, isNegative(), context);
+    return handleSignAndZeroPadding(upper ? Seq.upperCase(mant) : mant, isNegative(), context);
   }
 
   Seq forScientificNotation(FormatContext context, boolean upper) {
@@ -206,7 +134,8 @@ abstract class AbstractNumericTraits implements FormatTraits {
 
     char[] exp = (value == 0.0) ? new char[] {'+', '0', '0'} : fd.getExponent();
 
-    return handleSign(buildScientific(mant, Seq.forArray(exp), upper), isNegative(), context);
+    return handleSignAndZeroPadding(
+        buildScientific(mant, Seq.forArray(exp), upper), isNegative(), context);
   }
 
   Seq forUseShortestPresentation(FormatContext context, boolean upper) {
@@ -245,9 +174,10 @@ abstract class AbstractNumericTraits implements FormatTraits {
     // requested decimal point.
     if (context.hasFlag(Flag.ALTERNATE) && (prec == 0)) mantSeq = addDot(mantSeq);
     if (exp != null) {
-      return handleSign(buildScientific(mantSeq, Seq.forArray(exp), upper), isNegative(), context);
+      return handleSignAndZeroPadding(
+          buildScientific(mantSeq, Seq.forArray(exp), upper), isNegative(), context);
     } else {
-      return handleSign(mantSeq, isNegative(), context);
+      return handleSignAndZeroPadding(mantSeq, isNegative(), context);
     }
   }
 
@@ -268,7 +198,8 @@ abstract class AbstractNumericTraits implements FormatTraits {
     // Let Double.toHexString handle simple cases
     if (!Double.isFinite(value) || value == 0.0 || prec == 0 || prec >= 13)
       // remove "0x"
-      return handleSign(Seq.wrap(Double.toHexString(value).substring(2)), isNegative(), context);
+      return handleSignAndZeroPadding(
+          Seq.wrap(Double.toHexString(value).substring(2)), isNegative(), context);
     else {
       int exponent = Math.getExponent(value);
       boolean subnormal = (exponent == DoubleConsts.MIN_EXPONENT - 1);
@@ -322,14 +253,13 @@ abstract class AbstractNumericTraits implements FormatTraits {
           int idx = res.indexOf('p');
           if (idx == -1) {
             // No 'p' character in hex string.
-            assert false;
-            return null;
+            throw new AssertionError();
           } else {
             // Get exponent and append at the end.
             String exp = res.substring(idx + 1);
             int iexp = Integer.parseInt(exp) - 54;
             char p = upper ? 'P' : 'p';
-            return handleSign(
+            return handleSignAndZeroPadding(
                 Seq.wrap(res.substring(0, idx))
                     .append(Seq.singleChar(p))
                     .append(Seq.wrap(Integer.toString(iexp))),
@@ -341,22 +271,6 @@ abstract class AbstractNumericTraits implements FormatTraits {
     }
   }
 
-  Seq forString(FormatContext context) {
-    int precision = context.getPrecision();
-    CharSequence cs = asCharSequence();
-    int length = cs.length();
-    if (precision == -1 || precision >= length) {
-      return Seq.wrap(cs);
-    } else {
-      return Seq.wrap(cs.subSequence(0, precision));
-    }
-  }
 
-  Seq forCharacter() {
-    int value = asInt();
-    if (value < 0) {
-      throw new IllegalArgumentException("character value must be non-negative");
-    }
-    return Seq.singleChar((char) value);
-  }
+
 }

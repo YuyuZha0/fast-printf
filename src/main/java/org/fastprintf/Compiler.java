@@ -92,7 +92,7 @@ final class Compiler {
     }
     while (true) {
       char c = source.charAt(lookahead);
-      if (c == '.' || !Utils.isDigit(c)) {
+      if (c == '.' || Utils.isNotDigit(c)) {
         break;
       }
       lookahead++;
@@ -128,7 +128,8 @@ final class Compiler {
     }
     String p = source.substring(start, lookahead);
     if (p.isEmpty()) {
-      throw new PrintfSyntaxException("Invalid precision", source, lookahead);
+      return 0;
+      // throw new PrintfSyntaxException("Invalid precision", source, lookahead);
     }
     return Integer.parseInt(p);
   }

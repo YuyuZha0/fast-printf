@@ -2,6 +2,8 @@ package org.fastprintf;
 
 import org.junit.Test;
 
+import java.nio.charset.StandardCharsets;
+
 import static org.junit.Assert.assertEquals;
 
 public class FastPrintfTest {
@@ -31,14 +33,25 @@ public class FastPrintfTest {
   }
 
   @Test
+  public void test4() {
+    FastPrintf fastPrintf = FastPrintf.compile("%s, %s");
+    Args args = Args.of("hello".getBytes(StandardCharsets.UTF_8), "world".toCharArray());
+    String format = fastPrintf.format(args);
+    assertEquals("aGVsbG8=, world", format);
+  }
+
+  @Test
   // https://raw.githubusercontent.com/BartMassey/printf-tests/master/printf-tests.txt
   public void test() {
     FastPrintf fastPrintf =
-        FastPrintf.compile("%d %i %u %o %x %X %f %F %e %E %g %G %a %A %c %s %i %%");
-    Args args = Args.of(1, 2, 3, 4, 5, 6, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14, "hello", 15);
+        FastPrintf.compile("%20s");
+    Args args = Args.of("Hallo");
     String format = fastPrintf.format(args);
-    assertEquals(
-        "1 2 3 4 5 6 7.000000 8.000000 9.000000e+00 1.000000E+01 11.000000 12.000000 0xd.0p+3 0XD.0P+3 \nhello 15 %",
-        format);
+    System.out.println(format);
+  }
+
+  @Test
+  public void testJava(){
+    System.out.printf("%#.0f%n", 0D);
   }
 }

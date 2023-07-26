@@ -1,10 +1,13 @@
 package org.fastprintf.traits;
 
+import org.fastprintf.box.FloatFamily;
+import org.fastprintf.box.IntFamily;
+
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Base64;
 
-public final class ObjectTraits extends AbstractTextTraits {
+public final class ObjectTraits implements FormatTraits {
 
   private final Object value;
 
@@ -56,11 +59,35 @@ public final class ObjectTraits extends AbstractTextTraits {
   }
 
   @Override
-  public CharSequence asCharSequence() {
+  public String asString() {
     Class<?> type = value.getClass();
     if (type.isArray()) {
       return arrayToString(value, type.getComponentType());
     }
     return value.toString();
+  }
+
+  @Override
+  public IntFamily asIntFamily() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public FloatFamily asFloatFamily() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public int asInt() {
+    if (value instanceof Number) {
+      return ((Number) value).intValue();
+    }
+    if (value instanceof Boolean) {
+      return ((Boolean) value) ? 1 : 0;
+    }
+    if (value instanceof String) {
+      return Integer.parseInt((String) value);
+    }
+    throw new UnsupportedOperationException();
   }
 }

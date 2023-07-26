@@ -41,6 +41,7 @@ public final class UpperCase implements Seq {
 
   @Override
   public void appendTo(Appendable appendable) throws IOException {
+    // TODO optimize for StringBuilder
     appendable.append(toString());
   }
 }

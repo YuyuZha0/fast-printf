@@ -51,6 +51,12 @@ public final class Repeated implements Seq {
 
   @Override
   public void appendTo(Appendable appendable) throws IOException {
+    if (count > 1 && appendable instanceof StringBuilder) {
+      char[] chars = new char[count];
+      Arrays.fill(chars, c);
+      ((StringBuilder) appendable).append(chars);
+      return;
+    }
     for (int i = 0; i < count; i++) {
       appendable.append(c);
     }

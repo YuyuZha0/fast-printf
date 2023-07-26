@@ -5,6 +5,7 @@ import org.fastprintf.traits.FormatTraits;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.List;
 
 public interface Args extends Iterable<FormatTraits> {
 
@@ -20,7 +21,7 @@ public interface Args extends Iterable<FormatTraits> {
     return new ArgsImpl();
   }
 
-  int size();
+  List<FormatTraits> asList();
 
   Args putNull();
 

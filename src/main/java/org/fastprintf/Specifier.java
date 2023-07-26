@@ -17,6 +17,7 @@ public enum Specifier {
   HEXADECIMAL_FLOATING_POINT_UPPERCASE('A'),
   CHARACTER('c'),
   STRING('s'),
+  STRING_UPPERCASE('S'),
   NOTHING_PRINTED('n'),
   PERCENT_SIGN('%');
 

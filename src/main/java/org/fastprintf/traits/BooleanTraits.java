@@ -1,6 +1,9 @@
 package org.fastprintf.traits;
 
-public final class BooleanTraits extends AbstractNumericTraits {
+import org.fastprintf.box.FloatFamily;
+import org.fastprintf.box.IntFamily;
+
+public final class BooleanTraits implements FormatTraits {
 
   private final boolean value;
 
@@ -9,32 +12,22 @@ public final class BooleanTraits extends AbstractNumericTraits {
   }
 
   @Override
-  public boolean isNegative() {
-    return false;
+  public IntFamily asIntFamily() {
+    return IntFamily.valueOf(asInt());
+  }
+
+  @Override
+  public FloatFamily asFloatFamily() {
+    return FloatFamily.valueOf(asInt());
+  }
+
+  @Override
+  public String asString() {
+    return Boolean.toString(value);
   }
 
   @Override
   public int asInt() {
     return value ? 1 : 0;
-  }
-
-  @Override
-  public long asLong() {
-    return value ? 1 : 0;
-  }
-
-  @Override
-  public long asUnsignedLong() {
-    return value ? 1 : 0;
-  }
-
-  @Override
-  public double asDouble() {
-    return value ? 1D : 0D;
-  }
-
-  @Override
-  public String asCharSequence() {
-    return Boolean.toString(value);
   }
 }

@@ -31,6 +31,6 @@ public class ConcatTest {
     assertEquals("World", seq.subSequence(6, 11).toString());
 
     assertEquals("Hello World!", seq.append(Seq.wrap("!")).toString());
-    assertEquals("Hello World!!", Seq.wrap("!").prepend(seq).toString());
+    assertEquals("Hello World!", Seq.wrap("!").prepend(seq).toString());
   }
 }
