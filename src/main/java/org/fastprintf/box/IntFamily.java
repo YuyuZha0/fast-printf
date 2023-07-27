@@ -38,4 +38,8 @@ public interface IntFamily {
   String toOctalString();
 
   String toUnsignedDecimalString();
+
+  default boolean isNegative() {
+    return signum() < 0;
+  }
 }

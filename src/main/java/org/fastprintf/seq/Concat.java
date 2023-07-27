@@ -9,13 +9,24 @@ import java.util.List;
 public final class Concat implements Seq {
 
   private final Seq[] sequences;
+  private final int length;
 
   Concat(List<Seq> sequences) {
     this.sequences = sequences.toArray(new Seq[0]);
+    this.length = length(this.sequences);
   }
 
   private Concat(Seq[] sequences) {
     this.sequences = sequences;
+    this.length = length(sequences);
+  }
+
+  private static int length(Seq[] sequences) {
+    int length = 0;
+    for (Seq seq : sequences) {
+      length += seq.length();
+    }
+    return length;
   }
 
   private static Seq[] concat(Seq[] a, Seq[] b) {
@@ -54,10 +65,6 @@ public final class Concat implements Seq {
 
   @Override
   public int length() {
-    int length = 0;
-    for (Seq seq : sequences) {
-      length += seq.length();
-    }
     return length;
   }
 

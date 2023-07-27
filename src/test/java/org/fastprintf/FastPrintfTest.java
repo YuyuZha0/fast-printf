@@ -43,15 +43,14 @@ public class FastPrintfTest {
   @Test
   // https://raw.githubusercontent.com/BartMassey/printf-tests/master/printf-tests.txt
   public void test() {
-    FastPrintf fastPrintf =
-        FastPrintf.compile("%20s");
+    FastPrintf fastPrintf = FastPrintf.compile("%20s");
     Args args = Args.of("Hallo");
     String format = fastPrintf.format(args);
     System.out.println(format);
   }
 
   @Test
-  public void testJava(){
-    System.out.printf("%#.0f%n", 0D);
+  public void testJava() {
+    System.out.printf("%c%n", 65);
   }
 }

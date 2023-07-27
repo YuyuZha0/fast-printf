@@ -69,24 +69,18 @@ public final class ObjectTraits implements FormatTraits {
 
   @Override
   public IntFamily asIntFamily() {
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException(value.getClass().getName() + " is not a number");
   }
 
   @Override
   public FloatFamily asFloatFamily() {
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException(value.getClass().getName() + " is not a number");
   }
 
   @Override
   public int asInt() {
     if (value instanceof Number) {
       return ((Number) value).intValue();
-    }
-    if (value instanceof Boolean) {
-      return ((Boolean) value) ? 1 : 0;
-    }
-    if (value instanceof String) {
-      return Integer.parseInt((String) value);
     }
     throw new UnsupportedOperationException();
   }

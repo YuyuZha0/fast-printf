@@ -25,22 +25,31 @@ public final class DoubleBox implements FloatFamily {
     return Double.isInfinite(value);
   }
 
-  @Override
-  public String toGeneralString(int precision) {
-    // TODO: Implement this method
-    return String.format("%." + precision + "g", value);
-  }
-
-  @Override
-  public String toScientificString(int precision) {
-    return String.format("%." + precision + "e", value);
-  }
-
-  @Override
-  public String toDecimalString(int precision) {
+  private FloatLayout toLayout(int precision, FormattedFloatingDecimal.Form form) {
     FormattedFloatingDecimal fd =
-            FormattedFloatingDecimal.valueOf(value, precision, FormattedFloatingDecimal.Form.GENERAL);
-    return "";
+        FormattedFloatingDecimal.valueOf(Math.abs(value), precision, form);
+    return new FloatLayout(fd.getMantissa(), fd.getExponent(), fd.getExponentRounded());
+  }
+
+  @Override
+  public FloatLayout generalLayout(int precision) {
+    if (value == 0D) {
+      return new FloatLayout(new char[] {'0'}, null, 0);
+    }
+    return toLayout(precision, FormattedFloatingDecimal.Form.GENERAL);
+  }
+
+  @Override
+  public FloatLayout scientificLayout(int precision) {
+    if (value == 0D) {
+      return new FloatLayout(new char[] {'0'}, new char[] {'+', '0', '0'}, 0);
+    }
+    return toLayout(precision, FormattedFloatingDecimal.Form.SCIENTIFIC);
+  }
+
+  @Override
+  public FloatLayout decimalLayout(int precision) {
+    return toLayout(precision, FormattedFloatingDecimal.Form.DECIMAL_FLOAT);
   }
 
   @Override

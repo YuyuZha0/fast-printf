@@ -28,17 +28,17 @@ public final class BigDecimalBox implements FloatFamily {
   }
 
   @Override
-  public String toGeneralString(int precision) {
+  public FloatLayout generalLayout(int precision) {
     return null;
   }
 
   @Override
-  public String toScientificString(int precision) {
+  public FloatLayout scientificLayout(int precision) {
     return null;
   }
 
   @Override
-  public String toDecimalString(int precision) {
+  public FloatLayout decimalLayout(int precision) {
     return null;
   }
 

@@ -18,11 +18,15 @@ public interface FloatFamily {
 
   boolean isInfinite();
 
-  String toGeneralString(int precision);
+  FloatLayout generalLayout(int precision);
 
-  String toScientificString(int precision);
+  FloatLayout scientificLayout(int precision);
 
-  String toDecimalString(int precision);
+  FloatLayout decimalLayout(int precision);
 
   String toHexString(int precision);
+
+  default boolean isNegative() {
+    return signum() < 0;
+  }
 }
