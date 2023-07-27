@@ -9,7 +9,7 @@ public final class Utils {
     throw new IllegalStateException();
   }
 
-  public static char[] toUpperCase(char[] chars) {
+  public static void toUpperCase(char[] chars) {
     int length = chars.length;
     for (int i = 0; i < length; i++) {
       char c = chars[i];
@@ -17,7 +17,6 @@ public final class Utils {
         chars[i] = (char) (c ^ CASE_MASK);
       }
     }
-    return chars;
   }
 
   public static String toUpperCase(String string) {

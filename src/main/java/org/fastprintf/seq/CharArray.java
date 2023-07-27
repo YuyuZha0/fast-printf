@@ -96,4 +96,9 @@ public final class CharArray implements Seq {
     Utils.toUpperCase(chars);
     return new CharArray(chars, 0, length, false);
   }
+
+  @Override
+  public boolean isEmpty() {
+    return false;
+  }
 }

@@ -16,7 +16,6 @@ public final class SeqFormatter {
   private static final Seq MINUS = Seq.singleChar('-');
   private static final Seq SPACE = Seq.singleChar(' ');
   private static final Seq DOT = Seq.singleChar('.');
-
   private static final Seq E = Seq.singleChar('e');
 
   private SeqFormatter() {
@@ -174,7 +173,7 @@ public final class SeqFormatter {
     if (precision == 0 && context.hasFlag(Flag.ALTERNATE)) {
       mantissa = mantissa.append(DOT);
     }
-    return signAndJustify(context, mantissa, value.signum() < 0);
+    return signAndJustify(context, mantissa, value.isNegative());
   }
 
   private static Seq addZeros(char[] mantissa, int precision) {
@@ -208,7 +207,7 @@ public final class SeqFormatter {
     }
     v0 = v0.append(E);
     v0 = v0.append(Seq.forArray(layout.getExponent()));
-    return signAndJustify(context, v0, value.signum() < 0);
+    return signAndJustify(context, v0, value.isNegative());
   }
 
   static Seq g(FormatContext context, FloatFamily value) {
@@ -238,7 +237,7 @@ public final class SeqFormatter {
       v0 = v0.append(Seq.forArray(exp));
     }
 
-    return signAndJustify(context, v0, value.signum() < 0);
+    return signAndJustify(context, v0, value.isNegative());
   }
 
   static Seq a(FormatContext context, FloatFamily value) {

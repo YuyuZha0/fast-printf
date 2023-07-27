@@ -1,6 +1,6 @@
 package org.fastprintf.box;
 
-import sun.misc.FormattedFloatingDecimal;
+import org.fastprintf.util.FormattedFloatingDecimal;
 
 public final class DoubleBox implements FloatFamily {
 

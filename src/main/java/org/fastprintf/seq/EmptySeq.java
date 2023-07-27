@@ -46,4 +46,9 @@ public final class EmptySeq implements Seq {
 
   @Override
   public void appendTo(Appendable appendable) throws IOException {}
+
+  @Override
+  public boolean isEmpty() {
+    return true;
+  }
 }

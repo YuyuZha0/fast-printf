@@ -1,11 +1,8 @@
 package org.fastprintf;
 
-import sun.security.action.GetPropertyAction;
-
 public class PrintfSyntaxException extends IllegalArgumentException {
 
-  private static final String nl =
-      java.security.AccessController.doPrivileged(new GetPropertyAction("line.separator"));
+  private static final String nl = System.lineSeparator();
   private final String desc;
   private final String pattern;
   private final int index;

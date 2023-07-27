@@ -16,9 +16,9 @@ public final class Concat implements Seq {
     this.length = length(this.sequences);
   }
 
-  private Concat(Seq[] sequences) {
+  private Concat(Seq[] sequences, int length) {
     this.sequences = sequences;
-    this.length = length(sequences);
+    this.length = length;
   }
 
   private static int length(Seq[] sequences) {
@@ -115,27 +115,27 @@ public final class Concat implements Seq {
 
   @Override
   public Seq prepend(Seq seq) {
-    if (seq.length() == 0) return this;
+    if (seq.isEmpty()) return this;
     if (seq instanceof Concat) {
       Concat concat = (Concat) seq;
-      return new Concat(concat(concat.sequences, sequences));
+      return new Concat(concat(concat.sequences, sequences), length + concat.length);
     }
-    return new Concat(concat(seq, sequences));
+    return new Concat(concat(seq, sequences), length + seq.length());
   }
 
   @Override
   public Seq append(Seq seq) {
-    if (seq.length() == 0) return this;
+    if (seq.isEmpty()) return this;
     if (seq instanceof Concat) {
       Concat concat = (Concat) seq;
-      return new Concat(concat(sequences, concat.sequences));
+      return new Concat(concat(sequences, concat.sequences), length + concat.length);
     }
-    return new Concat(concat(sequences, seq));
+    return new Concat(concat(sequences, seq), length + seq.length());
   }
 
   @Override
   public Seq dup() {
-    return new Concat(sequences.clone());
+    return new Concat(sequences.clone(), length);
   }
 
   @Override
@@ -144,7 +144,7 @@ public final class Concat implements Seq {
     for (int i = 0; i < seqs.length; ++i) {
       seqs[i] = sequences[i].upperCase();
     }
-    return new Concat(seqs);
+    return new Concat(seqs, length);
   }
 
   @Override

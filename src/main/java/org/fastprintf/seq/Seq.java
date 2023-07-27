@@ -61,7 +61,7 @@ public interface Seq extends CharSequence {
   }
 
   default Seq prepend(Seq seq) {
-    if (seq.length() == 0) return this;
+    if (seq.isEmpty()) return this;
     if (seq instanceof Concat) {
       Concat concat = (Concat) seq;
       return concat.append(this);
@@ -70,7 +70,7 @@ public interface Seq extends CharSequence {
   }
 
   default Seq append(Seq seq) {
-    if (seq.length() == 0) return this;
+    if (seq.isEmpty()) return this;
     if (seq instanceof Concat) {
       Concat concat = (Concat) seq;
       return concat.prepend(this);
@@ -105,5 +105,9 @@ public interface Seq extends CharSequence {
   default Seq map(Function<? super Seq, ? extends Seq> mapper) {
     Objects.requireNonNull(mapper, "map");
     return mapper.apply(this);
+  }
+
+  default boolean isEmpty() {
+    return length() == 0;
   }
 }

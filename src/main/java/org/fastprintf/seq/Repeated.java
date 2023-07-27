@@ -30,7 +30,7 @@ public final class Repeated implements Seq {
   @Override
   public Seq subSequence(int start, int end) {
     if (start < 0 || end > count || start > end) throw new IllegalArgumentException();
-    if (start == end) return EmptySeq.INSTANCE;
+    if (start == end) return Seq.empty();
     return new Repeated(c, end - start);
   }
 
