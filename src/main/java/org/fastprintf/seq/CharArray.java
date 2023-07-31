@@ -101,4 +101,16 @@ public final class CharArray implements Seq {
   public boolean isEmpty() {
     return false;
   }
+
+  @Override
+  public int indexOf(char c) {
+    int start = this.start;
+    int length = this.length;
+    for (int i = 0; i < length; ++i) {
+      if (ch[start + i] == c) {
+        return i;
+      }
+    }
+    return Utils.INDEX_NOT_FOUND;
+  }
 }

@@ -32,5 +32,15 @@ public class ConcatTest {
 
     assertEquals("Hello World!", seq.append(Seq.wrap("!")).toString());
     assertEquals("Hello World!", Seq.wrap("!").prepend(seq).toString());
+
+    assertEquals(0, seq.indexOf('H'));
+    assertEquals(1, seq.indexOf('e'));
+    assertEquals(2, seq.indexOf('l'));
+    assertEquals(4, seq.indexOf('o'));
+    assertEquals(5, seq.indexOf(' '));
+    assertEquals(6, seq.indexOf('W'));
+    assertEquals(8, seq.indexOf('r'));
+    assertEquals(10, seq.indexOf('d'));
+    assertEquals(-1, seq.indexOf('x'));
   }
 }

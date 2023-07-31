@@ -15,5 +15,7 @@ public class EmptySeqTest {
 
     assertEquals("Hello", seq.append(Seq.wrap("Hello")).toString());
     assertEquals("Hello", Seq.wrap("Hello").prepend(seq).toString());
+
+    assertEquals(-1, seq.indexOf('H'));
   }
 }

@@ -25,5 +25,11 @@ public class CharArrayTest {
 
     assertEquals("Hello World", seq.append(Seq.wrap(" World")).toString());
     assertEquals("Hello World", Seq.wrap(" World").prepend(seq).toString());
+
+    assertEquals(0, seq.indexOf('H'));
+    assertEquals(1, seq.indexOf('e'));
+    assertEquals(2, seq.indexOf('l'));
+    assertEquals(4, seq.indexOf('o'));
+    assertEquals(-1, seq.indexOf('x'));
   }
 }

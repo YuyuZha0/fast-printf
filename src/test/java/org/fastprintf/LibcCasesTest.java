@@ -6,9 +6,10 @@ import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 
-public class WorkLikeLibcTest {
+public class LibcCasesTest {
 
   private static void TEST(String result, int length, String format, Object... values) {
+    assertEquals(length, result.length());
     String s = FastPrintf.compile(format).format(values);
     assertEquals(
         String.format("Format: \"%s\" Args: %s", format, Arrays.toString(values)), result, s);

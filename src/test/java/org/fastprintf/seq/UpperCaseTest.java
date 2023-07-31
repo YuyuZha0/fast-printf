@@ -23,5 +23,12 @@ public class UpperCaseTest {
 
     assertEquals("HELLO World", seq.append(Seq.wrap(" World")).toString());
     assertEquals("HELLO World", Seq.wrap(" World").prepend(seq).toString());
+
+    assertEquals(0, seq.indexOf('H'));
+    assertEquals(1, seq.indexOf('E'));
+    assertEquals(2, seq.indexOf('L'));
+    assertEquals(4, seq.indexOf('O'));
+    assertEquals(-1, seq.indexOf('x'));
+    assertEquals(-1, seq.indexOf('h'));
   }
 }

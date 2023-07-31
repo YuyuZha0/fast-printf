@@ -17,6 +17,7 @@ public final class SeqFormatter {
   private static final Seq SPACE = Seq.singleChar(' ');
   private static final Seq DOT = Seq.singleChar('.');
   private static final Seq E = Seq.singleChar('e');
+  private static final Seq P = Seq.singleChar('p');
 
   private SeqFormatter() {
     throw new IllegalStateException();
@@ -150,16 +151,6 @@ public final class SeqFormatter {
     return spaceJustify(context, v0);
   }
 
-  private static int indexOfDot(char[] chars) {
-    int length = chars.length;
-    for (int i = 0; i < length; i++) {
-      if (chars[i] == '.') {
-        return i;
-      }
-    }
-    return -1;
-  }
-
   static Seq f(FormatContext context, FloatFamily value) {
     if (value.isNaN() || value.isInfinite()) {
       return nanOrInfinity(context, value);
@@ -176,20 +167,19 @@ public final class SeqFormatter {
     return signAndJustify(context, mantissa, value.isNegative());
   }
 
-  private static Seq addZeros(char[] mantissa, int precision) {
-    int dot = indexOfDot(mantissa);
-    Seq v0 = Seq.forArray(mantissa);
+  private static Seq addZeros(Seq mantissa, int precision) {
+    int dot = mantissa.indexOf('.');
     int outPrecision = 0;
     if (dot >= 0) {
-      outPrecision = mantissa.length - (dot + 1);
+      outPrecision = mantissa.length() - (dot + 1);
     }
     if (outPrecision == precision) {
-      return v0;
+      return mantissa;
     }
     if (dot < 0) {
-      v0 = v0.append(DOT);
+      mantissa = mantissa.append(DOT);
     }
-    return v0.append(Seq.repeated('0', precision - outPrecision));
+    return mantissa.append(Seq.repeated('0', precision - outPrecision));
   }
 
   static Seq e(FormatContext context, FloatFamily value) {
@@ -206,7 +196,7 @@ public final class SeqFormatter {
       v0 = v0.append(DOT);
     }
     v0 = v0.append(E);
-    v0 = v0.append(Seq.forArray(layout.getExponent()));
+    v0 = v0.append(layout.getExponent());
     return signAndJustify(context, v0, value.isNegative());
   }
 
@@ -222,7 +212,7 @@ public final class SeqFormatter {
       }
     }
     FloatLayout layout = value.generalLayout(precision);
-    char[] exp = layout.getExponent();
+    Seq exp = layout.getExponent();
     if (exp != null) {
       precision -= (layout.getExponentRounded() + 1);
     } else {
@@ -234,7 +224,7 @@ public final class SeqFormatter {
     }
     if (exp != null) {
       v0 = v0.append(E);
-      v0 = v0.append(Seq.forArray(exp));
+      v0 = v0.append(exp);
     }
 
     return signAndJustify(context, v0, value.isNegative());
@@ -244,8 +234,35 @@ public final class SeqFormatter {
     if (value.isNaN() || value.isInfinite()) {
       return nanOrInfinity(context, value);
     }
-    // TODO
-    return Seq.empty();
+    int precision = 0;
+    if (context.isPrecisionSet()) {
+      precision = context.getPrecision();
+      if (precision == 0) {
+        precision = 1;
+      }
+    }
+    FloatLayout layout = value.hexLayout(precision);
+    Seq v0 = layout.getMantissa();
+    int signum = value.signum();
+    if (signum == 0 && context.hasFlag(Flag.ALTERNATE)) {
+      v0 = v0.append(DOT);
+    }
+    v0 = v0.append(P).append(layout.getExponent());
+    if (context.hasFlag(Flag.ZERO_PAD) && !context.hasFlag(Flag.LEFT_JUSTIFY)) {
+      int width = context.getWidth() - 2;
+      if (signum < 0 || context.hasFlag(Flag.PLUS) || context.hasFlag(Flag.LEADING_SPACE)) {
+        --width;
+      }
+      int len = v0.length();
+      if (width > len) {
+        v0 = Seq.repeated('0', width - len).append(v0);
+      }
+      v0 = v0.prepend(Seq.wrap("0x"));
+      return sign(context, v0, signum < 0);
+    }
+    v0 = v0.prepend(Seq.wrap("0x"));
+    v0 = sign(context, v0, signum < 0);
+    return spaceJustify(context, v0);
   }
 
   static Seq c(FormatContext context, FormatTraits value) {

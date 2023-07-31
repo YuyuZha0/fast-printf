@@ -20,8 +20,7 @@ public final class UpperCase implements Seq {
 
   @Override
   public char charAt(int index) {
-    char c = cs.charAt(index);
-    return Utils.isLowerCase(c) ? Utils.toUpperCase(c) : c;
+    return Utils.toUpperCase(cs.charAt(index));
   }
 
   @Override
@@ -43,5 +42,19 @@ public final class UpperCase implements Seq {
   public void appendTo(Appendable appendable) throws IOException {
     // TODO optimize for StringBuilder
     appendable.append(toString());
+  }
+
+  @Override
+  public int indexOf(char c) {
+    if (Utils.isLowerCase(c)) {
+      return Utils.INDEX_NOT_FOUND;
+    }
+    int length = cs.length();
+    for (int i = 0; i < length; i++) {
+      if (Utils.toUpperCase(cs.charAt(i)) == c) {
+        return i;
+      }
+    }
+    return Utils.INDEX_NOT_FOUND;
   }
 }

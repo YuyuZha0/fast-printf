@@ -1,5 +1,7 @@
 package org.fastprintf.seq;
 
+import org.fastprintf.util.Utils;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -152,5 +154,16 @@ public final class Concat implements Seq {
     for (Seq seq : sequences) {
       seq.appendTo(appendable);
     }
+  }
+
+  @Override
+  public int indexOf(char c) {
+    int index = 0;
+    for (Seq seq : sequences) {
+      int i = seq.indexOf(c);
+      if (i >= 0) return index + i;
+      index += seq.length();
+    }
+    return Utils.INDEX_NOT_FOUND;
   }
 }

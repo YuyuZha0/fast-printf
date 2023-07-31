@@ -2,7 +2,7 @@ package org.fastprintf.box;
 
 import java.math.BigInteger;
 
-public interface IntFamily {
+public interface IntFamily extends NumberFamily {
 
   static IntFamily valueOf(byte value) {
     return new ByteBox(value);
@@ -24,8 +24,6 @@ public interface IntFamily {
     return new BigIntegerBox(value);
   }
 
-  int signum();
-
   /**
    * Format this object as a decimal string, without a sign.
    *
@@ -38,8 +36,4 @@ public interface IntFamily {
   String toOctalString();
 
   String toUnsignedDecimalString();
-
-  default boolean isNegative() {
-    return signum() < 0;
-  }
 }

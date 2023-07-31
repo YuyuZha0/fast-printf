@@ -15,7 +15,13 @@ public final class IntBox implements IntFamily {
 
   @Override
   public String toDecimalString() {
-    return Integer.toString(Math.abs(value));
+    if (value >= 0) {
+      return Integer.toString(value);
+    }
+    if (value > Integer.MIN_VALUE) {
+      return Integer.toString(-value);
+    }
+    return Integer.toString(value).substring(1);
   }
 
   @Override

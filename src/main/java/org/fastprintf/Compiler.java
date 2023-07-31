@@ -120,7 +120,7 @@ final class Compiler {
     final int start = lookahead;
     while (true) {
       char c = source.charAt(lookahead);
-      if (!Utils.isDigit(c)) {
+      if (Utils.isNotDigit(c)) {
         break;
       }
       lookahead++;

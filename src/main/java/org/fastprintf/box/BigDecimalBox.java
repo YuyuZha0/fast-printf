@@ -43,7 +43,7 @@ public final class BigDecimalBox implements FloatFamily {
   }
 
   @Override
-  public String toHexString(int precision) {
+  public FloatLayout hexLayout(int precision) {
     return null;
   }
 

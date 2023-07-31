@@ -1,5 +1,7 @@
 package org.fastprintf.seq;
 
+import org.fastprintf.util.Utils;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +33,10 @@ public interface Seq extends CharSequence {
     if (cs instanceof Seq) return (Seq) cs;
     if (cs.length() == 0) return empty();
     return new Wrapper(cs);
+  }
+
+  static Seq wrap(String s) {
+    return new Wrapper(s);
   }
 
   static Seq forArray(char[] ch, int start, int length) {
@@ -109,5 +115,9 @@ public interface Seq extends CharSequence {
 
   default boolean isEmpty() {
     return length() == 0;
+  }
+
+  default int indexOf(char c) {
+    return Utils.indexOf(this, c);
   }
 }

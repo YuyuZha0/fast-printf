@@ -1,5 +1,7 @@
 package org.fastprintf.seq;
 
+import org.fastprintf.util.Utils;
+
 import java.io.IOException;
 import java.util.Objects;
 
@@ -43,5 +45,14 @@ public final class Wrapper implements Seq {
   @Override
   public void appendTo(Appendable appendable) throws IOException {
     appendable.append(cs);
+  }
+
+  @Override
+  public int indexOf(char c) {
+    if (cs instanceof String) {
+      int index = ((String) cs).indexOf(c);
+      return index >= 0 ? index : Utils.INDEX_NOT_FOUND;
+    }
+    return Utils.indexOf(cs, c);
   }
 }

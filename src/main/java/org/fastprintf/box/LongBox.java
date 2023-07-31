@@ -15,7 +15,13 @@ public final class LongBox implements IntFamily {
 
   @Override
   public String toDecimalString() {
-    return Long.toString(Math.abs(value));
+    if (value >= 0) {
+      return Long.toString(value);
+    }
+    if (value > Long.MIN_VALUE) {
+      return Long.toString(-value);
+    }
+    return Long.toString(value).substring(1);
   }
 
   @Override

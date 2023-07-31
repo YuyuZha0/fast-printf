@@ -22,5 +22,8 @@ public class RepeatedTest {
 
     assertEquals("aaaaa World", seq.append(Seq.wrap(" World")).toString());
     assertEquals("aaaaa World", Seq.wrap(" World").prepend(seq).toString());
+
+    assertEquals(0, seq.indexOf('a'));
+    assertEquals(-1, seq.indexOf('x'));
   }
 }

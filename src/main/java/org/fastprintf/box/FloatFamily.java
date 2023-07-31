@@ -2,7 +2,7 @@ package org.fastprintf.box;
 
 import java.math.BigDecimal;
 
-public interface FloatFamily {
+public interface FloatFamily extends NumberFamily {
 
   static FloatFamily valueOf(double value) {
     return new DoubleBox(value);
@@ -11,8 +11,6 @@ public interface FloatFamily {
   static FloatFamily valueOf(BigDecimal value) {
     return new BigDecimalBox(value);
   }
-
-  int signum();
 
   boolean isNaN();
 
@@ -24,9 +22,5 @@ public interface FloatFamily {
 
   FloatLayout decimalLayout(int precision);
 
-  String toHexString(int precision);
-
-  default boolean isNegative() {
-    return signum() < 0;
-  }
+  FloatLayout hexLayout(int precision);
 }

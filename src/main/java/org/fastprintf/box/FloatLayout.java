@@ -1,23 +1,26 @@
 package org.fastprintf.box;
 
+import org.fastprintf.seq.Seq;
+
+import java.io.IOException;
+
 public final class FloatLayout {
 
-  private final char[] mantissa;
-  private final char[] exponent;
-
+  private final Seq mantissa;
+  private final Seq exponent;
   private final int exponentRounded;
 
-  FloatLayout(char[] mantissa, char[] exponent, int exponentRounded) {
+  FloatLayout(Seq mantissa, Seq exponent, int exponentRounded) {
     this.mantissa = mantissa;
     this.exponent = exponent;
     this.exponentRounded = exponentRounded;
   }
 
-  public char[] getMantissa() {
+  public Seq getMantissa() {
     return mantissa;
   }
 
-  public char[] getExponent() {
+  public Seq getExponent() {
     return exponent;
   }
 
@@ -29,11 +32,19 @@ public final class FloatLayout {
   public String toString() {
     StringBuilder builder = new StringBuilder();
     if (mantissa != null) {
-      builder.append(mantissa);
+      try {
+        mantissa.appendTo(builder);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
     if (exponent != null) {
       builder.append('e');
-      builder.append(exponent);
+      try {
+        exponent.appendTo(builder);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
     return builder.toString();
   }
