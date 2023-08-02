@@ -78,6 +78,10 @@ public final class FormatContext {
     return EnumSet.copyOf(flags);
   }
 
+  public void addFlag(Flag flag) {
+    flags.add(flag);
+  }
+
   public boolean hasFlag(Flag flag) {
     return flag != null && flags.contains(flag);
   }

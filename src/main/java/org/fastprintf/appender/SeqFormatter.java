@@ -118,13 +118,16 @@ public final class SeqFormatter {
     int precision = 1;
     if (context.isPrecisionSet()) {
       precision = context.getPrecision();
+      if (context.hasFlag(Flag.ALTERNATE) && "0".equals(prefix)) {
+        --precision;
+      }
     } else if (context.hasFlag(Flag.ZERO_PAD)
         && context.isWidthSet()
         && !context.hasFlag(Flag.LEFT_JUSTIFY)) {
       precision = context.getWidth();
-    }
-    if (context.hasFlag(Flag.ALTERNATE)) {
-      precision -= prefix.length();
+      if (context.hasFlag(Flag.ALTERNATE)) {
+        precision -= prefix.length();
+      }
     }
     if (precision > v0.length()) {
       Seq pad = Seq.repeated('0', precision - v0.length());

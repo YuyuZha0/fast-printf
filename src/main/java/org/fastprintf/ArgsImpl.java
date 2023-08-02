@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 final class ArgsImpl implements Args {
 
@@ -120,5 +121,13 @@ final class ArgsImpl implements Args {
     }
     Objects.requireNonNull(value, "value is null");
     return addTraits(new ObjectTraits(value));
+  }
+
+  @Override
+  public String toString() {
+    return traits.stream()
+        .map(FormatTraits::value)
+        .map(String::valueOf)
+        .collect(Collectors.joining(", ", "[", "]"));
   }
 }

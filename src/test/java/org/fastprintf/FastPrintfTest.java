@@ -64,13 +64,12 @@ public class FastPrintfTest {
   @Test
   // https://raw.githubusercontent.com/BartMassey/printf-tests/master/printf-tests.txt
   public void test() {
-    FastPrintf fastPrintf = FastPrintf.compile("%040.1a");
-    Args args = Args.of(Math.PI);
+    FastPrintf fastPrintf = FastPrintf.compile("%#.25o");
+    Args args = Args.of(-100L);
     String format = fastPrintf.format(args);
-    System.out.println(format);
-    System.out.printf("%040.1a%n", Math.PI);
+    System.out.println(format + " " + format.length());
+    //0001777777777777777777634
+    //00001777777777777777777634
   }
 
-  @Test
-  public void testJava() {}
 }

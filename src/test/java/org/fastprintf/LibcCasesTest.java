@@ -6,6 +6,7 @@ import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 
+// https://github.com/BartMassey/printf-tests/blob/master/sources/tests-libc-sprintf.c
 public class LibcCasesTest {
 
   private static void TEST(String result, int length, String format, Object... values) {

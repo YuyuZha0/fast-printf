@@ -1,5 +1,6 @@
 package org.fastprintf.appender;
 
+import org.fastprintf.Flag;
 import org.fastprintf.FormatContext;
 import org.fastprintf.Specifier;
 import org.fastprintf.seq.Seq;
@@ -30,10 +31,21 @@ public final class DefaultAppender implements Appender {
   @Override
   public void append(List<Seq> collect, Iterator<FormatTraits> traitsIterator) {
     if (context.isPrecedingWidth()) {
-      context.setWidth(nextInt(traitsIterator));
+      int w = nextInt(traitsIterator);
+      if (w >= 0) {
+        context.setWidth(w);
+      } else {
+        context.addFlag(Flag.LEFT_JUSTIFY);
+        context.setWidth(-w);
+      }
     }
     if (context.isPrecedingPrecision()) {
-      context.setPrecision(nextInt(traitsIterator));
+      int p = nextInt(traitsIterator);
+      if (p >= 0) {
+        context.setPrecision(p);
+      } else {
+        context.setPrecision(FormatContext.UNSET);
+      }
     }
     if (!traitsIterator.hasNext()) {
       throw new NoSuchElementException("Missing argument for specifier: " + specifier);
