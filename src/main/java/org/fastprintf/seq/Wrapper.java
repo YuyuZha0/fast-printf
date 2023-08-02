@@ -9,7 +9,7 @@ public final class Wrapper implements Seq {
 
   private final CharSequence cs;
 
-  public Wrapper(CharSequence cs) {
+  Wrapper(CharSequence cs) {
     this.cs = Objects.requireNonNull(cs);
   }
 

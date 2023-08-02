@@ -8,7 +8,7 @@ public final class EmptySeq implements Seq {
 
   static final EmptySeq INSTANCE = new EmptySeq();
 
-  public EmptySeq() {}
+  private EmptySeq() {}
 
   @Override
   public Seq prepend(Seq seq) {
