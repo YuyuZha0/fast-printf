@@ -1,22 +1,28 @@
 package org.fastprintf;
 
+import java.io.Serializable;
 import java.util.EnumSet;
 import java.util.Objects;
 
-public final class FormatContext {
+public final class FormatContext implements Serializable {
 
   public static final int PRECEDING = Integer.MIN_VALUE;
   public static final int UNSET = -1;
-  private final EnumSet<Flag> flags;
-  private final boolean precedingWidth;
-  private final boolean precedingPrecision;
-  private int width = UNSET;
-  private int precision = UNSET;
 
-  public FormatContext(EnumSet<Flag> flags, boolean precedingWidth, boolean precedingPrecision) {
-    this.flags = EnumSet.copyOf(flags);
-    this.precedingWidth = precedingWidth;
-    this.precedingPrecision = precedingPrecision;
+  private static final long serialVersionUID = 460649064794800700L;
+  private final EnumSet<Flag> flags;
+  private final int width;
+  private final int precision;
+
+  private FormatContext(EnumSet<Flag> flags, int width, int precision) {
+    this.flags = flags;
+    this.width = width;
+    this.precision = precision;
+  }
+
+  public static FormatContext create(EnumSet<Flag> flags, int width, int precision) {
+    Objects.requireNonNull(flags, "flags is null");
+    return new FormatContext(EnumSet.copyOf(flags), width, precision);
   }
 
   public static FormatContext create(String flags) {
@@ -32,22 +38,15 @@ public final class FormatContext {
         flagSet.add(Flag.valueOf(flags.charAt(i)));
       }
     }
-    FormatContext context = new FormatContext(flagSet, w == PRECEDING, p == PRECEDING);
-    if (w >= 0) {
-      context.setWidth(w);
-    }
-    if (p >= 0) {
-      context.setPrecision(p);
-    }
-    return context;
+    return new FormatContext(flagSet, w, p);
   }
 
   public int getWidth() {
     return width;
   }
 
-  public void setWidth(int width) {
-    this.width = width;
+  public FormatContext setWidth(int newWidth) {
+    return new FormatContext(EnumSet.copyOf(flags), newWidth, precision);
   }
 
   public boolean isWidthSet() {
@@ -58,8 +57,8 @@ public final class FormatContext {
     return precision;
   }
 
-  public void setPrecision(int precision) {
-    this.precision = precision;
+  public FormatContext setPrecision(int newPrecision) {
+    return new FormatContext(EnumSet.copyOf(flags), width, newPrecision);
   }
 
   public boolean isPrecisionSet() {
@@ -67,19 +66,24 @@ public final class FormatContext {
   }
 
   public boolean isPrecedingWidth() {
-    return precedingWidth;
+    return width == PRECEDING;
   }
 
   public boolean isPrecedingPrecision() {
-    return precedingPrecision;
+    return precision == PRECEDING;
   }
 
   public EnumSet<Flag> getFlags() {
     return EnumSet.copyOf(flags);
   }
 
-  public void addFlag(Flag flag) {
-    flags.add(flag);
+  public FormatContext addFlag(Flag flag) {
+    if (flag == null || flags.contains(flag)) {
+      return this;
+    }
+    FormatContext newContext = new FormatContext(EnumSet.copyOf(flags), width, precision);
+    newContext.flags.add(flag);
+    return newContext;
   }
 
   public boolean hasFlag(Flag flag) {
@@ -114,14 +118,14 @@ public final class FormatContext {
           break;
       }
     }
-    if (width == FormatContext.PRECEDING) {
+    if (width == PRECEDING) {
       builder.append('*');
-    } else if (width != FormatContext.UNSET) {
+    } else if (width != UNSET) {
       builder.append(width);
     }
-    if (precision == FormatContext.PRECEDING) {
+    if (precision == PRECEDING) {
       builder.append(".*");
-    } else if (precision != FormatContext.UNSET) {
+    } else if (precision != UNSET) {
       builder.append('.').append(precision);
     }
     builder.append(specifier);

@@ -54,11 +54,7 @@ final class Compiler {
     int width = width();
     int precision = precision();
     Specifier specifier = specifier();
-    FormatContext context =
-        new FormatContext(
-            flags, width == FormatContext.PRECEDING, precision == FormatContext.PRECEDING);
-    context.setWidth(width);
-    context.setPrecision(precision);
+    FormatContext context = FormatContext.create(flags, width, precision);
     appenders.add(new DefaultAppender(specifier, context));
     recursiveDecrease();
   }
