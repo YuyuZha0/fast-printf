@@ -30,4 +30,9 @@ public final class DoubleTraits implements FormatTraits {
   public int asInt() {
     return (int) Math.round(value);
   }
+
+  @Override
+  public Object value() {
+    return value;
+  }
 }

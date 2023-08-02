@@ -30,4 +30,9 @@ public final class FloatTraits implements FormatTraits {
   public int asInt() {
     return Math.round(value);
   }
+
+  @Override
+  public Object value() {
+    return value;
+  }
 }

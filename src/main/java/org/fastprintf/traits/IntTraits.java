@@ -30,4 +30,9 @@ public final class IntTraits implements FormatTraits {
   public int asInt() {
     return value;
   }
+
+  @Override
+  public Object value() {
+    return value;
+  }
 }

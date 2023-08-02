@@ -30,4 +30,9 @@ public final class CharSequenceTraits implements FormatTraits {
   public FloatFamily asFloatFamily() {
     return FloatFamily.valueOf(Double.parseDouble(value.toString()));
   }
+
+  @Override
+  public Object value() {
+    return value;
+  }
 }

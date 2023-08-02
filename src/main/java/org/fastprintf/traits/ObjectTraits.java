@@ -84,4 +84,9 @@ public final class ObjectTraits implements FormatTraits {
     }
     throw new UnsupportedOperationException();
   }
+
+  @Override
+  public Object value() {
+    return value;
+  }
 }

@@ -8,12 +8,10 @@ public final class FloatLayout {
 
   private final Seq mantissa;
   private final Seq exponent;
-  private final int exponentRounded;
 
-  FloatLayout(Seq mantissa, Seq exponent, int exponentRounded) {
+  FloatLayout(Seq mantissa, Seq exponent) {
     this.mantissa = mantissa;
     this.exponent = exponent;
-    this.exponentRounded = exponentRounded;
   }
 
   public Seq getMantissa() {
@@ -22,10 +20,6 @@ public final class FloatLayout {
 
   public Seq getExponent() {
     return exponent;
-  }
-
-  public int getExponentRounded() {
-    return exponentRounded;
   }
 
   @Override

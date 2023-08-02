@@ -43,6 +43,9 @@ public final class DefaultAppender implements Appender {
   }
 
   private Seq format(FormatTraits traits) {
+    if (traits.isNull()) {
+      return SeqFormatter.forNull(context);
+    }
     switch (specifier) {
       case SIGNED_DECIMAL_INTEGER:
         return SeqFormatter.d(context, traits.asIntFamily());
@@ -76,6 +79,8 @@ public final class DefaultAppender implements Appender {
         return SeqFormatter.s(context, traits).upperCase();
       case CHARACTER:
         return SeqFormatter.c(context, traits);
+      case POINTER:
+        return SeqFormatter.p(context, traits);
       case PERCENT_SIGN:
         return Seq.singleChar('%');
       default:

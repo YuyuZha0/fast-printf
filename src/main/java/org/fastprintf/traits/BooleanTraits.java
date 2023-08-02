@@ -30,4 +30,9 @@ public final class BooleanTraits implements FormatTraits {
   public int asInt() {
     return value ? 1 : 0;
   }
+
+  @Override
+  public Object value() {
+    return value;
+  }
 }

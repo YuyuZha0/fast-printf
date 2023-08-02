@@ -3,6 +3,7 @@ package org.fastprintf;
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 
 import static org.junit.Assert.assertEquals;
 
@@ -41,6 +42,26 @@ public class FastPrintfTest {
   }
 
   @Test
+  public void test5() {
+    FastPrintf fastPrintf = FastPrintf.compile("%p, %p, %p, %p, %p, %p, %p, %p, %p, %p, %p");
+    Args args =
+        Args.of(
+            1,
+            1L,
+            1.0,
+            1.0f,
+            'a',
+            true,
+            "hello",
+            new int[0],
+            new Object[0],
+            (short) 9,
+            new ArrayList<>());
+    String format = fastPrintf.format(args);
+    System.out.println(format);
+  }
+
+  @Test
   // https://raw.githubusercontent.com/BartMassey/printf-tests/master/printf-tests.txt
   public void test() {
     FastPrintf fastPrintf = FastPrintf.compile("%040.1a");
@@ -51,7 +72,5 @@ public class FastPrintfTest {
   }
 
   @Test
-  public void testJava() {
-
-  }
+  public void testJava() {}
 }

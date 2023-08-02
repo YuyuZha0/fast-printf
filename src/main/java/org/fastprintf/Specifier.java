@@ -19,6 +19,7 @@ public enum Specifier {
   STRING('s'),
   STRING_UPPERCASE('S'),
   NOTHING_PRINTED('n'),
+  POINTER('p'),
   PERCENT_SIGN('%');
 
   private static final Specifier[] VALUES = values();
@@ -29,9 +30,6 @@ public enum Specifier {
   }
 
   public static Specifier valueOf(char c) {
-    if (c == 'p') {
-      throw new UnsupportedOperationException("Pointer not supported");
-    }
     if (c == 'i') {
       return SIGNED_DECIMAL_INTEGER;
     }

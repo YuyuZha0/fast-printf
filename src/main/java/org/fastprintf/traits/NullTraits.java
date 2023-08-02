@@ -35,4 +35,9 @@ public final class NullTraits implements FormatTraits {
   public int asInt() {
     throw new UnsupportedOperationException();
   }
+
+  @Override
+  public Object value() {
+    return null;
+  }
 }

@@ -30,4 +30,9 @@ public final class LongTraits implements FormatTraits {
   public int asInt() {
     return (int) value;
   }
+
+  @Override
+  public Object value() {
+    return value;
+  }
 }

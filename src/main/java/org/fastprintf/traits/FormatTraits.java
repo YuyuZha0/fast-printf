@@ -16,4 +16,6 @@ public interface FormatTraits {
   String asString();
 
   int asInt();
+
+  Object value();
 }

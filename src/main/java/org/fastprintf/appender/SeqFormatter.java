@@ -19,6 +19,8 @@ public final class SeqFormatter {
   private static final Seq E = Seq.singleChar('e');
   private static final Seq P = Seq.singleChar('p');
 
+  private static final Seq AT = Seq.singleChar('@');
+
   private SeqFormatter() {
     throw new IllegalStateException();
   }
@@ -200,6 +202,18 @@ public final class SeqFormatter {
     return signAndJustify(context, v0, value.isNegative());
   }
 
+  private static Seq truncateDotAndZero(Seq v0) {
+    int length = v0.length();
+    int index = length - 1;
+    while (index >= 1 && v0.charAt(index) == '0') {
+      --index;
+    }
+    if (index >= 1 && v0.charAt(index) == '.') {
+      --index;
+    }
+    return v0.subSequence(0, index + 1);
+  }
+
   static Seq g(FormatContext context, FloatFamily value) {
     if (value.isNaN() || value.isInfinite()) {
       return nanOrInfinity(context, value);
@@ -212,16 +226,8 @@ public final class SeqFormatter {
       }
     }
     FloatLayout layout = value.generalLayout(precision);
+    Seq v0 = truncateDotAndZero(layout.getMantissa());
     Seq exp = layout.getExponent();
-    if (exp != null) {
-      precision -= (layout.getExponentRounded() + 1);
-    } else {
-      --precision;
-    }
-    Seq v0 = addZeros(layout.getMantissa(), precision);
-    if (precision == 0 && context.hasFlag(Flag.ALTERNATE)) {
-      v0 = v0.append(DOT);
-    }
     if (exp != null) {
       v0 = v0.append(E);
       v0 = v0.append(exp);
@@ -242,12 +248,12 @@ public final class SeqFormatter {
       }
     }
     FloatLayout layout = value.hexLayout(precision);
-    Seq v0 = layout.getMantissa();
-    int signum = value.signum();
-    if (signum == 0 && context.hasFlag(Flag.ALTERNATE)) {
+    Seq v0 = addZeros(layout.getMantissa(), precision);
+    if (precision == 0 && context.hasFlag(Flag.ALTERNATE)) {
       v0 = v0.append(DOT);
     }
     v0 = v0.append(P).append(layout.getExponent());
+    int signum = value.signum();
     if (context.hasFlag(Flag.ZERO_PAD) && !context.hasFlag(Flag.LEFT_JUSTIFY)) {
       int width = context.getWidth() - 2;
       if (signum < 0 || context.hasFlag(Flag.PLUS) || context.hasFlag(Flag.LEADING_SPACE)) {
@@ -276,5 +282,17 @@ public final class SeqFormatter {
       s = s.substring(0, precision);
     }
     return spaceJustify(context, Seq.wrap(s));
+  }
+
+  static Seq p(FormatContext context, FormatTraits traits) {
+    Object value = traits.value();
+    Seq seq = Seq.wrap(Integer.toHexString(System.identityHashCode(value)));
+    seq = seq.prepend(AT);
+    seq = seq.prepend(Seq.wrap(value.getClass().getName()));
+    return spaceJustify(context, seq);
+  }
+
+  static Seq forNull(FormatContext context) {
+    return spaceJustify(context, Seq.wrap("null"));
   }
 }
