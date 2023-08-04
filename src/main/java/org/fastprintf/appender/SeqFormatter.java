@@ -275,7 +275,7 @@ public final class SeqFormatter {
   }
 
   static Seq c(FormatContext context, FormatTraits value) {
-    return spaceJustify(context, Seq.singleChar((char) value.asInt()));
+    return spaceJustify(context, Seq.singleChar(value.asChar()));
   }
 
   static Seq s(FormatContext context, FormatTraits value) {

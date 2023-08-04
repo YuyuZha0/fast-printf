@@ -32,6 +32,11 @@ public final class ByteTraits implements FormatTraits {
   }
 
   @Override
+  public char asChar() {
+    return (char) value;
+  }
+
+  @Override
   public Object value() {
     return value;
   }

@@ -21,7 +21,7 @@ public final class LongBox implements IntFamily {
     if (value > Long.MIN_VALUE) {
       return Long.toString(-value);
     }
-    return Long.toString(value).substring(1);
+    return "9223372036854775808";
   }
 
   @Override

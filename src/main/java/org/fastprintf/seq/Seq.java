@@ -36,7 +36,10 @@ public interface Seq extends CharSequence {
   }
 
   static Seq wrap(String s) {
-    return new Wrapper(s);
+    if (!s.isEmpty()) {
+      return new Wrapper(s);
+    }
+    return empty();
   }
 
   static Seq forArray(char[] ch, int start, int length) {
@@ -88,15 +91,23 @@ public interface Seq extends CharSequence {
   Seq subSequence(int start, int end);
 
   default void appendTo(Appendable appendable) throws IOException {
-    int length = length();
-    if (length == 0) return;
     if (appendable instanceof StringBuilder) {
       StringBuilder sb = (StringBuilder) appendable;
-      sb.append(this);
+      appendTo(sb);
       return;
     }
+    int length = length();
+    if (length == 0) return;
     for (int i = 0; i < length; i++) {
       appendable.append(charAt(i));
+    }
+  }
+
+  default void appendTo(StringBuilder sb) {
+    int length = length();
+    if (length == 0) return;
+    for (int i = 0; i < length; i++) {
+      sb.append(charAt(i));
     }
   }
 

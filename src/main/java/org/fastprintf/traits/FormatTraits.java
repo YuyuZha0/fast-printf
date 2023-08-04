@@ -17,5 +17,9 @@ public interface FormatTraits {
 
   int asInt();
 
+  default char asChar() {
+    return (char) asInt();
+  }
+
   Object value();
 }

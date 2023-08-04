@@ -80,14 +80,14 @@ public final class CharArray implements Seq {
 
   @Override
   public void appendTo(Appendable appendable) throws IOException {
-    if (appendable instanceof StringBuilder) {
-      StringBuilder sb = (StringBuilder) appendable;
-      sb.append(ch, start, length);
-    } else {
-      for (int i = start; i < start + length; i++) {
-        appendable.append(ch[i]);
-      }
+    for (int i = start; i < start + length; i++) {
+      appendable.append(ch[i]);
     }
+  }
+
+  @Override
+  public void appendTo(StringBuilder sb) {
+    sb.append(ch, start, length);
   }
 
   @Override

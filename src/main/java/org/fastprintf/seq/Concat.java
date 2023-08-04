@@ -157,6 +157,13 @@ public final class Concat implements Seq {
   }
 
   @Override
+  public void appendTo(StringBuilder sb) {
+    for (Seq seq : sequences) {
+      seq.appendTo(sb);
+    }
+  }
+
+  @Override
   public int indexOf(char c) {
     int index = 0;
     for (Seq seq : sequences) {

@@ -21,8 +21,8 @@ public final class IntBox implements IntFamily {
     if (value > Integer.MIN_VALUE) {
       return Integer.toString(-value);
     }
-    //special case for Integer.MIN_VALUE, as -Integer.MIN_VALUE < 0
-    return Integer.toString(value).substring(1);
+    // special case for Integer.MIN_VALUE, as -Integer.MIN_VALUE < 0
+    return "2147483648";
   }
 
   @Override

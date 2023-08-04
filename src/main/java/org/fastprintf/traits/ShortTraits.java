@@ -32,6 +32,11 @@ public final class ShortTraits implements FormatTraits {
   }
 
   @Override
+  public char asChar() {
+    return (char) value;
+  }
+
+  @Override
   public Object value() {
     return value;
   }

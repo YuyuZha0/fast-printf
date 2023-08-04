@@ -32,6 +32,11 @@ public final class CharacterTraits implements FormatTraits {
   }
 
   @Override
+  public char asChar() {
+    return value;
+  }
+
+  @Override
   public Object value() {
     return value;
   }

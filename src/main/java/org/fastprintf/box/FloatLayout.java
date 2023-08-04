@@ -2,8 +2,6 @@ package org.fastprintf.box;
 
 import org.fastprintf.seq.Seq;
 
-import java.io.IOException;
-
 public final class FloatLayout {
 
   private final Seq mantissa;
@@ -26,19 +24,11 @@ public final class FloatLayout {
   public String toString() {
     StringBuilder builder = new StringBuilder();
     if (mantissa != null) {
-      try {
-        mantissa.appendTo(builder);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+      mantissa.appendTo(builder);
     }
     if (exponent != null) {
       builder.append('e');
-      try {
-        exponent.appendTo(builder);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+      exponent.appendTo(builder);
     }
     return builder.toString();
   }

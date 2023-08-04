@@ -22,6 +22,14 @@ public final class CharSequenceTraits implements FormatTraits {
   }
 
   @Override
+  public char asChar() {
+    if (value.length() >= 1) {
+      return value.charAt(0);
+    }
+    return Character.MIN_VALUE;
+  }
+
+  @Override
   public IntFamily asIntFamily() {
     return IntFamily.valueOf(Long.parseLong(value.toString()));
   }

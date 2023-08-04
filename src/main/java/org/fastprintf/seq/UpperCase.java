@@ -40,8 +40,21 @@ public final class UpperCase implements Seq {
 
   @Override
   public void appendTo(Appendable appendable) throws IOException {
-    // TODO optimize for StringBuilder
     appendable.append(toString());
+  }
+
+  @Override
+  public void appendTo(StringBuilder sb) {
+    if (cs instanceof String) {
+      char[] chars = ((String) cs).toCharArray();
+      Utils.toUpperCase(chars);
+      sb.append(chars);
+    } else {
+      int length = cs.length();
+      for (int i = 0; i < length; i++) {
+        sb.append(Utils.toUpperCase(cs.charAt(i)));
+      }
+    }
   }
 
   @Override

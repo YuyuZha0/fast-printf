@@ -48,6 +48,15 @@ public final class Wrapper implements Seq {
   }
 
   @Override
+  public void appendTo(StringBuilder sb) {
+    if (cs instanceof String) {
+      sb.append((String) cs);
+      return;
+    }
+    sb.append(cs);
+  }
+
+  @Override
   public int indexOf(char c) {
     if (cs instanceof String) {
       int index = ((String) cs).indexOf(c);

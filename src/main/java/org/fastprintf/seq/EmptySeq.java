@@ -50,6 +50,9 @@ public final class EmptySeq implements Seq {
   public void appendTo(Appendable appendable) throws IOException {}
 
   @Override
+  public void appendTo(StringBuilder sb) {}
+
+  @Override
   public boolean isEmpty() {
     return true;
   }

@@ -21,7 +21,7 @@ public final class ObjectTraits implements FormatTraits {
       return encoder.encodeToString((byte[]) array);
     }
     if (componentType == char.class) {
-      return new String((char[]) array);
+      return String.valueOf((char[]) array);
     }
     int length = Array.getLength(array);
     if (length == 0) {

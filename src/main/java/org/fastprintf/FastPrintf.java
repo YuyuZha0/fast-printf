@@ -16,4 +16,6 @@ public interface FastPrintf {
   default String format(Object... values) {
     return format(Args.of(values));
   }
+
+  FastPrintf enableThreadLocalCache();
 }
