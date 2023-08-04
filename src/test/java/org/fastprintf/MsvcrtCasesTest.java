@@ -2,6 +2,9 @@ package org.fastprintf;
 
 import org.junit.Test;
 
+import java.io.StringWriter;
+import java.io.Writer;
+
 import static org.junit.Assert.assertEquals;
 
 // https://github.com/BartMassey/printf-tests/blob/master/sources/tests-msvcrt-printf.c
@@ -10,7 +13,13 @@ public class MsvcrtCasesTest {
   private static void assertFormatResult(String pattern, String expected, Object... value) {
     FastPrintf fastPrintf = FastPrintf.compile(pattern);
     Args args = Args.of(value);
-    String format = fastPrintf.format(args);
+    String format;
+    try (Writer writer = new StringWriter()) {
+      fastPrintf.format(writer, args);
+      format = writer.toString();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
     assertEquals(pattern, expected, format);
   }
 

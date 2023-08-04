@@ -26,7 +26,6 @@ import java.util.stream.Collectors;
 
 final class ArgsImpl implements Args {
 
-  private static final FormatTraits NULL = new NullTraits();
   private static final FormatTraits TRUE = new BooleanTraits(true);
   private static final FormatTraits FALSE = new BooleanTraits(false);
 
@@ -52,7 +51,7 @@ final class ArgsImpl implements Args {
 
   @Override
   public Args putNull() {
-    return addTraits(NULL);
+    return addTraits(NullTraits.getInstance());
   }
 
   @Override

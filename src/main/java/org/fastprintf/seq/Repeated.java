@@ -55,7 +55,6 @@ public final class Repeated implements Seq {
 
   @Override
   public void appendTo(Appendable appendable) throws IOException {
-
     for (int i = 0; i < count; i++) {
       appendable.append(c);
     }

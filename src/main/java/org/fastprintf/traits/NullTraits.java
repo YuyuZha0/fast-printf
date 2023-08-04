@@ -7,6 +7,8 @@ public final class NullTraits implements FormatTraits {
 
   private static final NullTraits INSTANCE = new NullTraits();
 
+  private NullTraits() {}
+
   public static NullTraits getInstance() {
     return INSTANCE;
   }
