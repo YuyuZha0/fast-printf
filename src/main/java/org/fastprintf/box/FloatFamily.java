@@ -1,6 +1,7 @@
 package org.fastprintf.box;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 
 public interface FloatFamily extends NumberFamily {
 
@@ -10,6 +11,10 @@ public interface FloatFamily extends NumberFamily {
 
   static FloatFamily valueOf(BigDecimal value) {
     return new BigDecimalBox(value);
+  }
+
+  static FloatFamily valueOf(BigInteger value) {
+    return new BigDecimalBox(value, 0);
   }
 
   boolean isNaN();

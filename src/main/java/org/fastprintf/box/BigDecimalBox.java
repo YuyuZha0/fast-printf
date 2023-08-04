@@ -1,15 +1,22 @@
 package org.fastprintf.box;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 
 public final class BigDecimalBox implements FloatFamily {
 
-  private final BigDecimal value;
+  private final BigInteger unscaledValue;
+  private final int scale;
   private final int signum;
 
   public BigDecimalBox(BigDecimal value) {
-    this.value = value.abs();
-    this.signum = value.signum();
+    this(value.unscaledValue(), value.scale());
+  }
+
+  public BigDecimalBox(BigInteger unscaledValue, int scale) {
+    this.unscaledValue = unscaledValue.abs();
+    this.scale = scale;
+    this.signum = unscaledValue.signum();
   }
 
   @Override
@@ -29,30 +36,34 @@ public final class BigDecimalBox implements FloatFamily {
 
   @Override
   public FloatLayout generalLayout(int precision) {
+    // TODO
     return null;
   }
 
   @Override
   public FloatLayout scientificLayout(int precision) {
+    // TODO
     return null;
   }
 
   @Override
   public FloatLayout decimalLayout(int precision) {
+    // TODO
     return null;
   }
 
   @Override
   public FloatLayout hexLayout(int precision) {
+    // TODO
     return null;
   }
 
   @Override
   public String toString() {
     if (signum >= 0) {
-      return value.toString();
+      return new BigDecimal(unscaledValue, scale).toString();
     } else {
-      return "-" + value.toString();
+      return "-" + new BigDecimal(unscaledValue, scale);
     }
   }
 }

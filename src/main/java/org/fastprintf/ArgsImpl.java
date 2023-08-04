@@ -1,5 +1,7 @@
 package org.fastprintf;
 
+import org.fastprintf.traits.BigDecimalTraits;
+import org.fastprintf.traits.BigIntegerTraits;
 import org.fastprintf.traits.BooleanTraits;
 import org.fastprintf.traits.ByteTraits;
 import org.fastprintf.traits.CharSequenceTraits;
@@ -101,12 +103,14 @@ final class ArgsImpl implements Args {
 
   @Override
   public Args putBigInteger(BigInteger value) {
-    throw new UnsupportedOperationException();
+    Objects.requireNonNull(value, "value is null");
+    return addTraits(new BigIntegerTraits(value));
   }
 
   @Override
   public Args putBigDecimal(BigDecimal value) {
-    throw new UnsupportedOperationException();
+    Objects.requireNonNull(value, "value is null");
+    return addTraits(new BigDecimalTraits(value));
   }
 
   @Override

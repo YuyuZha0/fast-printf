@@ -2,6 +2,7 @@ package org.fastprintf;
 
 import org.junit.Test;
 
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
@@ -64,12 +65,8 @@ public class FastPrintfTest {
   @Test
   // https://raw.githubusercontent.com/BartMassey/printf-tests/master/printf-tests.txt
   public void test() {
-    FastPrintf fastPrintf = FastPrintf.compile("%#.0o");
-    Args args = Args.of(0);
-    String format = fastPrintf.format(args);
-    System.out.printf("%b\n", 9999);
-    System.out.println(format + "," + format.length());
-    // 0001777777777777777777634
-    // 00001777777777777777777634
+    BigDecimal bigDecimal = new BigDecimal("3.7415926");
+    String.format("%d", bigDecimal.toBigInteger());
+    System.out.println(bigDecimal.toBigInteger());
   }
 }
