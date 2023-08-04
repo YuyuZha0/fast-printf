@@ -3,7 +3,6 @@ package org.fastprintf;
 import org.fastprintf.appender.Appender;
 import org.fastprintf.seq.Seq;
 import org.fastprintf.traits.FormatTraits;
-import org.fastprintf.util.Cleaner;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -20,10 +19,7 @@ final class FastPrintfImpl implements FastPrintf {
   private FastPrintfImpl(Appender[] appenders, boolean enableThreadLocalCache) {
     this.appenders = appenders;
     if (enableThreadLocalCache) {
-      final ThreadLocal<StringBuilder> threadLocalBuilder =
-          ThreadLocal.withInitial(StringBuilder::new);
-      this.threadLocalBuilder = threadLocalBuilder;
-      Cleaner.create(this, threadLocalBuilder::remove);
+      this.threadLocalBuilder = ThreadLocal.withInitial(StringBuilder::new);
     } else {
       this.threadLocalBuilder = null;
     }
