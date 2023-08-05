@@ -11,14 +11,17 @@ public final class Utils {
     throw new IllegalStateException();
   }
 
-  public static void toUpperCase(char[] chars) {
+  public static boolean toUpperCase(char[] chars) {
     int length = chars.length;
+    boolean mod = false;
     for (int i = 0; i < length; i++) {
       char c = chars[i];
       if (isLowerCase(c)) {
         chars[i] = (char) (c ^ CASE_MASK);
+        mod = true;
       }
     }
+    return mod;
   }
 
   public static String toUpperCase(String string) {
