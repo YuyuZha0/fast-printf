@@ -1,11 +1,9 @@
 package org.fastprintf.box;
 
-import org.fastprintf.seq.Seq;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class FloatFamilyTest {
@@ -13,49 +11,29 @@ public class FloatFamilyTest {
   private static void assertDouble(double d, int precision) {
     assertTrue(precision >= 0);
     FloatFamily floatFamily = FloatFamily.valueOf(d);
-    assertDoubleLayout(floatFamily.generalLayout(precision), d, precision);
-    assertDoubleLayout(floatFamily.scientificLayout(precision), d, precision);
-    assertDoubleLayout(floatFamily.decimalLayout(precision), d, precision);
-    // assertDoubleLayout(floatFamily.hexLayout(precision), d, precision);
+    assertDoubleLayout(floatFamily.generalLayout(precision), d, precision, "g");
+    assertDoubleLayout(floatFamily.scientificLayout(precision), d, precision, "e");
+    assertDoubleLayout(floatFamily.decimalLayout(precision), d, precision, "f");
+    //assertDoubleLayout(floatFamily.hexLayout(precision), d, precision, "a");
   }
 
-  private static int actualPrecision(FloatLayout layout) {
-    Seq mantissa = layout.getMantissa();
-    int index = mantissa.indexOf('.');
-    int length = mantissa.length();
-    if (index < 0 || index == length - 1) {
-      return 0;
-    }
-    while (index < length - 1) {
-      ++index;
-      if (mantissa.charAt(index) != '0') {
-        break;
-      }
-    }
-    return length - index;
-  }
-
-  private static void assertDoubleLayout(FloatLayout layout, double d, int precision) {
-    int actualPrecision = actualPrecision(layout);
-    String msg = "d=" + d + ", precision=" + precision + ", layout=" + layout;
-    assertTrue(msg, actualPrecision <= precision);
+  private static void assertDoubleLayout(FloatLayout layout, double d, int precision, String spec) {
+    String format = "%." + precision + spec;
+    String s = String.format(format, Math.abs(d));
     double d1 = Double.parseDouble(layout.toString());
-    assertFalse(Double.isNaN(d1));
-    if (Double.isInfinite(d1)) {
-      return;
-    }
-    if (d == 0) {
-      assertEquals(msg, 0D, d1, 0D);
+    double d2 = Double.parseDouble(s);
+    if (Double.isNaN(d1)) {
+      assertTrue(Double.isNaN(d2));
+    } else if (Double.isInfinite(d1)) {
+      assertTrue(Double.isInfinite(d2));
     } else {
-      double r = Math.abs(d1 / d);
-      //System.out.println(layout + ", " + r + ", " + actualPrecision);
-      assertEquals(msg, 1D, r, Math.pow(10D, 1 - actualPrecision));
+      assertEquals(s + ", " + layout, d2, d1, 0);
     }
   }
 
   @Test
   public void testDouble() {
-    int[] precisions = {3, 5, 8};
+    int[] precisions = {1, 3, 5, 8};
     for (int p : precisions) {
       assertDouble(0D, p);
       assertDouble(1D, p);
@@ -64,8 +42,8 @@ public class FloatFamilyTest {
       assertDouble(-0.1D, p);
       assertDouble(Math.PI, p);
       assertDouble(-Math.PI, p);
-      // assertDouble(Double.MAX_VALUE -1, p);
-      // assertDouble(Double.MIN_VALUE, p);
+      assertDouble(Double.MAX_VALUE, p);
+      assertDouble(Double.MIN_VALUE, p);
       assertDouble(Math.E * 1000, p);
       assertDouble(-Math.E * 0.001, p);
       assertDouble(Long.MAX_VALUE, p);
