@@ -1,12 +1,12 @@
-package org.fastprintf.box;
+package org.fastprintf.number;
 
 import org.junit.Test;
 
-public class DoubleBoxTest {
+public class DoubleWrapperTest {
 
   @Test
   public void test() {
-    DoubleBox box = new DoubleBox(999);
+    DoubleWrapper box = new DoubleWrapper(999);
 
     System.out.println(box.generalLayout(10));
     System.out.println(box.scientificLayout(10));

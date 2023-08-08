@@ -1,4 +1,4 @@
-package org.fastprintf.box;
+package org.fastprintf.number;
 
 import org.fastprintf.seq.Seq;
 

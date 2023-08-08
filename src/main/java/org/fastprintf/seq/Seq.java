@@ -10,7 +10,7 @@ import java.util.function.Function;
 
 public interface Seq extends CharSequence {
 
-  static Seq singleChar(char c) {
+  static Seq ch(char c) {
     return new Repeated(c, 1);
   }
 

@@ -1,4 +1,4 @@
-package org.fastprintf.box;
+package org.fastprintf.number;
 
 import org.junit.Ignore;
 import org.junit.Test;
@@ -6,11 +6,11 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class FloatFamilyTest {
+public class FloatFormTest {
 
   private static void assertDouble(double d, int precision) {
     assertTrue(precision >= 0);
-    FloatFamily floatFamily = FloatFamily.valueOf(d);
+    FloatForm floatFamily = FloatForm.valueOf(d);
     assertDoubleLayout(floatFamily.generalLayout(precision), d, precision, "g");
     assertDoubleLayout(floatFamily.scientificLayout(precision), d, precision, "e");
     assertDoubleLayout(floatFamily.decimalLayout(precision), d, precision, "f");
@@ -59,8 +59,8 @@ public class FloatFamilyTest {
     // System.out.printf("%.3f%n", 2718.2818284590453D);
     double d = 1.7976931348623157E308;
     System.out.println(d - Math.rint(d));
-    System.out.println(FloatFamily.valueOf(d).decimalLayout(3));
+    System.out.println(FloatForm.valueOf(d).decimalLayout(3));
     System.out.printf("%.3g%n", -0.002718281828459045);
-    System.out.println(FloatFamily.valueOf(-0.002718281828459045).generalLayout(3));
+    System.out.println(FloatForm.valueOf(-0.002718281828459045).generalLayout(3));
   }
 }

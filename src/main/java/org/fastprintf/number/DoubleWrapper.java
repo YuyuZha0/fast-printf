@@ -1,16 +1,16 @@
-package org.fastprintf.box;
+package org.fastprintf.number;
 
 import org.fastprintf.seq.Seq;
 import org.fastprintf.util.DoubleConsts;
 import org.fastprintf.util.FormattedFloatingDecimal;
 
-public final class DoubleBox implements FloatFamily {
+public final class DoubleWrapper implements FloatForm {
 
   private static final double SCALE_UP = Math.scalb(1.0, 54);
 
   private final double value;
 
-  public DoubleBox(double value) {
+  public DoubleWrapper(double value) {
     this.value = value;
   }
 
@@ -56,7 +56,7 @@ public final class DoubleBox implements FloatFamily {
   @Override
   public FloatLayout generalLayout(int precision) {
     if (value == 0D) {
-      return new FloatLayout(Seq.singleChar('0'), null);
+      return new FloatLayout(Seq.ch('0'), null);
     }
     return toLayout(precision, FormattedFloatingDecimal.Form.GENERAL);
   }
@@ -64,7 +64,7 @@ public final class DoubleBox implements FloatFamily {
   @Override
   public FloatLayout scientificLayout(int precision) {
     if (value == 0D) {
-      return new FloatLayout(Seq.singleChar('0'), Seq.wrap("+00"));
+      return new FloatLayout(Seq.ch('0'), Seq.wrap("+00"));
     }
     return toLayout(precision, FormattedFloatingDecimal.Form.SCIENTIFIC);
   }

@@ -1,6 +1,6 @@
-package org.fastprintf.box;
+package org.fastprintf.number;
 
-public interface NumberFamily {
+public interface NumberForm {
 
   int signum();
 

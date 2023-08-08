@@ -1,10 +1,10 @@
-package org.fastprintf.box;
+package org.fastprintf.number;
 
-public final class IntBox implements IntFamily {
+public final class IntWrapper implements IntForm {
 
   private final int value;
 
-  public IntBox(int value) {
+  public IntWrapper(int value) {
     this.value = value;
   }
 

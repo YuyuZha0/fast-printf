@@ -1,10 +1,10 @@
-package org.fastprintf.box;
+package org.fastprintf.number;
 
-public final class ByteBox implements IntFamily {
+public final class ByteWrapper implements IntForm {
 
   private final byte value;
 
-  public ByteBox(byte value) {
+  public ByteWrapper(byte value) {
     this.value = value;
   }
 

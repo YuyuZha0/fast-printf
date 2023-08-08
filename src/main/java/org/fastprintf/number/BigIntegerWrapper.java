@@ -1,13 +1,13 @@
-package org.fastprintf.box;
+package org.fastprintf.number;
 
 import java.math.BigInteger;
 
-public final class BigIntegerBox implements IntFamily {
+public final class BigIntegerWrapper implements IntForm {
 
   private final BigInteger value;
   private final int signum;
 
-  public BigIntegerBox(BigInteger value) {
+  public BigIntegerWrapper(BigInteger value) {
     this.value = value.abs();
     this.signum = value.signum();
   }

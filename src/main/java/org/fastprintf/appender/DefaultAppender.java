@@ -29,43 +29,43 @@ public final class DefaultAppender implements Appender {
     switch (specifier) {
       case SIGNED_DECIMAL_INTEGER:
         return (FormatContext context, FormatTraits traits) ->
-            SeqFormatter.d(context, traits.asIntFamily());
+            SeqFormatter.d(context, traits.asIntForm());
       case UNSIGNED_DECIMAL_INTEGER:
         return (FormatContext context, FormatTraits traits) ->
-            SeqFormatter.u(context, traits.asIntFamily());
+            SeqFormatter.u(context, traits.asIntForm());
       case UNSIGNED_HEXADECIMAL_INTEGER:
         return (FormatContext context, FormatTraits traits) ->
-            SeqFormatter.x(context, traits.asIntFamily());
+            SeqFormatter.x(context, traits.asIntForm());
       case UNSIGNED_HEXADECIMAL_INTEGER_UPPERCASE:
         return (FormatContext context, FormatTraits traits) ->
-            SeqFormatter.x(context, traits.asIntFamily()).upperCase();
+            SeqFormatter.x(context, traits.asIntForm()).upperCase();
       case UNSIGNED_OCTAL_INTEGER:
         return (FormatContext context, FormatTraits traits) ->
-            SeqFormatter.o(context, traits.asIntFamily());
+            SeqFormatter.o(context, traits.asIntForm());
       case DECIMAL_FLOATING_POINT:
         return (FormatContext context, FormatTraits traits) ->
-            SeqFormatter.f(context, traits.asFloatFamily());
+            SeqFormatter.f(context, traits.asFloatForm());
       case DECIMAL_FLOATING_POINT_UPPERCASE:
         return (FormatContext context, FormatTraits traits) ->
-            SeqFormatter.f(context, traits.asFloatFamily()).upperCase();
+            SeqFormatter.f(context, traits.asFloatForm()).upperCase();
       case SCIENTIFIC_NOTATION:
         return (FormatContext context, FormatTraits traits) ->
-            SeqFormatter.e(context, traits.asFloatFamily());
+            SeqFormatter.e(context, traits.asFloatForm());
       case SCIENTIFIC_NOTATION_UPPERCASE:
         return (FormatContext context, FormatTraits traits) ->
-            SeqFormatter.e(context, traits.asFloatFamily()).upperCase();
+            SeqFormatter.e(context, traits.asFloatForm()).upperCase();
       case USE_SHORTEST_PRESENTATION:
         return (FormatContext context, FormatTraits traits) ->
-            SeqFormatter.g(context, traits.asFloatFamily());
+            SeqFormatter.g(context, traits.asFloatForm());
       case USE_SHORTEST_PRESENTATION_UPPERCASE:
         return (FormatContext context, FormatTraits traits) ->
-            SeqFormatter.g(context, traits.asFloatFamily()).upperCase();
+            SeqFormatter.g(context, traits.asFloatForm()).upperCase();
       case HEXADECIMAL_FLOATING_POINT:
         return (FormatContext context, FormatTraits traits) ->
-            SeqFormatter.a(context, traits.asFloatFamily());
+            SeqFormatter.a(context, traits.asFloatForm());
       case HEXADECIMAL_FLOATING_POINT_UPPERCASE:
         return (FormatContext context, FormatTraits traits) ->
-            SeqFormatter.a(context, traits.asFloatFamily()).upperCase();
+            SeqFormatter.a(context, traits.asFloatForm()).upperCase();
       case STRING:
         return SeqFormatter::s;
       case STRING_UPPERCASE:
@@ -76,7 +76,7 @@ public final class DefaultAppender implements Appender {
       case POINTER:
         return SeqFormatter::p;
       case PERCENT_SIGN:
-        return (FormatContext context, FormatTraits traits) -> Seq.singleChar('%');
+        return (FormatContext context, FormatTraits traits) -> Seq.ch('%');
       default:
         return (FormatContext context, FormatTraits traits) -> Seq.empty();
     }

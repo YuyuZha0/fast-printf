@@ -1,7 +1,7 @@
 package org.fastprintf.traits;
 
-import org.fastprintf.box.FloatFamily;
-import org.fastprintf.box.IntFamily;
+import org.fastprintf.number.FloatForm;
+import org.fastprintf.number.IntForm;
 
 public interface FormatTraits {
 
@@ -9,9 +9,9 @@ public interface FormatTraits {
     return false;
   }
 
-  IntFamily asIntFamily();
+  IntForm asIntForm();
 
-  FloatFamily asFloatFamily();
+  FloatForm asFloatForm();
 
   String asString();
 

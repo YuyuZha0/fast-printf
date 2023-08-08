@@ -2,8 +2,8 @@ package org.fastprintf.appender;
 
 import org.fastprintf.FormatContext;
 import org.fastprintf.Specifier;
-import org.fastprintf.box.FloatFamily;
-import org.fastprintf.box.IntFamily;
+import org.fastprintf.number.FloatForm;
+import org.fastprintf.number.IntForm;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -16,40 +16,40 @@ public class SeqFormatterTest {
   private static void assertD(FormatContext ctx, int value) {
     String javaPattern = ctx.toPatternString(Specifier.SIGNED_DECIMAL_INTEGER);
     String javaResult = String.format(javaPattern, value);
-    String result = SeqFormatter.d(ctx, IntFamily.valueOf(value)).toString();
+    String result = SeqFormatter.d(ctx, IntForm.valueOf(value)).toString();
     assertEquals(javaPattern + ":" + value, javaResult, result);
   }
 
   private static void assertX(FormatContext ctx, long value) {
     String javaPattern = ctx.toPatternString(Specifier.UNSIGNED_HEXADECIMAL_INTEGER_UPPERCASE);
     String javaResult = String.format(javaPattern, value);
-    String result = SeqFormatter.x(ctx, IntFamily.valueOf(value)).upperCase().toString();
+    String result = SeqFormatter.x(ctx, IntForm.valueOf(value)).upperCase().toString();
     assertEquals(javaPattern + ":" + value, javaResult, result);
   }
 
   private static void assertF(FormatContext ctx, double value) {
     String javaPattern = ctx.toPatternString(Specifier.DECIMAL_FLOATING_POINT);
     String javaResult = String.format(javaPattern, value);
-    String result = SeqFormatter.f(ctx, FloatFamily.valueOf(value)).toString();
+    String result = SeqFormatter.f(ctx, FloatForm.valueOf(value)).toString();
     assertEquals(javaPattern + ":" + value, javaResult, result);
   }
 
   private static void assertE(FormatContext ctx, double value) {
     String javaPattern = ctx.toPatternString(Specifier.SCIENTIFIC_NOTATION_UPPERCASE);
     String javaResult = String.format(javaPattern, value);
-    String result = SeqFormatter.e(ctx, FloatFamily.valueOf(value)).upperCase().toString();
+    String result = SeqFormatter.e(ctx, FloatForm.valueOf(value)).upperCase().toString();
     assertEquals(javaPattern + ":" + value, javaResult, result);
   }
 
   private static void assertG(FormatContext ctx, double value, String expected) {
     String javaPattern = ctx.toPatternString(Specifier.USE_SHORTEST_PRESENTATION);
-    String result = SeqFormatter.g(ctx, FloatFamily.valueOf(value)).toString();
+    String result = SeqFormatter.g(ctx, FloatForm.valueOf(value)).toString();
     assertEquals(javaPattern + ":" + value, expected, result);
   }
 
   private static void assertA(FormatContext ctx, double value, String expected) {
     String javaPattern = ctx.toPatternString(Specifier.HEXADECIMAL_FLOATING_POINT_UPPERCASE);
-    String result = SeqFormatter.a(ctx, FloatFamily.valueOf(value)).upperCase().toString();
+    String result = SeqFormatter.a(ctx, FloatForm.valueOf(value)).upperCase().toString();
     assertEquals(javaPattern + ":" + value, expected, result);
     if (Double.isFinite(value)) {
       double parseValue = Double.parseDouble(result);

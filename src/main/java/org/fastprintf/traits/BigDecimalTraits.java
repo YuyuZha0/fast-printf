@@ -1,7 +1,7 @@
 package org.fastprintf.traits;
 
-import org.fastprintf.box.FloatFamily;
-import org.fastprintf.box.IntFamily;
+import org.fastprintf.number.FloatForm;
+import org.fastprintf.number.IntForm;
 
 import java.math.BigDecimal;
 
@@ -14,13 +14,13 @@ public final class BigDecimalTraits implements FormatTraits {
   }
 
   @Override
-  public IntFamily asIntFamily() {
-    return IntFamily.valueOf(value.toBigInteger());
+  public IntForm asIntForm() {
+    return IntForm.valueOf(value.toBigInteger());
   }
 
   @Override
-  public FloatFamily asFloatFamily() {
-    return FloatFamily.valueOf(value);
+  public FloatForm asFloatForm() {
+    return FloatForm.valueOf(value);
   }
 
   @Override

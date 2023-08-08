@@ -2,9 +2,9 @@ package org.fastprintf.appender;
 
 import org.fastprintf.Flag;
 import org.fastprintf.FormatContext;
-import org.fastprintf.box.FloatFamily;
-import org.fastprintf.box.FloatLayout;
-import org.fastprintf.box.IntFamily;
+import org.fastprintf.number.FloatForm;
+import org.fastprintf.number.FloatLayout;
+import org.fastprintf.number.IntForm;
 import org.fastprintf.seq.Seq;
 import org.fastprintf.traits.FormatTraits;
 
@@ -12,14 +12,14 @@ import java.util.function.Function;
 
 public final class SeqFormatter {
 
-  private static final Seq PLUS = Seq.singleChar('+');
-  private static final Seq MINUS = Seq.singleChar('-');
-  private static final Seq SPACE = Seq.singleChar(' ');
-  private static final Seq DOT = Seq.singleChar('.');
-  private static final Seq E = Seq.singleChar('e');
-  private static final Seq P = Seq.singleChar('p');
+  private static final Seq PLUS = Seq.ch('+');
+  private static final Seq MINUS = Seq.ch('-');
+  private static final Seq SPACE = Seq.ch(' ');
+  private static final Seq DOT = Seq.ch('.');
+  private static final Seq E = Seq.ch('e');
+  private static final Seq P = Seq.ch('p');
 
-  private static final Seq AT = Seq.singleChar('@');
+  private static final Seq AT = Seq.ch('@');
 
   private SeqFormatter() {
     throw new IllegalStateException();
@@ -70,7 +70,7 @@ public final class SeqFormatter {
     return sign(context, v0, negative);
   }
 
-  static Seq d(FormatContext context, IntFamily value) {
+  static Seq d(FormatContext context, IntForm value) {
     int signum = value.signum();
     if (signum == 0 && context.getPrecision() == 0) {
       Seq v0 = context.hasFlag(Flag.PLUS) ? PLUS : Seq.empty();
@@ -96,20 +96,20 @@ public final class SeqFormatter {
     return spaceJustify(context, v0);
   }
 
-  static Seq o(FormatContext context, IntFamily value) {
-    return formatUnsignedInteger(context, value, IntFamily::toOctalString, "0");
+  static Seq o(FormatContext context, IntForm value) {
+    return formatUnsignedInteger(context, value, IntForm::toOctalString, "0");
   }
 
-  static Seq x(FormatContext context, IntFamily value) {
-    return formatUnsignedInteger(context, value, IntFamily::toHexString, "0x");
+  static Seq x(FormatContext context, IntForm value) {
+    return formatUnsignedInteger(context, value, IntForm::toHexString, "0x");
   }
 
-  static Seq u(FormatContext context, IntFamily value) {
-    return formatUnsignedInteger(context, value, IntFamily::toUnsignedDecimalString, "");
+  static Seq u(FormatContext context, IntForm value) {
+    return formatUnsignedInteger(context, value, IntForm::toUnsignedDecimalString, "");
   }
 
   private static Seq formatUnsignedInteger(
-      FormatContext context, IntFamily value, Function<IntFamily, String> toString, String prefix) {
+          FormatContext context, IntForm value, Function<IntForm, String> toString, String prefix) {
     int signum = value.signum();
     if (signum == 0 && context.getPrecision() == 0) {
       return spaceJustify(context, Seq.empty());
@@ -139,7 +139,7 @@ public final class SeqFormatter {
     return spaceJustify(context, v0);
   }
 
-  private static Seq nanOrInfinity(FormatContext context, FloatFamily value) {
+  private static Seq nanOrInfinity(FormatContext context, FloatForm value) {
     Seq v0;
     if (value.isNaN()) {
       v0 = Seq.wrap("NaN");
@@ -156,7 +156,7 @@ public final class SeqFormatter {
     return spaceJustify(context, v0);
   }
 
-  static Seq f(FormatContext context, FloatFamily value) {
+  static Seq f(FormatContext context, FloatForm value) {
     if (value.isNaN() || value.isInfinite()) {
       return nanOrInfinity(context, value);
     }
@@ -187,7 +187,7 @@ public final class SeqFormatter {
     return mantissa.append(Seq.repeated('0', precision - outPrecision));
   }
 
-  static Seq e(FormatContext context, FloatFamily value) {
+  static Seq e(FormatContext context, FloatForm value) {
     if (value.isNaN() || value.isInfinite()) {
       return nanOrInfinity(context, value);
     }
@@ -217,7 +217,7 @@ public final class SeqFormatter {
     return v0.subSequence(0, index + 1);
   }
 
-  static Seq g(FormatContext context, FloatFamily value) {
+  static Seq g(FormatContext context, FloatForm value) {
     if (value.isNaN() || value.isInfinite()) {
       return nanOrInfinity(context, value);
     }
@@ -239,7 +239,7 @@ public final class SeqFormatter {
     return signAndJustify(context, v0, value.isNegative());
   }
 
-  static Seq a(FormatContext context, FloatFamily value) {
+  static Seq a(FormatContext context, FloatForm value) {
     if (value.isNaN() || value.isInfinite()) {
       return nanOrInfinity(context, value);
     }
@@ -275,7 +275,7 @@ public final class SeqFormatter {
   }
 
   static Seq c(FormatContext context, FormatTraits value) {
-    return spaceJustify(context, Seq.singleChar(value.asChar()));
+    return spaceJustify(context, Seq.ch(value.asChar()));
   }
 
   static Seq s(FormatContext context, FormatTraits value) {

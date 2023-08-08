@@ -1,7 +1,7 @@
 package org.fastprintf.traits;
 
-import org.fastprintf.box.FloatFamily;
-import org.fastprintf.box.IntFamily;
+import org.fastprintf.number.FloatForm;
+import org.fastprintf.number.IntForm;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
@@ -68,12 +68,12 @@ public final class ObjectTraits implements FormatTraits {
   }
 
   @Override
-  public IntFamily asIntFamily() {
+  public IntForm asIntForm() {
     throw new UnsupportedOperationException(value.getClass().getName() + " is not a number");
   }
 
   @Override
-  public FloatFamily asFloatFamily() {
+  public FloatForm asFloatForm() {
     throw new UnsupportedOperationException(value.getClass().getName() + " is not a number");
   }
 
