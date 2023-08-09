@@ -22,7 +22,7 @@ public final class DoubleWrapper implements FloatForm {
     String s = Double.toHexString(d);
     int p = s.indexOf('p');
     assert (p >= 0);
-    return new FloatLayout(Seq.wrap(s.substring(d >= 0 ? 2 : 3, p)), addPlus(s.substring(p + 1)));
+    return new FloatLayout(Seq.wrap(s, d >= 0 ? 2 : 3, p), addPlus(s.substring(p + 1)));
   }
 
   private static Seq addPlus(String input) {
@@ -136,8 +136,7 @@ public final class DoubleWrapper implements FloatForm {
           // Get exponent and append at the end.
           String exp = s.substring(idx + 1);
           int iexp = Integer.parseInt(exp) - 54;
-          return new FloatLayout(
-              Seq.wrap(s.substring(d >= 0 ? 2 : 3, idx)), addPlus(Integer.toString(iexp)));
+          return new FloatLayout(Seq.wrap(s, d >= 0 ? 2 : 3, idx), addPlus(Integer.toString(iexp)));
         } else {
           throw new AssertionError("Invalid hex string: " + s);
         }

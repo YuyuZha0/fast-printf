@@ -3,6 +3,7 @@ package org.fastprintf.seq;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 
 public class RepeatedTest {
 
@@ -25,5 +26,19 @@ public class RepeatedTest {
 
     assertEquals(0, seq.indexOf('a'));
     assertEquals(-1, seq.indexOf('x'));
+  }
+
+  @Test
+  public void testSingleChar() {
+    Seq a1 = Seq.ch('a');
+    Seq a2 = Seq.wrap("a");
+
+    assertEquals("a", a1.toString());
+    assertEquals("a", a2.toString());
+    assertEquals("A", a1.upperCase().toString());
+    assertEquals("A", a2.upperCase().toString());
+
+    assertSame(a1, a2);
+    assertSame(a1.upperCase(), a2.upperCase());
   }
 }

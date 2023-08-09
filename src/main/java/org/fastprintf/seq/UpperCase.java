@@ -3,14 +3,13 @@ package org.fastprintf.seq;
 import org.fastprintf.util.Utils;
 
 import java.io.IOException;
-import java.util.Objects;
 
 public final class UpperCase implements Seq {
 
   private final CharSequence cs;
 
   UpperCase(CharSequence cs) {
-    this.cs = Objects.requireNonNull(cs);
+    this.cs = cs;
   }
 
   @Override

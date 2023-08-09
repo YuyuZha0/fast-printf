@@ -3,14 +3,13 @@ package org.fastprintf.seq;
 import org.fastprintf.util.Utils;
 
 import java.io.IOException;
-import java.util.Objects;
 
-public final class Wrapper implements Seq {
+public final class CharSequenceView implements Seq {
 
   private final CharSequence cs;
 
-  Wrapper(CharSequence cs) {
-    this.cs = Objects.requireNonNull(cs);
+  CharSequenceView(CharSequence cs) {
+    this.cs = cs;
   }
 
   CharSequence unwrap() {
@@ -28,8 +27,8 @@ public final class Wrapper implements Seq {
   }
 
   @Override
-  public Wrapper subSequence(int start, int end) {
-    return new Wrapper(cs.subSequence(start, end));
+  public CharSequenceView subSequence(int start, int end) {
+    return new CharSequenceView(cs.subSequence(start, end));
   }
 
   @Override
@@ -49,19 +48,11 @@ public final class Wrapper implements Seq {
 
   @Override
   public void appendTo(StringBuilder sb) {
-    if (cs instanceof String) {
-      sb.append((String) cs);
-      return;
-    }
     sb.append(cs);
   }
 
   @Override
   public int indexOf(char c) {
-    if (cs instanceof String) {
-      int index = ((String) cs).indexOf(c);
-      return index >= 0 ? index : Utils.INDEX_NOT_FOUND;
-    }
     return Utils.indexOf(cs, c);
   }
 }

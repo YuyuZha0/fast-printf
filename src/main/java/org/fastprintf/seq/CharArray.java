@@ -65,15 +65,7 @@ public final class CharArray implements Seq {
     }
     if (obj instanceof CharArray) {
       CharArray cha = (CharArray) obj;
-      if (length == cha.length) {
-        int n = length;
-        int i = start;
-        int j = cha.start;
-        while (n-- != 0) {
-          if (ch[i++] != cha.ch[j++]) return false;
-        }
-        return true;
-      }
+      return Arrays.equals(ch, cha.ch);
     }
     return false;
   }

@@ -15,21 +15,21 @@ import org.openjdk.jmh.annotations.Warmup;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
-@Warmup(iterations = 2, time = 5)
-@Measurement(iterations = 2, time = 5)
+@Warmup(iterations = 3, time = 5)
+@Measurement(iterations = 3, time = 5)
 @State(Scope.Thread)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
-@Fork(1)
-/**
+@Fork(2)
+/*
  *
  *
  * <pre>
- * Benchmark                                      Mode  Cnt     Score   Error  Units
- * FastPrintfBenchmark.fastPrintf                 avgt    2  1221.938          ns/op
- * FastPrintfBenchmark.fastPrintfWithThreadLocal  avgt    2  1156.478          ns/op
- * FastPrintfBenchmark.jdkPrintf                  avgt    2  3792.861          ns/op
- * FastPrintfBenchmark.stringJoin                 avgt    2   224.955          ns/op
+ Benchmark                                      Mode  Cnt     Score    Error  Units
+FastPrintfBenchmark.fastPrintf                 avgt    6  1022.882 ± 29.105  ns/op
+FastPrintfBenchmark.fastPrintfWithThreadLocal  avgt    6  1170.014 ± 12.103  ns/op
+FastPrintfBenchmark.jdkPrintf                  avgt    6  3684.583 ± 60.826  ns/op
+FastPrintfBenchmark.stringJoin                 avgt    6   227.949 ±  3.251  ns/op
  *     </pre>
  */
 public class FastPrintfBenchmark {

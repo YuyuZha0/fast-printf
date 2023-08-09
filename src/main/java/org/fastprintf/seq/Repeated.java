@@ -7,13 +7,27 @@ import java.util.Arrays;
 
 public final class Repeated implements Seq {
 
+  private static final Repeated[] SINGLE_CHAR_REPEATED = new Repeated[128];
+
+  static {
+    for (int i = 0; i < SINGLE_CHAR_REPEATED.length; i++) {
+      SINGLE_CHAR_REPEATED[i] = new Repeated((char) i, 1);
+    }
+  }
+
   private final char c;
   private final int count;
 
   Repeated(char c, int count) {
-    if (count < 1) throw new IllegalArgumentException("count < 1");
     this.c = c;
     this.count = count;
+  }
+
+  static Repeated ofSingleChar(char c) {
+    if (c < SINGLE_CHAR_REPEATED.length) {
+      return SINGLE_CHAR_REPEATED[c];
+    }
+    return new Repeated(c, 1);
   }
 
   @Override
@@ -48,7 +62,9 @@ public final class Repeated implements Seq {
   @Override
   public Seq upperCase() {
     if (Utils.isLowerCase(c)) {
-      return new Repeated(Utils.toUpperCase(c), count);
+      char upperCase = Utils.toUpperCase(c);
+      if (count == 1) return ofSingleChar(upperCase);
+      return new Repeated(upperCase, count);
     }
     return this;
   }
@@ -62,10 +78,7 @@ public final class Repeated implements Seq {
 
   @Override
   public void appendTo(StringBuilder sb) {
-    if (count > 1) {
-      char[] chars = toCharArray();
-      sb.append(chars);
-    } else {
+    for (int i = 0; i < count; i++) {
       sb.append(c);
     }
   }

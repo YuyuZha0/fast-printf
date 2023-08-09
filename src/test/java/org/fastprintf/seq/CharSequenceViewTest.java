@@ -4,11 +4,11 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class WrapperTest {
+public class CharSequenceViewTest {
 
   @Test
   public void test() {
-    Seq seq = Seq.wrap("Hello");
+    Seq seq = Seq.wrap((CharSequence) "Hello");
 
     assertEquals(5, seq.length());
     assertEquals('H', seq.charAt(0));
@@ -21,8 +21,8 @@ public class WrapperTest {
     assertEquals("Hello", seq.subSequence(0, 5).toString());
     assertEquals("ell", seq.subSequence(1, 4).toString());
 
-    assertEquals("Hello World", seq.append(Seq.wrap(" World")).toString());
-    assertEquals("Hello World", Seq.wrap(" World").prepend(seq).toString());
+    assertEquals("Hello World", seq.append(Seq.wrap((CharSequence) " World")).toString());
+    assertEquals("Hello World", Seq.wrap((CharSequence) " World").prepend(seq).toString());
 
     assertEquals(0, seq.indexOf('H'));
     assertEquals(1, seq.indexOf('e'));

@@ -11,10 +11,12 @@ import java.util.function.Function;
 public interface Seq extends CharSequence {
 
   static Seq ch(char c) {
-    return new Repeated(c, 1);
+    return Repeated.ofSingleChar(c);
   }
 
   static Seq repeated(char c, int count) {
+    if (count < 1) throw new IllegalArgumentException("count < 1");
+    if (count == 1) return ch(c);
     return new Repeated(c, count);
   }
 
@@ -32,14 +34,36 @@ public interface Seq extends CharSequence {
   static Seq wrap(CharSequence cs) {
     if (cs instanceof Seq) return (Seq) cs;
     if (cs.length() == 0) return empty();
-    return new Wrapper(cs);
+    return new CharSequenceView(cs);
   }
 
   static Seq wrap(String s) {
-    if (!s.isEmpty()) {
-      return new Wrapper(s);
+    Objects.requireNonNull(s);
+    int length = s.length();
+    if (length > 0) {
+      if (length == 1) return ch(s.charAt(0));
+      return new StrView(s, 0, length);
     }
     return empty();
+  }
+
+  static Seq wrap(String s, int start) {
+    return wrap(s, start, s.length());
+  }
+
+  static Seq wrap(String s, int start, int end) {
+    Objects.requireNonNull(s);
+    int length = s.length();
+    if (start < 0 || start >= length) {
+      throw new IndexOutOfBoundsException("start: " + start + ", length: " + length);
+    }
+    if (end < start || end > length) {
+      throw new IndexOutOfBoundsException(
+          "end: " + end + ", start: " + start + ", length: " + length);
+    }
+    if (start == end) return empty();
+    if (end == start + 1) return ch(s.charAt(start));
+    return new StrView(s, start, end - start);
   }
 
   static Seq forArray(char[] ch, int start, int length) {

@@ -12,15 +12,6 @@ import java.util.function.Function;
 
 public final class SeqFormatter {
 
-  private static final Seq PLUS = Seq.ch('+');
-  private static final Seq MINUS = Seq.ch('-');
-  private static final Seq SPACE = Seq.ch(' ');
-  private static final Seq DOT = Seq.ch('.');
-  private static final Seq E = Seq.ch('e');
-  private static final Seq P = Seq.ch('p');
-
-  private static final Seq AT = Seq.ch('@');
-
   private SeqFormatter() {
     throw new IllegalStateException();
   }
@@ -45,11 +36,11 @@ public final class SeqFormatter {
 
   private static Seq sign(FormatContext context, Seq v0, boolean negative) {
     if (negative) {
-      v0 = v0.prepend(MINUS);
+      v0 = v0.prepend(Seq.ch('-'));
     } else if (context.hasFlag(Flag.PLUS)) {
-      v0 = v0.prepend(PLUS);
+      v0 = v0.prepend(Seq.ch('+'));
     } else if (context.hasFlag(Flag.LEADING_SPACE)) {
-      v0 = v0.prepend(SPACE);
+      v0 = v0.prepend(Seq.ch(' '));
     }
     return v0;
   }
@@ -73,7 +64,7 @@ public final class SeqFormatter {
   static Seq d(FormatContext context, IntForm value) {
     int signum = value.signum();
     if (signum == 0 && context.getPrecision() == 0) {
-      Seq v0 = context.hasFlag(Flag.PLUS) ? PLUS : Seq.empty();
+      Seq v0 = context.hasFlag(Flag.PLUS) ? Seq.ch('+') : Seq.empty();
       return spaceJustify(context, v0);
     }
     Seq v0 = Seq.wrap(value.toDecimalString());
@@ -109,7 +100,7 @@ public final class SeqFormatter {
   }
 
   private static Seq formatUnsignedInteger(
-          FormatContext context, IntForm value, Function<IntForm, String> toString, String prefix) {
+      FormatContext context, IntForm value, Function<IntForm, String> toString, String prefix) {
     int signum = value.signum();
     if (signum == 0 && context.getPrecision() == 0) {
       return spaceJustify(context, Seq.empty());
@@ -167,7 +158,7 @@ public final class SeqFormatter {
     FloatLayout layout = value.decimalLayout(precision);
     Seq mantissa = addZeros(layout.getMantissa(), precision);
     if (precision == 0 && context.hasFlag(Flag.ALTERNATE)) {
-      mantissa = mantissa.append(DOT);
+      mantissa = mantissa.append(Seq.ch('.'));
     }
     return signAndJustify(context, mantissa, value.isNegative());
   }
@@ -182,7 +173,7 @@ public final class SeqFormatter {
       return mantissa;
     }
     if (dot < 0) {
-      mantissa = mantissa.append(DOT);
+      mantissa = mantissa.append(Seq.ch('.'));
     }
     return mantissa.append(Seq.repeated('0', precision - outPrecision));
   }
@@ -198,9 +189,9 @@ public final class SeqFormatter {
     FloatLayout layout = value.scientificLayout(precision);
     Seq v0 = addZeros(layout.getMantissa(), precision);
     if (precision == 0 && context.hasFlag(Flag.ALTERNATE)) {
-      v0 = v0.append(DOT);
+      v0 = v0.append(Seq.ch('.'));
     }
-    v0 = v0.append(E);
+    v0 = v0.append(Seq.ch('e'));
     v0 = v0.append(layout.getExponent());
     return signAndJustify(context, v0, value.isNegative());
   }
@@ -232,7 +223,7 @@ public final class SeqFormatter {
     Seq v0 = truncateDotAndZero(layout.getMantissa());
     Seq exp = layout.getExponent();
     if (exp != null) {
-      v0 = v0.append(E);
+      v0 = v0.append(Seq.ch('e'));
       v0 = v0.append(exp);
     }
 
@@ -253,9 +244,9 @@ public final class SeqFormatter {
     FloatLayout layout = value.hexLayout(precision);
     Seq v0 = addZeros(layout.getMantissa(), precision);
     if (precision == 0 && context.hasFlag(Flag.ALTERNATE)) {
-      v0 = v0.append(DOT);
+      v0 = v0.append(Seq.ch('.'));
     }
-    v0 = v0.append(P).append(layout.getExponent());
+    v0 = v0.append(Seq.ch('p')).append(layout.getExponent());
     int signum = value.signum();
     if (context.hasFlag(Flag.ZERO_PAD) && !context.hasFlag(Flag.LEFT_JUSTIFY)) {
       int width = context.getWidth() - 2;
@@ -290,7 +281,7 @@ public final class SeqFormatter {
   static Seq p(FormatContext context, FormatTraits traits) {
     Object value = traits.value();
     Seq seq = Seq.wrap(Integer.toHexString(System.identityHashCode(value)));
-    seq = seq.prepend(AT);
+    seq = seq.prepend(Seq.ch('@'));
     seq = seq.prepend(Seq.wrap(value.getClass().getName()));
     return spaceJustify(context, seq);
   }
