@@ -3,6 +3,7 @@ package org.fastprintf.seq;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 
 public class CharArrayTest {
 
@@ -31,5 +32,14 @@ public class CharArrayTest {
     assertEquals(2, seq.indexOf('l'));
     assertEquals(4, seq.indexOf('o'));
     assertEquals(-1, seq.indexOf('x'));
+  }
+
+  @Test
+  public void testUpperCase() {
+    String str = "HELLO WORLD 12345";
+    Seq seq = Seq.forArray(str.toCharArray());
+    assertEquals(str, seq.toString());
+    assertEquals(str, seq.upperCase().toString());
+    assertSame(seq, seq.upperCase());
   }
 }

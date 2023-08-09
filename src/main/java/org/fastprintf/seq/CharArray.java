@@ -85,8 +85,10 @@ public final class CharArray implements Seq {
   @Override
   public Seq upperCase() {
     char[] chars = Arrays.copyOfRange(ch, start, start + length);
-    Utils.toUpperCase(chars);
-    return new CharArray(chars, 0, length, false);
+    if (Utils.toUpperCase(chars)) {
+      return new CharArray(chars, 0, length, false);
+    }
+    return this;
   }
 
   @Override
