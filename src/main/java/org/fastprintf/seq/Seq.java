@@ -1,7 +1,5 @@
 package org.fastprintf.seq;
 
-import org.fastprintf.util.Utils;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -9,6 +7,8 @@ import java.util.Objects;
 import java.util.function.Function;
 
 public interface Seq extends CharSequence {
+
+  int INDEX_NOT_FOUND = -1;
 
   static Seq ch(char c) {
     return Repeated.ofSingleChar(c);
@@ -153,6 +153,12 @@ public interface Seq extends CharSequence {
   }
 
   default int indexOf(char c) {
-    return Utils.indexOf(this, c);
+    int length = length();
+    for (int i = 0; i < length; i++) {
+      if (charAt(i) == c) {
+        return i;
+      }
+    }
+    return INDEX_NOT_FOUND;
   }
 }

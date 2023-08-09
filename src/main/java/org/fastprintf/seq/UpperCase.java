@@ -59,7 +59,7 @@ public final class UpperCase implements Seq {
   @Override
   public int indexOf(char c) {
     if (Utils.isLowerCase(c)) {
-      return Utils.INDEX_NOT_FOUND;
+      return INDEX_NOT_FOUND;
     }
     int length = cs.length();
     for (int i = 0; i < length; i++) {
@@ -67,6 +67,6 @@ public final class UpperCase implements Seq {
         return i;
       }
     }
-    return Utils.INDEX_NOT_FOUND;
+    return INDEX_NOT_FOUND;
   }
 }

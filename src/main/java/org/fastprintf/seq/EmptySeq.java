@@ -1,7 +1,5 @@
 package org.fastprintf.seq;
 
-import org.fastprintf.util.Utils;
-
 import java.io.IOException;
 
 public final class EmptySeq implements Seq {
@@ -59,6 +57,6 @@ public final class EmptySeq implements Seq {
 
   @Override
   public int indexOf(char c) {
-    return Utils.INDEX_NOT_FOUND;
+    return INDEX_NOT_FOUND;
   }
 }

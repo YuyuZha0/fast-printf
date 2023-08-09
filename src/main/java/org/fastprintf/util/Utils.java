@@ -2,8 +2,6 @@ package org.fastprintf.util;
 
 public final class Utils {
 
-  public static final int INDEX_NOT_FOUND = -1;
-
   /** A bit mask which selects the bit encoding ASCII character case. */
   private static final char CASE_MASK = 0x20;
 
@@ -65,15 +63,5 @@ public final class Utils {
 
   public static boolean isNotDigit(char c) {
     return !isDigit(c);
-  }
-
-  public static int indexOf(CharSequence cs, char c) {
-    int length = cs.length();
-    for (int i = 0; i < length; i++) {
-      if (cs.charAt(i) == c) {
-        return i;
-      }
-    }
-    return INDEX_NOT_FOUND;
   }
 }

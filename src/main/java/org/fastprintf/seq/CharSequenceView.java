@@ -1,7 +1,5 @@
 package org.fastprintf.seq;
 
-import org.fastprintf.util.Utils;
-
 import java.io.IOException;
 
 public final class CharSequenceView implements Seq {
@@ -53,6 +51,12 @@ public final class CharSequenceView implements Seq {
 
   @Override
   public int indexOf(char c) {
-    return Utils.indexOf(cs, c);
+    int length = cs.length();
+    for (int i = 0; i < length; i++) {
+      if (cs.charAt(i) == c) {
+        return i;
+      }
+    }
+    return INDEX_NOT_FOUND;
   }
 }

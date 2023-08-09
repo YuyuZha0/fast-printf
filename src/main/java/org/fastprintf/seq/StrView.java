@@ -46,7 +46,7 @@ public final class StrView implements Seq {
   public int indexOf(char c) {
     int index = str.indexOf(c, start);
     if (index == -1 || index >= start + length) {
-      return Utils.INDEX_NOT_FOUND;
+      return INDEX_NOT_FOUND;
     }
     return index - start;
   }

@@ -85,6 +85,6 @@ public final class Repeated implements Seq {
 
   @Override
   public int indexOf(char c) {
-    return this.c == c ? 0 : Utils.INDEX_NOT_FOUND;
+    return this.c == c ? 0 : INDEX_NOT_FOUND;
   }
 }

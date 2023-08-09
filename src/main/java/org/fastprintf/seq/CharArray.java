@@ -103,6 +103,6 @@ public final class CharArray implements Seq {
         return i;
       }
     }
-    return Utils.INDEX_NOT_FOUND;
+    return INDEX_NOT_FOUND;
   }
 }
