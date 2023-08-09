@@ -120,9 +120,9 @@ public class NpmCasesTest {
     //    printf('%06.2f', 42.8952).should.eql '042.90'
     //    printf('%+6.2f', 42.8952).should.eql '+42.90'
     //    printf('%5.10f', 42.8952).should.eql '42.8952000000'
-    assertFormatResult("%d", "43", 42.8952);
-    assertFormatResult("%.2d", "43", 42.8952);
-    assertFormatResult("%.2i", "43", 42.8952);
+    assertFormatResult("%d", "42", 42.8952);
+    assertFormatResult("%.2d", "42", 42.8952);
+    assertFormatResult("%.2i", "42", 42.8952);
     assertFormatResult("%.2f", "42.90", 42.8952);
     assertFormatResult("%.2F", "42.90", 42.8952);
     assertFormatResult("%.10f", "42.8952000000", 42.8952);

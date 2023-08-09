@@ -22,6 +22,14 @@ public final class BigDecimalWrapper implements FloatForm {
     this.signum = unscaledValue.signum();
   }
 
+  private static Seq insertDotAfterFirstChar(String unscaledString) {
+    int length = unscaledString.length();
+    Seq mant = Seq.ch(unscaledString.charAt(0));
+    mant = mant.append(Seq.ch('.'));
+    mant = mant.append(Seq.wrap(unscaledString, 1, length));
+    return mant;
+  }
+
   private static FloatLayout scientificLayout0(BigDecimal value) {
     BigInteger unscaledValue = value.unscaledValue();
     int scale = value.scale();
@@ -29,9 +37,7 @@ public final class BigDecimalWrapper implements FloatForm {
     int length = unscaledString.length();
     if (scale == 0) {
       if (length > 1) {
-        Seq mant = Seq.ch(unscaledString.charAt(0));
-        mant = mant.append(Seq.ch('.'));
-        mant = mant.append(Seq.wrap(unscaledString, 1, length - 1));
+        Seq mant = insertDotAfterFirstChar(unscaledString);
         Seq exp = length < 10 ? Seq.wrap("+0" + (length - 1)) : Seq.wrap("+" + (length - 1));
         return new FloatLayout(mant, exp);
       } else {
@@ -40,9 +46,7 @@ public final class BigDecimalWrapper implements FloatForm {
     }
     Seq mant;
     if (length > 1) {
-      mant = Seq.ch(unscaledString.charAt(0));
-      mant = mant.append(Seq.ch('.'));
-      mant = mant.append(Seq.wrap(unscaledString, 1, length - 1));
+      mant = insertDotAfterFirstChar(unscaledString);
     } else {
       mant = Seq.wrap(unscaledString);
     }
@@ -52,7 +56,7 @@ public final class BigDecimalWrapper implements FloatForm {
       long abs = Math.abs(adjusted);
       exp = Seq.ch(adjusted < 0 ? '-' : '+');
       if (abs < 10) {
-        exp = exp.append(Seq.ch('.'));
+        exp = exp.append(Seq.ch('0'));
       }
       exp = exp.append(Seq.wrap(Long.toString(abs)));
     } else {
@@ -82,7 +86,7 @@ public final class BigDecimalWrapper implements FloatForm {
     if (-pad < length) {
       Seq mant = Seq.wrap(unscaledString, 0, -pad);
       mant = mant.append(Seq.ch('.'));
-      mant = mant.append(Seq.wrap(unscaledString, -pad, scale));
+      mant = mant.append(Seq.wrap(unscaledString, -pad, length));
       return new FloatLayout(mant, null);
     }
 

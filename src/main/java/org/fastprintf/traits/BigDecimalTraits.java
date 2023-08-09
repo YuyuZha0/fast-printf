@@ -37,4 +37,5 @@ public final class BigDecimalTraits implements FormatTraits {
   public Object value() {
     return value;
   }
+
 }

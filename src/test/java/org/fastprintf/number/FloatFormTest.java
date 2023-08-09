@@ -3,6 +3,10 @@ package org.fastprintf.number;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.math.MathContext;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -14,7 +18,7 @@ public class FloatFormTest {
     assertDoubleLayout(floatFamily.generalLayout(precision), d, precision, "g");
     assertDoubleLayout(floatFamily.scientificLayout(precision), d, precision, "e");
     assertDoubleLayout(floatFamily.decimalLayout(precision), d, precision, "f");
-    //assertDoubleLayout(floatFamily.hexLayout(precision), d, precision, "a");
+    // assertDoubleLayout(floatFamily.hexLayout(precision), d, precision, "a");
   }
 
   private static void assertDoubleLayout(FloatLayout layout, double d, int precision, String spec) {
@@ -29,6 +33,23 @@ public class FloatFormTest {
     } else {
       assertEquals(s + ", " + layout, d2, d1, 0);
     }
+  }
+
+  private static void assertBigDecimal(BigDecimal value, int precision) {
+    assertTrue(precision >= 0);
+    FloatForm floatFamily = FloatForm.valueOf(value);
+    assertBigDecimalLayout(floatFamily.generalLayout(precision), value, precision, "g");
+    assertBigDecimalLayout(floatFamily.scientificLayout(precision), value, precision, "e");
+    assertBigDecimalLayout(floatFamily.decimalLayout(precision), value, precision, "f");
+  }
+
+  private static void assertBigDecimalLayout(
+      FloatLayout layout, BigDecimal value, int precision, String spec) {
+    String format = "%." + precision + spec;
+    String s = String.format(format, value.abs());
+    BigDecimal d1 = new BigDecimal(layout.toString());
+    BigDecimal d2 = new BigDecimal(s);
+    assertEquals(s + ", " + layout, 0, d1.compareTo(d2));
   }
 
   @Test
@@ -54,13 +75,31 @@ public class FloatFormTest {
   }
 
   @Test
+  public void testBigDecimal() {
+    int[] precisions = {1, 3, 5, 8, 16};
+    for (int p : precisions) {
+      assertBigDecimal(BigDecimal.ZERO, p);
+      assertBigDecimal(BigDecimal.ONE, p);
+      assertBigDecimal(BigDecimal.ONE.negate(), p);
+      assertBigDecimal(BigDecimal.valueOf(0.1), p);
+      assertBigDecimal(BigDecimal.valueOf(-0.1), p);
+      assertBigDecimal(BigDecimal.valueOf(Math.PI), p);
+      assertBigDecimal(BigDecimal.valueOf(-Math.PI), p);
+      assertBigDecimal(BigDecimal.valueOf(Double.MAX_VALUE), p);
+      assertBigDecimal(BigDecimal.valueOf(Double.MIN_VALUE), p);
+      assertBigDecimal(BigDecimal.valueOf(Math.E * 1000), p);
+      assertBigDecimal(BigDecimal.valueOf(-Math.E * 0.001), p);
+      assertBigDecimal(BigDecimal.valueOf(Long.MAX_VALUE), p);
+      assertBigDecimal(BigDecimal.valueOf(Long.MIN_VALUE), p);
+      assertBigDecimal(
+          BigDecimal.ONE.divide(BigDecimal.valueOf(Integer.MAX_VALUE), MathContext.DECIMAL128), p);
+      assertBigDecimal(
+          BigDecimal.ONE.divide(BigDecimal.valueOf(Integer.MIN_VALUE), MathContext.DECIMAL128), p);
+    }
+  }
+
+  @Test
   @Ignore
   public void test() {
-    // System.out.printf("%.3f%n", 2718.2818284590453D);
-    double d = 1.7976931348623157E308;
-    System.out.println(d - Math.rint(d));
-    System.out.println(FloatForm.valueOf(d).decimalLayout(3));
-    System.out.printf("%.3g%n", -0.002718281828459045);
-    System.out.println(FloatForm.valueOf(-0.002718281828459045).generalLayout(3));
   }
 }

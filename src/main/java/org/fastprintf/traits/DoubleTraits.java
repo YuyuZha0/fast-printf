@@ -13,7 +13,7 @@ public final class DoubleTraits implements FormatTraits {
 
   @Override
   public IntForm asIntForm() {
-    return IntForm.valueOf(Math.round(value));
+    return IntForm.valueOf((long) value);
   }
 
   @Override

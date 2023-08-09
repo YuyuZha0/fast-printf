@@ -6,6 +6,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,7 +45,7 @@ public class GhcCasesTest {
     }
   }
 
-  private static Object tryParse(String s) {
+  private static Object tryParsePrimitive(String s) {
     if (s.startsWith("\"") && s.endsWith("\"")) {
       return s.substring(1, s.length() - 1);
     }
@@ -66,6 +68,31 @@ public class GhcCasesTest {
       return Long.parseLong(s.substring(0, s.length() - 2));
     }
     return Integer.parseInt(s);
+  }
+
+  private static Object tryParseBigDecimal(String s) {
+    if (s.startsWith("\"") && s.endsWith("\"")) {
+      return s.substring(1, s.length() - 1);
+    }
+    if (s.startsWith("'") && s.endsWith("'")) {
+      return s.charAt(1);
+    }
+    if (s.startsWith("0x")) {
+      return new BigInteger(s.substring(2), 16);
+    }
+    if (s.startsWith("0o")) {
+      return new BigInteger(s.substring(2), 8);
+    }
+    if (s.indexOf('.') > 0) {
+      return new BigDecimal(s);
+    }
+    if (s.endsWith("U")) {
+      return new BigInteger(s.substring(0, s.length() - 1));
+    }
+    if (s.endsWith("LL")) {
+      return new BigInteger(s.substring(0, s.length() - 2));
+    }
+    return new BigInteger(s);
   }
 
   private static String fixFormat(String format) {
@@ -120,13 +147,31 @@ public class GhcCasesTest {
   }
 
   @Test
-  public void test1() {
-    System.out.println(
-        Arrays.toString(splitLine("145 \"hello\"                         \"hello\"")));
+  public void testBigDecimal() {
+    for (String line : readLines()) {
+      String[] a = splitLine(line);
+      if ("!H".equals(a[0]) || "!CH".equals(a[0]) || "?".equals(a[1])) {
+        continue;
+      }
+      String expected = unwrapQuotes(a[1]);
+      String format = fixFormat(a[2]);
+      // for big integer, unsigned case is complicated, so just ignore it
+      if ("xXou".indexOf(format.charAt(format.length() - 1)) >= 0) {
+        continue;
+      }
+      Args args = Args.create();
+      for (int i = 3; i < a.length; i++) {
+        args.put(tryParseBigDecimal(a[i]));
+      }
+      FastPrintf fastPrintf = FastPrintf.compile(format);
+      String actual = fastPrintf.format(args);
+      System.out.println("^" + line + "$");
+      assertEquals(join(a), expected, actual);
+    }
   }
 
   @Test
-  public void test() {
+  public void testPrimitive() {
     for (String line : readLines()) {
       String[] a = splitLine(line);
       if ("!H".equals(a[0]) || "!CH".equals(a[0]) || "?".equals(a[1])) {
@@ -136,7 +181,7 @@ public class GhcCasesTest {
       String format = fixFormat(a[2]);
       Args args = Args.create();
       for (int i = 3; i < a.length; i++) {
-        args.put(tryParse(a[i]));
+        args.put(tryParsePrimitive(a[i]));
       }
       FastPrintf fastPrintf = FastPrintf.compile(format);
       String actual = fastPrintf.format(args);
