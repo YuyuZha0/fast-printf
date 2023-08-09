@@ -91,7 +91,7 @@ public final class CharArray implements Seq {
 
   @Override
   public boolean isEmpty() {
-    return false;
+    return length == 0;
   }
 
   @Override

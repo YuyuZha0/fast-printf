@@ -36,6 +36,11 @@ public final class Repeated implements Seq {
   }
 
   @Override
+  public boolean isEmpty() {
+    return count == 0;
+  }
+
+  @Override
   public char charAt(int index) {
     if (index < 0 || index >= count) throw new IndexOutOfBoundsException();
     return c;
