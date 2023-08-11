@@ -26,6 +26,8 @@ public class RepeatedTest {
 
     assertEquals(0, seq.indexOf('a'));
     assertEquals(-1, seq.indexOf('x'));
+
+    assertEquals("AAAAA", seq.upperCase().toString());
   }
 
   @Test

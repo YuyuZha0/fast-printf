@@ -2,6 +2,8 @@ package org.fastprintf.seq;
 
 import org.junit.Test;
 
+import java.util.Locale;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 
@@ -41,5 +43,10 @@ public class CharArrayTest {
     assertEquals(str, seq.toString());
     assertEquals(str, seq.upperCase().toString());
     assertSame(seq, seq.upperCase());
+
+    String str1 = "Thequickbrownfoxjumpsoverthelazydog";
+    Seq seq1 = Seq.forArray(str1.toCharArray());
+    assertEquals(str1, seq1.toString());
+    assertEquals(str1.toUpperCase(Locale.US), seq1.upperCase().toString());
   }
 }

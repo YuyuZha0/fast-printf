@@ -12,5 +12,6 @@ public class DoubleWrapperTest {
     System.out.println(box.scientificLayout(10));
     System.out.println(box.decimalLayout(10));
     System.out.println(box.hexLayout(10));
+    System.out.println(box);
   }
 }
