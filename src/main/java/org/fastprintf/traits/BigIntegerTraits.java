@@ -3,6 +3,7 @@ package org.fastprintf.traits;
 import org.fastprintf.number.FloatForm;
 import org.fastprintf.number.IntForm;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 
 public final class BigIntegerTraits implements FormatTraits {
@@ -20,7 +21,7 @@ public final class BigIntegerTraits implements FormatTraits {
 
   @Override
   public FloatForm asFloatForm() {
-    return FloatForm.valueOf(value);
+    return FloatForm.valueOf(new BigDecimal(value, 0));
   }
 
   @Override

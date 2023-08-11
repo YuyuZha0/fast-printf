@@ -1,8 +1,9 @@
 package org.fastprintf;
 
+import org.fastprintf.util.Preconditions;
+
 import java.io.Serializable;
 import java.util.EnumSet;
-import java.util.Objects;
 
 public final class FormatContext implements Serializable {
 
@@ -21,7 +22,7 @@ public final class FormatContext implements Serializable {
   }
 
   public static FormatContext create(EnumSet<Flag> flags, int width, int precision) {
-    Objects.requireNonNull(flags, "flags is null");
+    Preconditions.checkNotNull(flags, "flags");
     return new FormatContext(EnumSet.copyOf(flags), width, precision);
   }
 
@@ -96,7 +97,7 @@ public final class FormatContext implements Serializable {
   }
 
   public String toPatternString(Specifier specifier) {
-    Objects.requireNonNull(specifier, "specifier is null");
+    Preconditions.checkNotNull(specifier, "specifier");
     StringBuilder builder = new StringBuilder();
     builder.append('%');
     for (Flag flag : flags) {

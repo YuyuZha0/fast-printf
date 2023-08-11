@@ -3,12 +3,12 @@ package org.fastprintf;
 import org.fastprintf.appender.Appender;
 import org.fastprintf.appender.DefaultAppender;
 import org.fastprintf.appender.FixedStringAppender;
+import org.fastprintf.util.Preconditions;
 import org.fastprintf.util.Utils;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Objects;
 
 final class Compiler {
 
@@ -17,8 +17,7 @@ final class Compiler {
   private int lookahead = 0;
 
   Compiler(String source) {
-    Objects.requireNonNull(source, "source is null");
-    this.source = source;
+    this.source = Preconditions.checkNotNull(source, "source");
   }
 
   void compile() {

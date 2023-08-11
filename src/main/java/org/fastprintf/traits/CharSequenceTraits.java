@@ -1,5 +1,6 @@
 package org.fastprintf.traits;
 
+import org.fastprintf.PrintfException;
 import org.fastprintf.number.FloatForm;
 import org.fastprintf.number.IntForm;
 
@@ -18,7 +19,11 @@ public final class CharSequenceTraits implements FormatTraits {
 
   @Override
   public int asInt() {
-    return Integer.parseInt(value.toString());
+    try {
+      return Integer.parseInt(value.toString());
+    } catch (NumberFormatException e) {
+      throw new PrintfException("Cannot convert \"" + value + "\" to int", e);
+    }
   }
 
   @Override
@@ -26,17 +31,25 @@ public final class CharSequenceTraits implements FormatTraits {
     if (value.length() >= 1) {
       return value.charAt(0);
     }
-    return Character.MIN_VALUE;
+    throw new PrintfException("Empty string cannot be converted to char");
   }
 
   @Override
   public IntForm asIntForm() {
-    return IntForm.valueOf(Long.parseLong(value.toString()));
+    try {
+      return IntForm.valueOf(Long.parseLong(value.toString()));
+    } catch (NumberFormatException e) {
+      throw new PrintfException("Cannot convert \"" + value + "\" to int", e);
+    }
   }
 
   @Override
   public FloatForm asFloatForm() {
-    return FloatForm.valueOf(Double.parseDouble(value.toString()));
+    try {
+      return FloatForm.valueOf(Double.parseDouble(value.toString()));
+    } catch (NumberFormatException e) {
+      throw new PrintfException("Cannot convert \"" + value + "\" to float", e);
+    }
   }
 
   @Override

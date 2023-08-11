@@ -1,7 +1,6 @@
 package org.fastprintf.number;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 
 public interface FloatForm extends NumberForm {
 
@@ -11,10 +10,6 @@ public interface FloatForm extends NumberForm {
 
   static FloatForm valueOf(BigDecimal value) {
     return new BigDecimalWrapper(value);
-  }
-
-  static FloatForm valueOf(BigInteger value) {
-    return new BigDecimalWrapper(value, 0);
   }
 
   boolean isNaN();

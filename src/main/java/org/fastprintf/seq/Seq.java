@@ -1,9 +1,10 @@
 package org.fastprintf.seq;
 
+import org.fastprintf.util.Preconditions;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Function;
 
 public interface Seq extends CharSequence {
@@ -15,7 +16,7 @@ public interface Seq extends CharSequence {
   }
 
   static Seq repeated(char c, int count) {
-    if (count < 1) throw new IllegalArgumentException("count < 1");
+    Preconditions.checkArgument(count >= 1, "count < 1");
     if (count == 1) return ch(c);
     return new Repeated(c, count);
   }
@@ -38,7 +39,7 @@ public interface Seq extends CharSequence {
   }
 
   static Seq wrap(String s) {
-    Objects.requireNonNull(s);
+    Preconditions.checkNotNull(s, "s");
     int length = s.length();
     if (length > 0) {
       if (length == 1) return ch(s.charAt(0));
@@ -52,25 +53,22 @@ public interface Seq extends CharSequence {
   }
 
   static Seq wrap(String s, int start, int end) {
-    Objects.requireNonNull(s);
+    Preconditions.checkNotNull(s, "s");
     int length = s.length();
-    if (start < 0 || start >= length) {
-      throw new IndexOutOfBoundsException("start: " + start + ", length: " + length);
-    }
-    if (end < start || end > length) {
-      throw new IndexOutOfBoundsException(
-          "end: " + end + ", start: " + start + ", length: " + length);
-    }
+    Preconditions.checkPositionIndexes(start, end, length);
     if (start == end) return empty();
     if (end == start + 1) return ch(s.charAt(start));
     return new StrView(s, start, end - start);
   }
 
   static Seq forArray(char[] ch, int start, int length) {
+    Preconditions.checkNotNull(ch, "ch");
+    Preconditions.checkPositionIndexes(start, start + length, ch.length);
     return new CharArray(ch, start, length, false);
   }
 
   static Seq forArray(char[] ch) {
+    Preconditions.checkNotNull(ch, "ch");
     return new CharArray(ch, 0, ch.length, false);
   }
 
@@ -144,7 +142,7 @@ public interface Seq extends CharSequence {
   }
 
   default Seq map(Function<? super Seq, ? extends Seq> mapper) {
-    Objects.requireNonNull(mapper, "map");
+    Preconditions.checkNotNull(mapper, "mapper");
     return mapper.apply(this);
   }
 

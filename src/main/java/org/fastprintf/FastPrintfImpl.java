@@ -3,12 +3,12 @@ package org.fastprintf;
 import org.fastprintf.appender.Appender;
 import org.fastprintf.seq.Seq;
 import org.fastprintf.traits.FormatTraits;
+import org.fastprintf.util.Preconditions;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Objects;
 
 /** GRAMMAR: %[flags][width][.precision]specifier */
 final class FastPrintfImpl implements FastPrintf {
@@ -41,7 +41,7 @@ final class FastPrintfImpl implements FastPrintf {
 
   @Override
   public String format(Args args) {
-    Objects.requireNonNull(args, "args");
+    Preconditions.checkNotNull(args, "args");
     Iterator<FormatTraits> iterator = args.iterator();
     List<Seq> collect = new ArrayList<>();
     for (Appender appender : appenders) {
@@ -67,8 +67,8 @@ final class FastPrintfImpl implements FastPrintf {
 
   @Override
   public <T extends Appendable> T format(T builder, Args args) {
-    Objects.requireNonNull(builder, "builder");
-    Objects.requireNonNull(args, "args");
+    Preconditions.checkNotNull(builder, "builder");
+    Preconditions.checkNotNull(args, "args");
     Iterator<FormatTraits> iterator = args.iterator();
     List<Seq> collect = new ArrayList<>();
     for (Appender appender : appenders) {

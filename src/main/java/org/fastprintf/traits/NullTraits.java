@@ -1,5 +1,6 @@
 package org.fastprintf.traits;
 
+import org.fastprintf.PrintfException;
 import org.fastprintf.number.FloatForm;
 import org.fastprintf.number.IntForm;
 
@@ -20,12 +21,12 @@ public final class NullTraits implements FormatTraits {
 
   @Override
   public IntForm asIntForm() {
-    throw new UnsupportedOperationException();
+    throw new PrintfException("null cannot be converted to int");
   }
 
   @Override
   public FloatForm asFloatForm() {
-    throw new UnsupportedOperationException();
+    throw new PrintfException("null cannot be converted to float");
   }
 
   @Override
@@ -35,7 +36,7 @@ public final class NullTraits implements FormatTraits {
 
   @Override
   public int asInt() {
-    throw new UnsupportedOperationException();
+    throw new PrintfException("null cannot be converted to int");
   }
 
   @Override

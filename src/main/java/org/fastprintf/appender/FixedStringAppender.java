@@ -2,17 +2,17 @@ package org.fastprintf.appender;
 
 import org.fastprintf.seq.Seq;
 import org.fastprintf.traits.FormatTraits;
+import org.fastprintf.util.Preconditions;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.Objects;
 
 public final class FixedStringAppender implements Appender {
 
   private final String value;
 
   public FixedStringAppender(String value) {
-    this.value = Objects.requireNonNull(value);
+    this.value = Preconditions.checkNotNull(value, "value");
   }
 
   @Override

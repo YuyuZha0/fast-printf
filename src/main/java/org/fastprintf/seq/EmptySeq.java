@@ -25,7 +25,7 @@ public final class EmptySeq implements Seq {
 
   @Override
   public char charAt(int index) {
-    throw new IndexOutOfBoundsException();
+    throw new IndexOutOfBoundsException(Integer.toString(index));
   }
 
   @Override

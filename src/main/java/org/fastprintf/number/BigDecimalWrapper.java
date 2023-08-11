@@ -1,5 +1,6 @@
 package org.fastprintf.number;
 
+import org.fastprintf.PrintfException;
 import org.fastprintf.seq.Seq;
 
 import java.math.BigDecimal;
@@ -172,7 +173,7 @@ public final class BigDecimalWrapper implements FloatForm {
 
   @Override
   public FloatLayout hexLayout(int precision) {
-    throw new UnsupportedOperationException();
+    throw new PrintfException("hexLayout not supported for BigDecimal");
   }
 
   @Override

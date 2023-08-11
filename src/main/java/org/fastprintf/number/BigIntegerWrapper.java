@@ -24,16 +24,19 @@ public final class BigIntegerWrapper implements IntForm {
 
   @Override
   public String toHexString() {
+    ensureNonNegative();
     return value.toString(16);
   }
 
   @Override
   public String toOctalString() {
+    ensureNonNegative();
     return value.toString(8);
   }
 
   @Override
   public String toUnsignedDecimalString() {
+    ensureNonNegative();
     return value.toString();
   }
 
@@ -43,6 +46,12 @@ public final class BigIntegerWrapper implements IntForm {
       return value.toString();
     } else {
       return "-" + value.toString();
+    }
+  }
+
+  private void ensureNonNegative() {
+    if (signum < 0) {
+      String msg = "Negative BigInteger(-" + value.toString() + ") cannot be converted to unsigned";
     }
   }
 }

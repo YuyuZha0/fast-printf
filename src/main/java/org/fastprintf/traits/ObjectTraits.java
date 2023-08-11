@@ -1,5 +1,6 @@
 package org.fastprintf.traits;
 
+import org.fastprintf.PrintfException;
 import org.fastprintf.number.FloatForm;
 import org.fastprintf.number.IntForm;
 
@@ -69,12 +70,18 @@ public final class ObjectTraits implements FormatTraits {
 
   @Override
   public IntForm asIntForm() {
-    throw new UnsupportedOperationException(value.getClass().getName() + " is not a number");
+    if (value instanceof Number) {
+      return IntForm.valueOf(((Number) value).longValue());
+    }
+    throw new PrintfException(value.getClass().getName() + " is not a number");
   }
 
   @Override
   public FloatForm asFloatForm() {
-    throw new UnsupportedOperationException(value.getClass().getName() + " is not a number");
+    if (value instanceof Number) {
+      return FloatForm.valueOf(((Number) value).doubleValue());
+    }
+    throw new PrintfException(value.getClass().getName() + " is not a number");
   }
 
   @Override
@@ -82,7 +89,7 @@ public final class ObjectTraits implements FormatTraits {
     if (value instanceof Number) {
       return ((Number) value).intValue();
     }
-    throw new UnsupportedOperationException();
+    throw new PrintfException(value + " cannot be converted to int");
   }
 
   @Override

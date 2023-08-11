@@ -1,12 +1,12 @@
 package org.fastprintf;
 
 import org.fastprintf.traits.FormatTraits;
+import org.fastprintf.util.Preconditions;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public interface Args extends Iterable<FormatTraits> {
 
@@ -19,7 +19,7 @@ public interface Args extends Iterable<FormatTraits> {
   }
 
   static Args of(Iterable<?> values) {
-    Objects.requireNonNull(values, "values");
+    Preconditions.checkNotNull(values, "values");
     ArgsImpl args = new ArgsImpl();
     for (Object value : values) {
       args.put(value);
@@ -61,7 +61,7 @@ public interface Args extends Iterable<FormatTraits> {
 
   Args putBigDecimal(BigDecimal value);
 
-  Args putAny(Object value);
+  Args putRaw(Object value);
 
   default Args put(Object value) {
     if (value == null) {
@@ -89,7 +89,7 @@ public interface Args extends Iterable<FormatTraits> {
     } else if (value instanceof BigDecimal) {
       return putBigDecimal((BigDecimal) value);
     } else {
-      return putAny(value);
+      return putRaw(value);
     }
   }
 }

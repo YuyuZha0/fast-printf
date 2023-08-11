@@ -2,14 +2,14 @@ package org.fastprintf.appender;
 
 import org.fastprintf.Flag;
 import org.fastprintf.FormatContext;
+import org.fastprintf.PrintfException;
 import org.fastprintf.Specifier;
 import org.fastprintf.seq.Seq;
 import org.fastprintf.traits.FormatTraits;
+import org.fastprintf.util.Preconditions;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.function.BiFunction;
 
 public final class DefaultAppender implements Appender {
@@ -19,8 +19,8 @@ public final class DefaultAppender implements Appender {
   private final BiFunction<FormatContext, FormatTraits, Seq> formatter;
 
   public DefaultAppender(Specifier specifier, FormatContext context) {
-    this.specifier = Objects.requireNonNull(specifier, "specifier");
-    this.context = Objects.requireNonNull(context, "context");
+    this.specifier = Preconditions.checkNotNull(specifier, "specifier");
+    this.context = Preconditions.checkNotNull(context, "context");
     this.formatter = formatterForSpecifier(specifier);
   }
 
@@ -84,7 +84,7 @@ public final class DefaultAppender implements Appender {
 
   private int nextInt(Iterator<FormatTraits> iterator) {
     if (!iterator.hasNext()) {
-      throw new NoSuchElementException("Missing argument for specifier: " + specifier);
+      throw new PrintfException("Missing argument for specifier: " + specifier);
     }
     return iterator.next().asInt();
   }
@@ -105,7 +105,7 @@ public final class DefaultAppender implements Appender {
       context = context.setPrecision(p >= 0 ? p : FormatContext.UNSET);
     }
     if (!traitsIterator.hasNext()) {
-      throw new NoSuchElementException("Missing argument for specifier: " + specifier);
+      throw new PrintfException("Missing argument for specifier: " + specifier);
     }
     collect.add(format(context, traitsIterator.next()));
   }

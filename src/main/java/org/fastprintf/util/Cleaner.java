@@ -4,7 +4,6 @@ import java.lang.ref.PhantomReference;
 import java.lang.ref.ReferenceQueue;
 import java.util.Collections;
 import java.util.IdentityHashMap;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -40,8 +39,8 @@ public final class Cleaner extends PhantomReference<Object> {
   }
 
   public static Cleaner create(Object referent, Runnable thunk) {
-    Objects.requireNonNull(referent, "referent");
-    Objects.requireNonNull(thunk, "thunk");
+    Preconditions.checkNotNull(referent, "referent");
+    Preconditions.checkNotNull(thunk, "thunk");
     Cleaner cleaner = new Cleaner(referent, thunk);
     synchronized (REFERENCES) {
       REFERENCES.add(cleaner);

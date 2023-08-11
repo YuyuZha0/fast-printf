@@ -1,5 +1,6 @@
 package org.fastprintf.seq;
 
+import org.fastprintf.util.Preconditions;
 import org.fastprintf.util.Utils;
 
 import java.io.IOException;
@@ -18,9 +19,7 @@ public final class StrView implements Seq {
 
   @Override
   public Seq subSequence(int start, int end) {
-    if (start < 0 || end > length || start > end) {
-      throw new IndexOutOfBoundsException();
-    }
+    Preconditions.checkPositionIndexes(start, end, length);
     if (start == end) {
       return Seq.empty();
     }

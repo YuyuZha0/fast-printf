@@ -1,5 +1,6 @@
 package org.fastprintf.seq;
 
+import org.fastprintf.util.Preconditions;
 import org.fastprintf.util.Utils;
 
 import java.io.IOException;
@@ -42,7 +43,7 @@ public final class Repeated implements Seq {
 
   @Override
   public char charAt(int index) {
-    if (index < 0 || index >= count) throw new IndexOutOfBoundsException();
+    Preconditions.checkPositionIndex(index, count);
     return c;
   }
 

@@ -14,6 +14,7 @@ import org.fastprintf.traits.LongTraits;
 import org.fastprintf.traits.NullTraits;
 import org.fastprintf.traits.ObjectTraits;
 import org.fastprintf.traits.ShortTraits;
+import org.fastprintf.util.Preconditions;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -21,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 final class ArgsImpl implements Args {
@@ -96,19 +96,19 @@ final class ArgsImpl implements Args {
 
   @Override
   public Args putCharSequence(CharSequence value) {
-    Objects.requireNonNull(value, "value is null");
+    Preconditions.checkNotNull(value, "value");
     return addTraits(new CharSequenceTraits(value));
   }
 
   @Override
   public Args putBigInteger(BigInteger value) {
-    Objects.requireNonNull(value, "value is null");
+    Preconditions.checkNotNull(value, "value");
     return addTraits(new BigIntegerTraits(value));
   }
 
   @Override
   public Args putBigDecimal(BigDecimal value) {
-    Objects.requireNonNull(value, "value is null");
+    Preconditions.checkNotNull(value, "value");
     return addTraits(new BigDecimalTraits(value));
   }
 
@@ -118,11 +118,11 @@ final class ArgsImpl implements Args {
   }
 
   @Override
-  public Args putAny(Object value) {
+  public Args putRaw(Object value) {
     if (value instanceof FormatTraits) {
       return addTraits((FormatTraits) value);
     }
-    Objects.requireNonNull(value, "value is null");
+    Preconditions.checkNotNull(value, "value");
     return addTraits(new ObjectTraits(value));
   }
 
