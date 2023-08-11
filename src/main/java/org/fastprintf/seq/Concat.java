@@ -20,7 +20,18 @@ public final class Concat implements Seq, Iterable<SimpleSeq> {
   }
 
   static Concat concat(Seq left, Seq right) {
-    return new Concat(left, right, left.length() + right.length());
+    // let the tree grow to the right, so the deque stack max size could be smaller
+    if (left instanceof Concat) {
+      Concat leftConcat = (Concat) left;
+      return concat0(leftConcat.left, concat0(leftConcat.right, right));
+    } else {
+      return concat0(left, right);
+    }
+  }
+
+  private static Concat concat0(Seq left, Seq right) {
+    int length = left.length() + right.length();
+    return new Concat(left, right, length);
   }
 
   private static Seq prependHead(Seq currentHead, SimpleSeq seq) {
