@@ -26,10 +26,10 @@ import java.util.concurrent.TimeUnit;
  *
  * <pre>
 Benchmark                                      Mode  Cnt     Score     Error  Units
-FastPrintfBenchmark.fastPrintf                 avgt    6   907.471 ±  23.232  ns/op
-FastPrintfBenchmark.fastPrintfWithThreadLocal  avgt    6   922.191 ±  29.155  ns/op
-FastPrintfBenchmark.jdkPrintf                  avgt    6  3786.070 ± 132.175  ns/op
-FastPrintfBenchmark.stringJoin                 avgt    6   233.571 ±   8.562  ns/op
+FastPrintfBenchmark.fastPrintf                 avgt    6   906.942 ±  14.372  ns/op
+FastPrintfBenchmark.fastPrintfWithThreadLocal  avgt    6  1009.801 ± 127.089  ns/op
+FastPrintfBenchmark.jdkPrintf                  avgt    6  3766.802 ± 129.694  ns/op
+FastPrintfBenchmark.stringJoin                 avgt    6   212.464 ±   6.167  ns/op
  *     </pre>
  */
 public class FastPrintfBenchmark {

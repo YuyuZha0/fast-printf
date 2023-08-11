@@ -31,9 +31,9 @@ import java.util.concurrent.TimeUnit;
  *
  * <pre>
  * Benchmark                                Mode  Cnt    Score    Error  Units
- * JoinBenchmark.fastPrintf                 avgt    6  445.875 ±  6.025  ns/op
- * JoinBenchmark.fastPrintfWithThreadLocal  avgt    6  449.232 ± 10.131  ns/op
- * JoinBenchmark.stringJoin                 avgt    6  293.116 ± 17.708  ns/op
+ * JoinBenchmark.fastPrintf                 avgt    6  443.783 ± 36.460  ns/op
+ * JoinBenchmark.fastPrintfWithThreadLocal  avgt    6  436.129 ± 49.553  ns/op
+ * JoinBenchmark.stringJoin                 avgt    6  291.991 ±  7.598  ns/op
  * </pre>
  */
 public class JoinBenchmark {
