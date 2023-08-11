@@ -272,10 +272,13 @@ public final class SeqFormatter {
   static Seq s(FormatContext context, FormatTraits value) {
     String s = value.asString();
     int precision;
+    Seq seq;
     if (context.isPrecisionSet() && (precision = context.getPrecision()) < s.length()) {
-      s = s.substring(0, precision);
+      seq = Seq.wrap(s, 0, precision);
+    } else {
+      seq = Seq.wrap(s);
     }
-    return spaceJustify(context, Seq.wrap(s));
+    return spaceJustify(context, seq);
   }
 
   static Seq p(FormatContext context, FormatTraits traits) {

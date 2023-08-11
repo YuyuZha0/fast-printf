@@ -1,5 +1,6 @@
 package org.fastprintf.benchmark;
 
+import org.fastprintf.Args;
 import org.fastprintf.FastPrintf;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -73,11 +74,27 @@ public class JoinBenchmark {
 
   @Benchmark
   public String fastPrintf() {
-    return FAST_PRINTF.format(next(), next(), next(), next(), next(), next());
+    Args args =
+        Args.create()
+            .putString(next())
+            .putString(next())
+            .putString(next())
+            .putString(next())
+            .putString(next())
+            .putString(next());
+    return FAST_PRINTF.format(args);
   }
 
   @Benchmark
   public String fastPrintfWithThreadLocal() {
-    return FAST_PRINTF2.format(next(), next(), next(), next(), next(), next());
+    Args args =
+        Args.create()
+            .putString(next())
+            .putString(next())
+            .putString(next())
+            .putString(next())
+            .putString(next())
+            .putString(next());
+    return FAST_PRINTF2.format(args);
   }
 }

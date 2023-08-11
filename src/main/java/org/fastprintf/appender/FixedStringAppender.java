@@ -10,14 +10,16 @@ import java.util.List;
 public final class FixedStringAppender implements Appender {
 
   private final String value;
+  private final Seq seq;
 
   public FixedStringAppender(String value) {
     this.value = Preconditions.checkNotNull(value, "value");
+    this.seq = Seq.wrap(value);
   }
 
   @Override
   public void append(List<Seq> collect, Iterator<FormatTraits> traitsIterator) {
-    collect.add(Seq.wrap(value));
+    collect.add(seq);
   }
 
   public String getValue() {
