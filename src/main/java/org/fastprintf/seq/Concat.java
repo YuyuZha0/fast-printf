@@ -4,11 +4,8 @@ import org.fastprintf.util.Preconditions;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
 import java.util.Iterator;
-import java.util.List;
-import java.util.function.Consumer;
 
 public final class Concat implements Seq, Iterable<SimpleSeq> {
 
@@ -26,14 +23,11 @@ public final class Concat implements Seq, Iterable<SimpleSeq> {
     return new Concat(left, right, left.length() + right.length());
   }
 
-  private static Deque<Seq> tempDeque() {
-    return new ArrayDeque<>(8);
-  }
-
-  private static void push(Deque<Seq> deque, Seq seq) {
-    Concat concat = (Concat) seq;
-    deque.push(concat.right);
-    deque.push(concat.left);
+  private static Seq prependHead(Seq currentHead, SimpleSeq seq) {
+    if (currentHead != null) {
+      return concat(currentHead, seq);
+    }
+    return seq;
   }
 
   @Override
@@ -44,20 +38,11 @@ public final class Concat implements Seq, Iterable<SimpleSeq> {
   @Override
   public char charAt(int index) {
     Preconditions.checkPositionIndex(index, length);
-    Deque<Seq> deque = tempDeque();
-    push(deque, this);
-    while (!deque.isEmpty()) {
-      Seq seq = deque.pop();
-      int seqLength = seq.length();
-      if (index >= seqLength) {
-        index -= seqLength;
-        continue;
-      }
-      if (seq instanceof Concat) {
-        push(deque, seq);
-      } else {
+    for (SimpleSeq seq : this) {
+      if (index < seq.length()) {
         return seq.charAt(index);
       }
+      index -= seq.length();
     }
     throw new AssertionError();
   }
@@ -67,20 +52,30 @@ public final class Concat implements Seq, Iterable<SimpleSeq> {
     Preconditions.checkPositionIndexes(start, end, length);
     if (start == end) return Seq.empty();
     if (start == 0 && end == length) return this;
-    int leftLength = left.length();
-    if (end <= leftLength) {
-      return left.subSequence(start, end);
-    } else if (start >= leftLength) {
-      return right.subSequence(start - leftLength, end - leftLength);
-    } else {
-      return concat(left.subSequence(start, leftLength), right.subSequence(0, end - leftLength));
+    Seq head = null;
+    for (SimpleSeq seq : this) {
+      int seqLength = seq.length();
+      if (start < seqLength) {
+        if (end <= seqLength) {
+          head = prependHead(head, seq.subSequence(start, end));
+          break;
+        }
+        head = prependHead(head, seq.subSequence(start, seqLength));
+        start = 0;
+        end -= seqLength;
+      } else {
+        start -= seqLength;
+        end -= seqLength;
+      }
     }
+    assert head != null;
+    return head;
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder(length);
-    visit(sb::append);
+    appendTo(sb);
     return sb.toString();
   }
 
@@ -98,83 +93,69 @@ public final class Concat implements Seq, Iterable<SimpleSeq> {
 
   @Override
   public Seq upperCase() {
-    Deque<Seq> deque = tempDeque();
-    push(deque, this);
     Seq head = null;
-    while (!deque.isEmpty()) {
-      Seq seq = deque.pop();
-      if (seq instanceof Concat) {
-        push(deque, seq);
-      } else {
-        if (head != null) {
-          head = concat(head, seq.upperCase());
-        } else {
-          head = seq.upperCase();
-        }
-      }
+    for (SimpleSeq seq : this) {
+      head = prependHead(head, seq.upperCase());
     }
     return head;
   }
 
-  private void visit(Consumer<? super SimpleSeq> consumer) {
-    // use Deque to avoid recursion/stack overflow
-    Deque<Seq> deque = tempDeque();
-    push(deque, this);
-    while (!deque.isEmpty()) {
-      Seq seq = deque.pop();
-      if (seq instanceof Concat) {
-        push(deque, seq);
-      } else {
-        assert seq instanceof SimpleSeq;
-        consumer.accept((SimpleSeq) seq);
-      }
-    }
-  }
-
   @Override
   public void appendTo(Appendable appendable) throws IOException {
-    Deque<Seq> deque = tempDeque();
-    push(deque, this);
-    while (!deque.isEmpty()) {
-      Seq seq = deque.pop();
-      if (seq instanceof Concat) {
-        push(deque, seq);
-      } else {
-        assert seq instanceof SimpleSeq;
-        seq.appendTo(appendable);
-      }
+    for (SimpleSeq seq : this) {
+      seq.appendTo(appendable);
     }
   }
 
   @Override
   public void appendTo(StringBuilder sb) {
-    visit(seq -> seq.appendTo(sb));
+    for (SimpleSeq seq : this) {
+      seq.appendTo(sb);
+    }
   }
 
   @Override
   public int indexOf(char c) {
-    Deque<Seq> deque = tempDeque();
-    push(deque, this);
-    int visitedLength = 0;
-    while (!deque.isEmpty()) {
-      Seq seq = deque.pop();
-      if (seq instanceof Concat) {
-        push(deque, seq);
-      } else {
-        int index = seq.indexOf(c);
-        if (index != INDEX_NOT_FOUND) {
-          return visitedLength + index;
-        }
-        visitedLength += seq.length();
+    int currentLength = 0;
+    for (SimpleSeq seq : this) {
+      int index = seq.indexOf(c);
+      if (index != INDEX_NOT_FOUND) {
+        return index + currentLength;
       }
+      currentLength += seq.length();
     }
     return INDEX_NOT_FOUND;
   }
 
   @Override
   public Iterator<SimpleSeq> iterator() {
-    List<SimpleSeq> collect = new ArrayList<>();
-    visit(collect::add);
-    return collect.iterator();
+    return new ConcatIterator(this);
+  }
+
+  private static final class ConcatIterator implements Iterator<SimpleSeq> {
+
+    private final Deque<Seq> deque = new ArrayDeque<>(8);
+
+    ConcatIterator(Concat concat) {
+      deque.push(concat.right);
+      deque.push(concat.left);
+    }
+
+    @Override
+    public boolean hasNext() {
+      return !deque.isEmpty();
+    }
+
+    @Override
+    public SimpleSeq next() {
+      Seq seq = deque.pop();
+      while (seq instanceof Concat) {
+        Concat concat = (Concat) seq;
+        deque.push(concat.right);
+        deque.push(concat.left);
+        seq = deque.pop();
+      }
+      return (SimpleSeq) seq;
+    }
   }
 }
