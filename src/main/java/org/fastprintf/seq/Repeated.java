@@ -6,7 +6,7 @@ import org.fastprintf.util.Utils;
 import java.io.IOException;
 import java.util.Arrays;
 
-public final class Repeated implements Seq {
+public final class Repeated implements SimpleSeq {
 
   private static final Repeated[] SINGLE_CHAR_REPEATED = new Repeated[128];
 
@@ -48,7 +48,7 @@ public final class Repeated implements Seq {
   }
 
   @Override
-  public Seq subSequence(int start, int end) {
+  public SimpleSeq subSequence(int start, int end) {
     if (start < 0 || end > count || start > end) throw new IllegalArgumentException();
     if (start == end) return Seq.empty();
     return new Repeated(c, end - start);
@@ -66,7 +66,7 @@ public final class Repeated implements Seq {
   }
 
   @Override
-  public Seq upperCase() {
+  public Repeated upperCase() {
     if (Utils.isLowerCase(c)) {
       char upperCase = Utils.toUpperCase(c);
       if (count == 1) return ofSingleChar(upperCase);

@@ -5,7 +5,7 @@ import org.fastprintf.util.Utils;
 
 import java.io.IOException;
 
-public final class StrView implements Seq {
+public final class StrView implements SimpleSeq {
 
   private final String str;
   private final int start;
@@ -18,7 +18,7 @@ public final class StrView implements Seq {
   }
 
   @Override
-  public Seq subSequence(int start, int end) {
+  public SimpleSeq subSequence(int start, int end) {
     Preconditions.checkPositionIndexes(start, end, length);
     if (start == end) {
       return Seq.empty();
@@ -67,7 +67,7 @@ public final class StrView implements Seq {
   }
 
   @Override
-  public Seq upperCase() {
+  public SimpleSeq upperCase() {
     char[] chars = toCharArray();
     Utils.toUpperCase(chars);
     return Seq.forArray(chars);

@@ -5,7 +5,7 @@ import org.fastprintf.util.Utils;
 import java.io.IOException;
 import java.util.Arrays;
 
-public final class CharArray implements Seq {
+public final class CharArray implements SimpleSeq {
 
   private final char[] ch;
   private final int start;
@@ -83,7 +83,7 @@ public final class CharArray implements Seq {
   }
 
   @Override
-  public Seq upperCase() {
+  public CharArray upperCase() {
     char[] chars = Arrays.copyOfRange(ch, start, start + length);
     if (Utils.toUpperCase(chars)) {
       return new CharArray(chars, 0, length, false);

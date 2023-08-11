@@ -42,5 +42,36 @@ public class ConcatTest {
     assertEquals(8, seq.indexOf('r'));
     assertEquals(10, seq.indexOf('d'));
     assertEquals(-1, seq.indexOf('x'));
+
+    assertEquals("HELLO WORLD", seq.upperCase().toString());
+
+    Seq seq1 = Seq.concat(Seq.wrap("123 "), seq);
+    assertEquals(15, seq1.length());
+    assertEquals('1', seq1.charAt(0));
+    assertEquals('2', seq1.charAt(1));
+    assertEquals('3', seq1.charAt(2));
+    assertEquals(' ', seq1.charAt(3));
+    assertEquals('H', seq1.charAt(4));
+
+    assertEquals("123 Hello World", seq1.toString());
+    assertEquals("123 Hello World", seq1.subSequence(0, 15).toString());
+    assertEquals("23 Hello Worl", seq1.subSequence(1, 14).toString());
+
+    assertEquals("123 HELLO WORLD", seq1.upperCase().toString());
+
+    Seq seq2 = Seq.concat(seq, Seq.wrap(" 123"));
+    assertEquals(15, seq2.length());
+    assertEquals('H', seq2.charAt(0));
+    assertEquals('e', seq2.charAt(1));
+    assertEquals('l', seq2.charAt(2));
+    assertEquals('l', seq2.charAt(3));
+    assertEquals('o', seq2.charAt(4));
+    assertEquals(' ', seq2.charAt(5));
+
+    assertEquals("Hello World 123", seq2.toString());
+    assertEquals("Hello World 123", seq2.subSequence(0, 15).toString());
+    assertEquals("ello World 12", seq2.subSequence(1, 14).toString());
+
+    assertEquals("HELLO WORLD 123", seq2.upperCase().toString());
   }
 }

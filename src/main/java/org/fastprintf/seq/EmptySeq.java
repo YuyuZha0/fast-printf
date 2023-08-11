@@ -2,7 +2,7 @@ package org.fastprintf.seq;
 
 import java.io.IOException;
 
-public final class EmptySeq implements Seq {
+public final class EmptySeq implements SimpleSeq {
 
   static final EmptySeq INSTANCE = new EmptySeq();
 
@@ -34,13 +34,13 @@ public final class EmptySeq implements Seq {
   }
 
   @Override
-  public Seq subSequence(int start, int end) {
+  public EmptySeq subSequence(int start, int end) {
     if (start == 0 && end == 0) return this;
     throw new IllegalArgumentException();
   }
 
   @Override
-  public Seq upperCase() {
+  public EmptySeq upperCase() {
     return this;
   }
 
