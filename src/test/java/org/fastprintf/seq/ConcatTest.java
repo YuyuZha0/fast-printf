@@ -2,6 +2,10 @@ package org.fastprintf.seq;
 
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
 import static org.junit.Assert.assertEquals;
 
 public class ConcatTest {
@@ -44,6 +48,12 @@ public class ConcatTest {
     assertEquals(-1, seq.indexOf('x'));
 
     assertEquals("HELLO WORLD", seq.upperCase().toString());
+
+    assertEquals(
+        Arrays.asList("Hello", " World"),
+        StreamSupport.stream(((Concat) seq).spliterator(), false)
+            .map(Seq::toString)
+            .collect(Collectors.toList()));
 
     Seq seq1 = Seq.concat(Seq.wrap("123 "), seq);
     assertEquals(15, seq1.length());

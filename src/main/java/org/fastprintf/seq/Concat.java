@@ -26,6 +26,10 @@ public final class Concat implements Seq, Iterable<SimpleSeq> {
     return new Concat(left, right, left.length() + right.length());
   }
 
+  private static Deque<Seq> tempDeque() {
+    return new ArrayDeque<>(8);
+  }
+
   private static void push(Deque<Seq> deque, Seq seq) {
     Concat concat = (Concat) seq;
     deque.push(concat.right);
@@ -40,12 +44,22 @@ public final class Concat implements Seq, Iterable<SimpleSeq> {
   @Override
   public char charAt(int index) {
     Preconditions.checkPositionIndex(index, length);
-    int leftLength = left.length();
-    if (index < leftLength) {
-      return left.charAt(index);
-    } else {
-      return right.charAt(index - leftLength);
+    Deque<Seq> deque = tempDeque();
+    push(deque, this);
+    while (!deque.isEmpty()) {
+      Seq seq = deque.pop();
+      int seqLength = seq.length();
+      if (index >= seqLength) {
+        index -= seqLength;
+        continue;
+      }
+      if (seq instanceof Concat) {
+        push(deque, seq);
+      } else {
+        return seq.charAt(index);
+      }
     }
+    throw new AssertionError();
   }
 
   @Override
@@ -84,7 +98,7 @@ public final class Concat implements Seq, Iterable<SimpleSeq> {
 
   @Override
   public Seq upperCase() {
-    Deque<Seq> deque = new ArrayDeque<>();
+    Deque<Seq> deque = tempDeque();
     push(deque, this);
     Seq head = null;
     while (!deque.isEmpty()) {
@@ -104,7 +118,7 @@ public final class Concat implements Seq, Iterable<SimpleSeq> {
 
   private void visit(Consumer<? super SimpleSeq> consumer) {
     // use Deque to avoid recursion/stack overflow
-    Deque<Seq> deque = new ArrayDeque<>();
+    Deque<Seq> deque = tempDeque();
     push(deque, this);
     while (!deque.isEmpty()) {
       Seq seq = deque.pop();
@@ -119,7 +133,7 @@ public final class Concat implements Seq, Iterable<SimpleSeq> {
 
   @Override
   public void appendTo(Appendable appendable) throws IOException {
-    Deque<Seq> deque = new ArrayDeque<>();
+    Deque<Seq> deque = tempDeque();
     push(deque, this);
     while (!deque.isEmpty()) {
       Seq seq = deque.pop();
@@ -139,7 +153,7 @@ public final class Concat implements Seq, Iterable<SimpleSeq> {
 
   @Override
   public int indexOf(char c) {
-    Deque<Seq> deque = new ArrayDeque<>();
+    Deque<Seq> deque = tempDeque();
     push(deque, this);
     int visitedLength = 0;
     while (!deque.isEmpty()) {
