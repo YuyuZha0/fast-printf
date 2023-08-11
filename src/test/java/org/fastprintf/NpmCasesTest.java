@@ -10,8 +10,9 @@ public class NpmCasesTest {
   private static void assertFormatResult(String pattern, String expected, Object... value) {
     FastPrintf fastPrintf = FastPrintf.compile(pattern).enableThreadLocalCache();
     Args args = Args.of(value);
-    String format = fastPrintf.format(args);
-    assertEquals(pattern, expected, format);
+    StringBuilder sb = new StringBuilder();
+    fastPrintf.format(sb, args);
+    assertEquals(pattern, expected, sb.toString());
   }
 
   private static void gcAndPause() {

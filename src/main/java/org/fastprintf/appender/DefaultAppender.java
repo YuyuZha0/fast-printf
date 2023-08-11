@@ -104,17 +104,19 @@ public final class DefaultAppender implements Appender {
       int p = nextInt(traitsIterator);
       context = context.setPrecision(p >= 0 ? p : FormatContext.UNSET);
     }
-    if (!traitsIterator.hasNext()) {
+    if (traitsIterator.hasNext()) {
+      collect.add(format(context, traitsIterator.next()));
+    } else {
       throw new PrintfException("Missing argument for specifier: " + specifier);
     }
-    collect.add(format(context, traitsIterator.next()));
   }
 
   private Seq format(FormatContext context, FormatTraits traits) {
-    if (traits.isNull()) {
+    if (!traits.isNull()) {
+      return formatter.apply(context, traits);
+    } else {
       return SeqFormatter.forNull(context);
     }
-    return formatter.apply(context, traits);
   }
 
   public Specifier getSpecifier() {

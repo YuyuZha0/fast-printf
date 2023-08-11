@@ -49,7 +49,7 @@ public final class Repeated implements SimpleSeq {
 
   @Override
   public SimpleSeq subSequence(int start, int end) {
-    if (start < 0 || end > count || start > end) throw new IllegalArgumentException();
+    Preconditions.checkPositionIndexes(start, end, count);
     if (start == end) return Seq.empty();
     return new Repeated(c, end - start);
   }

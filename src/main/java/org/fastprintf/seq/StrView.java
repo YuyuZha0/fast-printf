@@ -63,7 +63,14 @@ public final class StrView implements SimpleSeq {
 
   @Override
   public void appendTo(StringBuilder sb) {
-    sb.append(str, start, start + length);
+    if (start == 0 && length == str.length()) {
+      // this method is faster than sb.append(str, start, start + length)
+      sb.append(str);
+    } else if (length < 16) {
+      sb.append(str, start, start + length);
+    } else {
+      sb.append(toCharArray());
+    }
   }
 
   @Override

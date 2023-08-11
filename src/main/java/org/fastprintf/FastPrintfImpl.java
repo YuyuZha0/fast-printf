@@ -9,19 +9,29 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.IntFunction;
 
 /** GRAMMAR: %[flags][width][.precision]specifier */
 final class FastPrintfImpl implements FastPrintf {
 
   private final Appender[] appenders;
   private final ThreadLocal<StringBuilder> threadLocalBuilder;
+  private final IntFunction<StringBuilder> stringBuilderFactory;
 
   private FastPrintfImpl(Appender[] appenders, boolean enableThreadLocalCache) {
     this.appenders = appenders;
     if (enableThreadLocalCache) {
       this.threadLocalBuilder = ThreadLocal.withInitial(StringBuilder::new);
+      this.stringBuilderFactory =
+          len -> {
+            StringBuilder builder = threadLocalBuilder.get();
+            builder.setLength(0);
+            builder.ensureCapacity(len);
+            return builder;
+          };
     } else {
       this.threadLocalBuilder = null;
+      this.stringBuilderFactory = StringBuilder::new;
     }
   }
 
@@ -48,21 +58,11 @@ final class FastPrintfImpl implements FastPrintf {
       appender.append(collect, iterator);
     }
     int totalLength = precomputeLength(collect);
-    StringBuilder builder = getStringBuilder(totalLength);
+    StringBuilder builder = stringBuilderFactory.apply(totalLength);
     for (Seq seq : collect) {
       seq.appendTo(builder);
     }
     return builder.toString();
-  }
-
-  private StringBuilder getStringBuilder(int totalLength) {
-    if (threadLocalBuilder != null) {
-      StringBuilder builder = threadLocalBuilder.get();
-      builder.setLength(0);
-      builder.ensureCapacity(totalLength);
-      return builder;
-    }
-    return new StringBuilder(totalLength);
   }
 
   @Override

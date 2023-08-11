@@ -13,11 +13,12 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @Warmup(iterations = 3, time = 5)
 @Measurement(iterations = 3, time = 5)
@@ -29,35 +30,42 @@ import java.util.stream.Collectors;
  *
  *
  * <pre>
- *     Benchmark                                Mode  Cnt    Score   Error  Units
- * JoinBenchmark.fastPrintf                 avgt    6  280.292 ± 1.286  ns/op
- * JoinBenchmark.fastPrintfWithThreadLocal  avgt    6  265.075 ± 1.837  ns/op
- * JoinBenchmark.stringJoin                 avgt    6   93.775 ± 5.566  ns/op
+ * Benchmark                                Mode  Cnt    Score    Error  Units
+ * JoinBenchmark.fastPrintf                 avgt    6  445.875 ±  6.025  ns/op
+ * JoinBenchmark.fastPrintfWithThreadLocal  avgt    6  449.232 ± 10.131  ns/op
+ * JoinBenchmark.stringJoin                 avgt    6  293.116 ± 17.708  ns/op
  * </pre>
  */
 public class JoinBenchmark {
 
   private static final FastPrintf FAST_PRINTF = FastPrintf.compile("%s, %s, %s, %s, %s, %s");
   private static final FastPrintf FAST_PRINTF2 = FAST_PRINTF.enableThreadLocalCache();
-  private List<String> strings;
-
-  private Iterator<String> iterator;
+  private List<Object> objects;
+  private Iterator<Object> iterator;
 
   @Setup
   public void setup() {
-    strings =
-        ThreadLocalRandom.current()
-            .longs(6 * 300)
-            .mapToObj(Long::toString)
-            .collect(Collectors.toList());
-    iterator = strings.iterator();
+    List<Object> objects = new ArrayList<>(300 * 6);
+    ThreadLocalRandom random = ThreadLocalRandom.current();
+    for (int i = 0; i < 300; ++i) {
+      objects.add(random.nextInt());
+      objects.add(random.nextLong());
+      objects.add(random.nextFloat());
+      objects.add(random.nextDouble());
+      objects.add(random.nextBoolean());
+      byte[] bytes = new byte[16];
+      random.nextBytes(bytes);
+      objects.add(new String(bytes, StandardCharsets.UTF_8));
+    }
+    this.objects = objects;
+    iterator = objects.iterator();
   }
 
-  public String next() {
+  public Object next() {
     if (iterator.hasNext()) {
       return iterator.next();
     } else {
-      iterator = strings.iterator();
+      iterator = objects.iterator();
       return next();
     }
   }
@@ -74,27 +82,13 @@ public class JoinBenchmark {
 
   @Benchmark
   public String fastPrintf() {
-    Args args =
-        Args.create()
-            .putString(next())
-            .putString(next())
-            .putString(next())
-            .putString(next())
-            .putString(next())
-            .putString(next());
+    Args args = Args.of(next(), next(), next(), next(), next(), next());
     return FAST_PRINTF.format(args);
   }
 
   @Benchmark
   public String fastPrintfWithThreadLocal() {
-    Args args =
-        Args.create()
-            .putString(next())
-            .putString(next())
-            .putString(next())
-            .putString(next())
-            .putString(next())
-            .putString(next());
+    Args args = Args.of(next(), next(), next(), next(), next(), next());
     return FAST_PRINTF2.format(args);
   }
 }
