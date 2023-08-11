@@ -2,7 +2,7 @@ package org.fastprintf.number;
 
 import org.junit.Test;
 
-public class DoubleCharSequenceViewTest {
+public class DoubleWrapperTest {
 
   @Test
   public void test() {

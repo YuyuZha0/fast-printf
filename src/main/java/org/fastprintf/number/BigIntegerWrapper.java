@@ -1,5 +1,7 @@
 package org.fastprintf.number;
 
+import org.fastprintf.PrintfException;
+
 import java.math.BigInteger;
 
 public final class BigIntegerWrapper implements IntForm {
@@ -52,6 +54,7 @@ public final class BigIntegerWrapper implements IntForm {
   private void ensureNonNegative() {
     if (signum < 0) {
       String msg = "Negative BigInteger(-" + value.toString() + ") cannot be converted to unsigned";
+      throw new PrintfException(msg);
     }
   }
 }

@@ -1,10 +1,8 @@
 package org.fastprintf.number;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.math.MathContext;
 
 import static org.junit.Assert.assertEquals;
@@ -96,10 +94,5 @@ public class FloatFormTest {
       assertBigDecimal(
           BigDecimal.ONE.divide(BigDecimal.valueOf(Integer.MIN_VALUE), MathContext.DECIMAL128), p);
     }
-  }
-
-  @Test
-  @Ignore
-  public void test() {
   }
 }

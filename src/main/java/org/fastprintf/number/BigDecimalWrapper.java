@@ -173,7 +173,7 @@ public final class BigDecimalWrapper implements FloatForm {
 
   @Override
   public FloatLayout hexLayout(int precision) {
-    throw new PrintfException("hexLayout not supported for BigDecimal");
+    throw new PrintfException("hexLayout not supported for BigDecimal: " + this);
   }
 
   @Override

@@ -26,9 +26,6 @@ import java.util.stream.Collectors;
 
 final class ArgsImpl implements Args {
 
-  private static final FormatTraits TRUE = new BooleanTraits(true);
-  private static final FormatTraits FALSE = new BooleanTraits(false);
-
   private final List<FormatTraits> traits;
 
   ArgsImpl(List<FormatTraits> traits) {
@@ -56,7 +53,7 @@ final class ArgsImpl implements Args {
 
   @Override
   public Args putBoolean(boolean value) {
-    return addTraits(value ? TRUE : FALSE);
+    return addTraits(BooleanTraits.valueOf(value));
   }
 
   @Override

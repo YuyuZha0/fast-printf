@@ -62,11 +62,13 @@ public class FastPrintfTest {
     System.out.println(format);
   }
 
-  @Test
+  @Test(expected = PrintfException.class)
   // https://raw.githubusercontent.com/BartMassey/printf-tests/master/printf-tests.txt
-  public void test() {
+  public void testException() {
     BigDecimal bigDecimal = new BigDecimal("3.7415926");
-    String.format("%d", bigDecimal.toBigInteger());
-    System.out.println(bigDecimal.toBigInteger());
+    FastPrintf fastPrintf = FastPrintf.compile("%a");
+    Args args = Args.of(bigDecimal);
+    String format = fastPrintf.format(args);
+    System.out.println(format);
   }
 }
