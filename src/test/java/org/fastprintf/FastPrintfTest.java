@@ -15,18 +15,18 @@ public class FastPrintfTest {
 
   @Test
   public void test1() {
-    FastPrintf fastPrintf = FastPrintf.compile("%d %f %s");
-    Args args = Args.of(1, 2.0, "hello");
+    FastPrintf fastPrintf = FastPrintf.compile("%d %f %s %s");
+    Args args = Args.of(1, 2.0, "hello", null);
     String format = fastPrintf.format(args);
-    assertEquals("1 2.000000 hello", format);
+    assertEquals("1 2.000000 hello null", format);
   }
 
   @Test
   public void test2() {
-    FastPrintf fastPrintf = FastPrintf.compile("Some different radices: %d %x %o %#x %#o ");
-    Args args = Args.of(1, 2, 3, 4, 5);
+    FastPrintf fastPrintf = FastPrintf.compile("Some different radices: %d %x %o %#x %#o %X");
+    Args args = Args.of(1, 2, 3, 4, 5, null);
     String format = fastPrintf.format(args);
-    assertEquals("Some different radices: 1 2 3 0x4 05 ", format);
+    assertEquals("Some different radices: 1 2 3 0x4 05 null", format);
   }
 
   @Test
