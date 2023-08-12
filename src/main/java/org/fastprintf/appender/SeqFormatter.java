@@ -288,8 +288,4 @@ public final class SeqFormatter {
     seq = seq.prepend(Seq.wrap(value.getClass().getName()));
     return spaceJustify(context, seq);
   }
-
-  static Seq forNull(FormatContext context) {
-    return spaceJustify(context, Seq.wrap("null"));
-  }
 }

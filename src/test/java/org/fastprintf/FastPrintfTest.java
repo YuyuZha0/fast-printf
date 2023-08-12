@@ -23,10 +23,10 @@ public class FastPrintfTest {
 
   @Test
   public void test2() {
-    FastPrintf fastPrintf = FastPrintf.compile("Some different radices: %d %x %o %#x %#o %X");
+    FastPrintf fastPrintf = FastPrintf.compile("Some different radices: %d %x %o %#x %#o %.2S");
     Args args = Args.of(1, 2, 3, 4, 5, null);
     String format = fastPrintf.format(args);
-    assertEquals("Some different radices: 1 2 3 0x4 05 null", format);
+    assertEquals("Some different radices: 1 2 3 0x4 05 NU", format);
   }
 
   @Test

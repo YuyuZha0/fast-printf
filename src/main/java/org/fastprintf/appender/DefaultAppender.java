@@ -112,11 +112,7 @@ public final class DefaultAppender implements Appender {
   }
 
   private Seq format(FormatContext context, FormatTraits traits) {
-    if (!traits.isNull()) {
-      return formatter.apply(context, traits);
-    } else {
-      return SeqFormatter.forNull(context);
-    }
+    return formatter.apply(context, traits);
   }
 
   public Specifier getSpecifier() {
