@@ -6,7 +6,7 @@
     <url>https://github.com/YuyuZha0/fast-printf</url>
     <name>fast-printf</name>
     <description>Fast printf for Java</description>
-    <groupId>org.fastprintf</groupId>
+    <groupId>io.github.yuyuzha0</groupId>
     <artifactId>fast-printf</artifactId>
     <version>0.9.0</version>
 
