@@ -12,7 +12,7 @@ public class PrintfSyntaxException extends IllegalArgumentException {
    *
    * @param desc A description of the error
    * @param pattern The erroneous pattern
-   * @param index The approximate index in the pattern of the error, or <tt>-1</tt> if the index is
+   * @param index The approximate index in the pattern of the error, or -1 if the index is
    *     not known
    */
   public PrintfSyntaxException(String desc, String pattern, int index) {
@@ -24,7 +24,7 @@ public class PrintfSyntaxException extends IllegalArgumentException {
   /**
    * Retrieves the error index.
    *
-   * @return The approximate index in the pattern of the error, or <tt>-1</tt> if the index is not
+   * @return The approximate index in the pattern of the error, or -1 if the index is not
    *     known
    */
   public int getIndex() {

@@ -43,6 +43,8 @@ public final class Utils {
    * Indicates whether {@code c} is one of the twenty-six lowercase ASCII alphabetic characters
    * between {@code 'a'} and {@code 'z'} inclusive. All others (including non-ASCII characters)
    * return {@code false}.
+   * @param c the input character
+   * @return whether c is in lower case
    */
   public static boolean isLowerCase(char c) {
     // Note: This was benchmarked against the alternate expression "(char)(c - 'a') < 26" (Nov '13)
