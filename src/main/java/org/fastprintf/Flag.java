@@ -19,7 +19,8 @@ public enum Flag {
   // both the blank and + flags appear.
   LEADING_SPACE,
 
-  // If width is prefixed by 0, leading zeros are added until the minimum width is reached. If both 0
+  // If width is prefixed by 0, leading zeros are added until the minimum width is reached. If both
+  // 0
   // and - appear, the 0 is ignored. If 0 is specified for an integer format (i, u, x, X, o, d) and
   // a precision specification is also present—for example, %04.d—the 0 is ignored. If 0 is
   // specified for the a or A floating-point format, leading zeros are prepended to the mantissa,

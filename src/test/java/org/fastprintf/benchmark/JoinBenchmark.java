@@ -2,7 +2,6 @@ package org.fastprintf.benchmark;
 
 import org.fastprintf.Args;
 import org.fastprintf.FastPrintf;
-import org.fastprintf.util.Utils;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -32,9 +31,9 @@ import java.util.concurrent.TimeUnit;
  *
  * <pre>
  * Benchmark                                Mode  Cnt    Score    Error  Units
- * JoinBenchmark.fastPrintf                 avgt    6  443.783 ± 36.460  ns/op
- * JoinBenchmark.fastPrintfWithThreadLocal  avgt    6  436.129 ± 49.553  ns/op
- * JoinBenchmark.stringJoin                 avgt    6  291.991 ±  7.598  ns/op
+ * JoinBenchmark.fastPrintf                 avgt    6  423.544 ± 39.884  ns/op
+ * JoinBenchmark.fastPrintfWithThreadLocal  avgt    6  418.718 ± 36.527  ns/op
+ * JoinBenchmark.stringJoin                 avgt    6  298.388 ± 16.167  ns/op
  * </pre>
  */
 public class JoinBenchmark {
@@ -73,7 +72,13 @@ public class JoinBenchmark {
 
   @Benchmark
   public String stringJoin() {
-    return Utils.join(", ", new Object[] {next(), next(), next(), next(), next(), next()});
+    Object[] args = new Object[] {next(), next(), next(), next(), next(), next()};
+    StringBuilder builder = new StringBuilder();
+    builder.append(args[0]);
+    for (int i = 1; i < args.length; ++i) {
+      builder.append(", ").append(args[i]);
+    }
+    return builder.toString();
   }
 
   @Benchmark

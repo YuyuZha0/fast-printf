@@ -365,7 +365,7 @@ public /*@ spec_bigint_math @*/ final class FDBigInteger {
   @ ensures AP(result, \old(idx + 1)) == \old((AP(src, idx) + UNSIGNED(prev) << (idx*32)) << bitcount);
   @*/
   private static void leftShift(
-      int[] src, int idx, int result[], int bitcount, int anticount, int prev) {
+          int[] src, int idx, int[] result, int bitcount, int anticount, int prev) {
     for (; idx > 0; idx--) {
       int v = (prev << bitcount);
       prev = src[idx - 1];
@@ -1024,7 +1024,7 @@ public /*@ spec_bigint_math @*/ final class FDBigInteger {
     int sIndex = 0;
     long borrow = 0L;
     for (; sIndex < offsetDiff; sIndex++) {
-      long diff = 0L - (sData[sIndex] & LONG_MASK) + borrow;
+      long diff = -(sData[sIndex] & LONG_MASK) + borrow;
       sData[sIndex] = (int) diff;
       borrow = diff >> 32; // signed shift
     }

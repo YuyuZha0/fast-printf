@@ -9,10 +9,11 @@
 ## Usage
 
 ```xml
+
 <dependency>
     <groupId>io.github.yuyuzha0</groupId>
     <artifactId>fast-printf</artifactId>
-    <version>0.9.0</version>
+    <version>0.9.1</version>
 </dependency>
 ```
 

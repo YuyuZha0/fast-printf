@@ -1,13 +1,12 @@
 package org.fastprintf;
 
-import org.fastprintf.traits.FormatTraits;
+import org.fastprintf.util.Utils;
 import org.junit.Test;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 
@@ -89,11 +88,7 @@ public class FastPrintfTest {
             random.nextBoolean(),
             new String(bytes, StandardCharsets.UTF_8));
     FastPrintf fastPrintf = FastPrintf.compile("%s, %s, %s, %s, %s, %s");
-    String joinResult =
-        args.asList().stream()
-            .map(FormatTraits::value)
-            .map(String::valueOf)
-            .collect(Collectors.joining(", "));
+    String joinResult = Utils.join(", ", args.values());
     assertEquals(joinResult, fastPrintf.format(args));
   }
 }

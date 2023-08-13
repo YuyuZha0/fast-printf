@@ -332,7 +332,7 @@ public final class FloatingDecimal {
           }
           decSeen = true;
         } else {
-          break skipLeadingZerosLoop;
+          break;
         }
         i++;
       }
@@ -356,7 +356,7 @@ public final class FloatingDecimal {
           }
           decSeen = true;
         } else {
-          break digitLoop;
+          break;
         }
         i++;
       }
@@ -426,7 +426,7 @@ public final class FloatingDecimal {
             expVal = expVal * 10 + ((int) c - (int) '0');
           } else {
             i--; // back up.
-            break expLoop; // stop parsing exponent.
+            break; // stop parsing exponent.
           }
         }
         int expLimit = BIG_DECIMAL_EXPONENT + nDigits + nTrailZero;
@@ -981,21 +981,21 @@ public final class FloatingDecimal {
      *
      * @return The value converted to a <code>String</code>.
      */
-    public String toJavaFormatString();
+    String toJavaFormatString();
 
     /**
      * Appends a floating point value to an <code>Appendable</code>.
      *
      * @param buf The <code>Appendable</code> to receive the value.
      */
-    public void appendTo(Appendable buf);
+    void appendTo(Appendable buf);
 
     /**
      * Retrieves the decimal exponent most closely corresponding to this value.
      *
      * @return The decimal exponent.
      */
-    public int getDecimalExponent();
+    int getDecimalExponent();
 
     /**
      * Retrieves the value as an array of digits.
@@ -1003,35 +1003,35 @@ public final class FloatingDecimal {
      * @param digits The digit array.
      * @return The number of valid digits copied into the array.
      */
-    public int getDigits(char[] digits);
+    int getDigits(char[] digits);
 
     /**
      * Indicates the sign of the value.
      *
      * @return {@code value < 0.0}.
      */
-    public boolean isNegative();
+    boolean isNegative();
 
     /**
      * Indicates whether the value is either infinite or not a number.
      *
      * @return <code>true</code> if and only if the value is <code>NaN</code> or infinite.
      */
-    public boolean isExceptional();
+    boolean isExceptional();
 
     /**
      * Indicates whether the value was rounded up during the binary to ASCII conversion.
      *
      * @return <code>true</code> if and only if the value was rounded up.
      */
-    public boolean digitsRoundedUp();
+    boolean digitsRoundedUp();
 
     /**
      * Indicates whether the binary to ASCII conversion was exact.
      *
      * @return <code>true</code> if any only if the conversion was exact.
      */
-    public boolean decimalDigitsExact();
+    boolean decimalDigitsExact();
   }
 
   /**
@@ -1051,7 +1051,7 @@ public final class FloatingDecimal {
   private static class ExceptionalBinaryToASCIIBuffer
       implements FloatingDecimal.BinaryToASCIIConverter {
     private final String image;
-    private boolean isNegative;
+    private final boolean isNegative;
 
     public ExceptionalBinaryToASCIIBuffer(String image, boolean isNegative) {
       this.image = image;
@@ -1116,7 +1116,7 @@ public final class FloatingDecimal {
      * If insignificant==(1L << ixd) i = insignificantDigitsNumber[idx] is the same as: int i; for (
      * i = 0; insignificant >= 10L; i++ ) insignificant /= 10L;
      */
-    private static int[] insignificantDigitsNumber = {
+    private static final int[] insignificantDigitsNumber = {
       0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7, 8, 8, 8, 9,
       9, 9, 9, 10, 10, 10, 11, 11, 11, 12, 12, 12, 12, 13, 13, 13, 14, 14, 14, 15, 15, 15, 15, 16,
       16, 16, 17, 17, 17, 18, 18, 18, 19
@@ -1552,7 +1552,7 @@ public final class FloatingDecimal {
             }
             digits[ndigit++] = (char) ('0' + q);
           }
-          lowDigitDifference = (b << 1) - tens;
+          lowDigitDifference = ((long) b << 1) - tens;
           exactDecimalConversion = (b == 0);
         } else {
           // still good! they're all longs!
@@ -1822,7 +1822,7 @@ public final class FloatingDecimal {
     private static final int SINGLE_MAX_SMALL_TEN = SINGLE_SMALL_10_POW.length - 1;
     boolean isNegative;
     int decExponent;
-    char digits[];
+    char[] digits;
     int nDigits;
 
     ASCIIToBinaryBuffer(boolean negSign, int decExponent, char[] digits, int n) {
@@ -1851,7 +1851,7 @@ public final class FloatingDecimal {
       for (int i = 1; i < iDigits; i++) {
         iValue = iValue * 10 + (int) digits[i] - (int) '0';
       }
-      long lValue = (long) iValue;
+      long lValue = iValue;
       for (int i = iDigits; i < kDigits; i++) {
         lValue = lValue * 10L + (long) ((int) digits[i] - (int) '0');
       }
@@ -2145,20 +2145,20 @@ public final class FloatingDecimal {
         } else {
           // the candidate is exactly right!
           // this happens with surprising frequency
-          break correctionLoop;
+          break;
         }
         cmpResult = diff.cmpPow52(B5, Ulp2);
         if ((cmpResult) < 0) {
           // difference is small.
           // this is close enough
-          break correctionLoop;
+          break;
         } else if (cmpResult == 0) {
           // difference is exactly half an ULP
           // round to some other value maybe, then finish
           if ((ieeeBits & 1) != 0) { // half ties to even
             ieeeBits += overvalue ? -1 : 1; // nextDown or nextUp
           }
-          break correctionLoop;
+          break;
         } else {
           // difference is non-trivial.
           // could scale addend by ratio of difference to
@@ -2167,7 +2167,7 @@ public final class FloatingDecimal {
           ieeeBits += overvalue ? -1 : 1; // nextDown or nextUp
           if (ieeeBits == 0
               || ieeeBits == DoubleConsts.EXP_BIT_MASK) { // 0.0 or Double.POSITIVE_INFINITY
-            break correctionLoop; // oops. Fell off end of range.
+            break; // oops. Fell off end of range.
           }
           continue; // try again.
         }
@@ -2262,7 +2262,7 @@ public final class FloatingDecimal {
         // Then convert that integer to a double, multiply
         // by the appropriate power of ten, and convert to float.
         //
-        long lValue = (long) iValue;
+        long lValue = iValue;
         for (int i = kDigits; i < nDigits; i++) {
           lValue = lValue * 10L + (long) ((int) digits[i] - (int) '0');
         }
@@ -2450,20 +2450,20 @@ public final class FloatingDecimal {
         } else {
           // the candidate is exactly right!
           // this happens with surprising frequency
-          break correctionLoop;
+          break;
         }
         cmpResult = diff.cmpPow52(B5, Ulp2);
         if ((cmpResult) < 0) {
           // difference is small.
           // this is close enough
-          break correctionLoop;
+          break;
         } else if (cmpResult == 0) {
           // difference is exactly half an ULP
           // round to some other value maybe, then finish
           if ((ieeeBits & 1) != 0) { // half ties to even
             ieeeBits += overvalue ? -1 : 1; // nextDown or nextUp
           }
-          break correctionLoop;
+          break;
         } else {
           // difference is non-trivial.
           // could scale addend by ratio of difference to
@@ -2472,7 +2472,7 @@ public final class FloatingDecimal {
           ieeeBits += overvalue ? -1 : 1; // nextDown or nextUp
           if (ieeeBits == 0
               || ieeeBits == FloatConsts.EXP_BIT_MASK) { // 0.0 or Float.POSITIVE_INFINITY
-            break correctionLoop; // oops. Fell off end of range.
+            break; // oops. Fell off end of range.
           }
           continue; // try again.
         }

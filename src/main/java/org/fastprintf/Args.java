@@ -31,7 +31,7 @@ public interface Args extends Iterable<FormatTraits> {
     return new ArgsImpl();
   }
 
-  List<FormatTraits> asList();
+  List<Object> values();
 
   Args putNull();
 
@@ -61,35 +61,5 @@ public interface Args extends Iterable<FormatTraits> {
 
   Args putBigDecimal(BigDecimal value);
 
-  Args putRaw(Object value);
-
-  default Args put(Object value) {
-    if (value == null) {
-      return putNull();
-    } else if (value instanceof Boolean) {
-      return putBoolean((Boolean) value);
-    } else if (value instanceof Character) {
-      return putChar((Character) value);
-    } else if (value instanceof Byte) {
-      return putByte((Byte) value);
-    } else if (value instanceof Short) {
-      return putShort((Short) value);
-    } else if (value instanceof Integer) {
-      return putInt((Integer) value);
-    } else if (value instanceof Long) {
-      return putLong((Long) value);
-    } else if (value instanceof Float) {
-      return putFloat((Float) value);
-    } else if (value instanceof Double) {
-      return putDouble((Double) value);
-    } else if (value instanceof CharSequence) {
-      return putCharSequence((CharSequence) value);
-    } else if (value instanceof BigInteger) {
-      return putBigInteger((BigInteger) value);
-    } else if (value instanceof BigDecimal) {
-      return putBigDecimal((BigDecimal) value);
-    } else {
-      return putRaw(value);
-    }
-  }
+  Args put(Object value);
 }
