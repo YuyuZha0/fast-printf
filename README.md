@@ -3,12 +3,23 @@
 `fast-printf` is a Java library for fast printf-like formatting. Features:
 
 * Can be extremely fast , about 4x faster than `String.format`.
-* Compatible with GLibC printf format, rather than Java `String.format` format.
+* Compatible with `glibc` printf format, rather than Java `String.format` format.
 * Zero dependency. No external dependencies, requires only Java 8+.
 
 ## Usage
 
+```xml
+<dependency>
+    <groupId>io.github.yuyuzha0</groupId>
+    <artifactId>fast-printf</artifactId>
+    <version>0.9.0</version>
+</dependency>
+```
+
 ```java
+import org.fastprintf.Args;
+import org.fastprintf.FastPrintf;
+
 public class Demo {
     @Test
     public void test() {
