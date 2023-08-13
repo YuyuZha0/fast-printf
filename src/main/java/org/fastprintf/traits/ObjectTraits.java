@@ -3,6 +3,7 @@ package org.fastprintf.traits;
 import org.fastprintf.PrintfException;
 import org.fastprintf.number.FloatForm;
 import org.fastprintf.number.IntForm;
+import org.fastprintf.util.Utils;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
@@ -46,17 +47,8 @@ public final class ObjectTraits implements FormatTraits {
     if (componentType == double.class) {
       return Arrays.toString((double[]) array);
     }
-    StringBuilder sb = new StringBuilder();
-    sb.append('[');
-    for (int i = 0; i < length; i++) {
-      Object o = Array.get(array, i);
-      if (i > 0) {
-        sb.append(", ");
-      }
-      sb.append(o);
-    }
-    sb.append(']');
-    return sb.toString();
+
+    return Utils.join(new StringBuilder().append('['), ", ", array).append(']').toString();
   }
 
   @Override

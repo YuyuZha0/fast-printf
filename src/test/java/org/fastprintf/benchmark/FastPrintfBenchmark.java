@@ -29,7 +29,6 @@ Benchmark                                      Mode  Cnt     Score     Error  Un
 FastPrintfBenchmark.fastPrintf                 avgt    6   906.942 ±  14.372  ns/op
 FastPrintfBenchmark.fastPrintfWithThreadLocal  avgt    6  1009.801 ± 127.089  ns/op
 FastPrintfBenchmark.jdkPrintf                  avgt    6  3766.802 ± 129.694  ns/op
-FastPrintfBenchmark.stringJoin                 avgt    6   212.464 ±   6.167  ns/op
  *     </pre>
  */
 public class FastPrintfBenchmark {
@@ -69,25 +68,5 @@ public class FastPrintfBenchmark {
     Long l = nextLong();
     Double d = l.doubleValue();
     return String.format(FORMAT, l, l, l, d, d, d);
-  }
-
-  @Benchmark
-  public String stringJoin() {
-    long l = nextLong();
-    double d = l;
-    StringBuilder builder = new StringBuilder(255);
-    builder.append("This is plain text: ");
-    builder.append(l);
-    builder.append(" % ");
-    builder.append(Long.toHexString(l));
-    builder.append(" % ");
-    builder.append(Long.toOctalString(l));
-    builder.append(" % ");
-    builder.append(d);
-    builder.append(" % ");
-    builder.append(d);
-    builder.append(" % ");
-    builder.append(d);
-    return builder.toString();
   }
 }

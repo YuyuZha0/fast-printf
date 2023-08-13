@@ -16,7 +16,7 @@ public class FastPrintfTest {
   @Test
   public void test1() {
     FastPrintf fastPrintf = FastPrintf.compile("%d %f %s %s");
-    Args args = Args.of(1, 2.0, "hello", null);
+    Args args = Args.of(1, 2.0, "hello".toCharArray(), null);
     String format = fastPrintf.format(args);
     assertEquals("1 2.000000 hello null", format);
   }
@@ -24,7 +24,7 @@ public class FastPrintfTest {
   @Test
   public void test2() {
     FastPrintf fastPrintf = FastPrintf.compile("Some different radices: %d %x %o %#x %#o %.2S");
-    Args args = Args.of(1, 2, 3, 4, 5, null);
+    Args args = Args.of(1, 2, 3, "4", 5, null);
     String format = fastPrintf.format(args);
     assertEquals("Some different radices: 1 2 3 0x4 05 NU", format);
   }
@@ -32,7 +32,7 @@ public class FastPrintfTest {
   @Test
   public void test3() {
     FastPrintf fastPrintf = FastPrintf.compile("floats: %4.2f %+.0e %E \n");
-    Args args = Args.of(3.1416, 3.1416, 3.1416);
+    Args args = Args.of(3.1416, 3.1416, "3.1416");
     String format = fastPrintf.format(args);
     assertEquals("floats: 3.14 +3e+00 3.141600E+00 \n", format);
   }

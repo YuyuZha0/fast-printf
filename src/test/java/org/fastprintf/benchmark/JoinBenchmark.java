@@ -2,6 +2,7 @@ package org.fastprintf.benchmark;
 
 import org.fastprintf.Args;
 import org.fastprintf.FastPrintf;
+import org.fastprintf.util.Utils;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -72,12 +73,7 @@ public class JoinBenchmark {
 
   @Benchmark
   public String stringJoin() {
-    StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < 6; ++i) {
-      sb.append(next());
-      if (i != 5) sb.append(", ");
-    }
-    return sb.toString();
+    return Utils.join(", ", new Object[] {next(), next(), next(), next(), next(), next()});
   }
 
   @Benchmark

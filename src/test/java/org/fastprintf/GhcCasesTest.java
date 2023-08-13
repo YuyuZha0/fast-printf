@@ -1,5 +1,6 @@
 package org.fastprintf;
 
+import org.fastprintf.util.Utils;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -10,9 +11,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.StringJoiner;
 import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertEquals;
@@ -103,12 +102,6 @@ public class GhcCasesTest {
     return LL.matcher(format).replaceAll("");
   }
 
-  private static String join(String... args) {
-    StringJoiner sj = new StringJoiner(", ");
-    Arrays.stream(args).forEach(sj::add);
-    return sj.toString();
-  }
-
   private static String unwrapQuotes(String s) {
     return s.substring(1, s.length() - 1);
   }
@@ -122,8 +115,11 @@ public class GhcCasesTest {
       char c = line.charAt(i);
       if (c == '"') {
         start = i;
-        while (line.charAt(++i) != '"') {}
-        ++i;
+        int close = line.indexOf('"', i + 1);
+        if (close < 0) {
+          throw new RuntimeException("invalid line: " + line);
+        }
+        i = close + 1;
         list.add(line.substring(start, i));
         start = i;
         continue;
@@ -166,7 +162,7 @@ public class GhcCasesTest {
       FastPrintf fastPrintf = FastPrintf.compile(format);
       String actual = fastPrintf.format(args);
       System.out.println("^" + line + "$");
-      assertEquals(join(a), expected, actual);
+      assertEquals(Utils.join(", ", a), expected, actual);
     }
   }
 
@@ -186,7 +182,7 @@ public class GhcCasesTest {
       FastPrintf fastPrintf = FastPrintf.compile(format);
       String actual = fastPrintf.format(args);
       System.out.println("^" + line + "$");
-      assertEquals(join(a), expected, actual);
+      assertEquals(Utils.join(", ", a), expected, actual);
     }
   }
 }
