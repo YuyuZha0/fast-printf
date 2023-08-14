@@ -2,7 +2,7 @@
 
 `fast-printf` is a Java library for fast printf-like formatting. Features:
 
-* Can be extremely fast , about 4x faster than `String.format`.
+* Can be extremely fast , about **4x** faster than `String.format`.
 * Compatible with `glibc` printf format, rather than Java `String.format` format.
 * Zero dependency. No external dependencies, requires only Java 8+.
 
@@ -21,13 +21,20 @@
 import org.fastprintf.Args;
 import org.fastprintf.FastPrintf;
 
-public class Demo {
+public class Usage {
     @Test
-    public void test() {
-        FastPrintf fastPrintf = FastPrintf.compile("floats: %4.2f %+.0e %E \n");
-        Args args = Args.of(3.1416, 3.1416, 3.1416);
-        String format = fastPrintf.format(args);
-        assertEquals("floats: 3.14 +3e+00 3.141600E+00 \n", format);
+    public void usage() {
+        // The `FastPrintf` instance should be created once and reused.
+        FastPrintf fastPrintf = FastPrintf.compile("%#08X, %05.2f, %.5S");
+
+        String format = fastPrintf.format(123456789L, Math.PI, "Hello World");
+        assertEquals("0X75BCD15, 03.14, HELLO", format);
+
+        Args args = Args.of(123456789L, Math.PI, "Hello World");
+        assertEquals("0X75BCD15, 03.14, HELLO", fastPrintf.format(args));
+
+        Args args1 = Args.create().putLong(123456789L).putDouble(Math.PI).putString("Hello World");
+        assertEquals("0X75BCD15, 03.14, HELLO", fastPrintf.format(args1));
     }
 }
 ```

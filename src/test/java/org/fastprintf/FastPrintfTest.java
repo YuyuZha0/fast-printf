@@ -91,4 +91,19 @@ public class FastPrintfTest {
     String joinResult = Utils.join(", ", args.values());
     assertEquals(joinResult, fastPrintf.format(args));
   }
+
+  @Test
+  public void usage() {
+    // The `FastPrintf` instance should be created once and reused.
+    FastPrintf fastPrintf = FastPrintf.compile("%#08X, %05.2f, %.5S");
+
+    String format = fastPrintf.format(123456789L, Math.PI, "Hello World");
+    assertEquals("0X75BCD15, 03.14, HELLO", format);
+
+    Args args = Args.of(123456789L, Math.PI, "Hello World");
+    assertEquals("0X75BCD15, 03.14, HELLO", fastPrintf.format(args));
+
+    Args args1 = Args.create().putLong(123456789L).putDouble(Math.PI).putString("Hello World");
+    assertEquals("0X75BCD15, 03.14, HELLO", fastPrintf.format(args1));
+  }
 }
