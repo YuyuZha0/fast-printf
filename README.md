@@ -18,8 +18,8 @@
 ```
 
 ```java
-import org.fastprintf.Args;
-import org.fastprintf.FastPrintf;
+import io.fastprintf.Args;
+import io.fastprintf.FastPrintf;
 
 public class Usage {
     @Test
