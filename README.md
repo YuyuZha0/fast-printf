@@ -64,7 +64,7 @@ public class Usage {
 | A         | Hexadecimal floating point, uppercase                                                                                                                     | -0XC.90FEP-2               |
 | c         | Character                                                                                                                                                 | a                          |
 | s         | String of characters                                                                                                                                      | sample                     |
-| s         | String of characters, uppercase                                                                                                                           | SAMPLE                     |
+| S         | String of characters, uppercase                                                                                                                           | SAMPLE                     |
 | p         | Java Pointer address (Like `Object.toString()` output format)                                                                                             | b8000000                   |
 | n         | Nothing printed. The corresponding argument must be a pointer to a signed int. The number of characters written so far is stored in the pointed location. | java.lang.Integer@707f7052 |
 | %         | A % followed by another % character will write a single % to the stream. %                                                                                |                            |
