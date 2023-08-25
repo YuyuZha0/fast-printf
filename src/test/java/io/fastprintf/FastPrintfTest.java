@@ -5,6 +5,10 @@ import org.junit.Test;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -93,17 +97,39 @@ public class FastPrintfTest {
   }
 
   @Test
+  public void testDateTime() {
+    assertDateTime("yyyy-MM-dd HH:mm:ss", LocalDateTime.now());
+    assertDateTime("yyyy-MM-dd HH:mm:ss.SSS", LocalDateTime.now());
+
+    assertDateTime("yyyy-MM-dd'T'HH:mm:ssx", OffsetDateTime.now());
+    assertDateTime("yyyy-MM-dd'T'HH:mm:ss.SSSx", OffsetDateTime.now());
+  }
+
+  private void assertDateTime(String pattern, TemporalAccessor value) {
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
+    FastPrintf fastPrintf = FastPrintf.compile("%{" + pattern + "}t");
+    String format = fastPrintf.format(value);
+    assertEquals(formatter.format(value), format);
+  }
+
+  @Test
   public void usage() {
     // The `FastPrintf` instance should be created once and reused.
-    FastPrintf fastPrintf = FastPrintf.compile("%#08X, %05.2f, %.5S");
+    FastPrintf fastPrintf = FastPrintf.compile("%#08X, %05.2f, %.5S, %{yyyy-MM-dd HH:mm:ss}t");
+    LocalDateTime dateTime = LocalDateTime.of(2023, 12, 31, 23, 59, 59);
 
-    String format = fastPrintf.format(123456789L, Math.PI, "Hello World");
-    assertEquals("0X75BCD15, 03.14, HELLO", format);
+    String format = fastPrintf.format(123456789L, Math.PI, "Hello World", dateTime);
+    assertEquals("0X75BCD15, 03.14, HELLO, 2023-12-31 23:59:59", format);
 
-    Args args = Args.of(123456789L, Math.PI, "Hello World");
-    assertEquals("0X75BCD15, 03.14, HELLO", fastPrintf.format(args));
+    Args args = Args.of(123456789L, Math.PI, "Hello World", dateTime);
+    assertEquals("0X75BCD15, 03.14, HELLO, 2023-12-31 23:59:59", fastPrintf.format(args));
 
-    Args args1 = Args.create().putLong(123456789L).putDouble(Math.PI).putString("Hello World");
-    assertEquals("0X75BCD15, 03.14, HELLO", fastPrintf.format(args1));
+    Args args1 =
+        Args.create()
+            .putLong(123456789L)
+            .putDouble(Math.PI)
+            .putString("Hello World")
+            .putDateTime(dateTime);
+    assertEquals("0X75BCD15, 03.14, HELLO, 2023-12-31 23:59:59", fastPrintf.format(args1));
   }
 }

@@ -1,23 +1,11 @@
 package io.fastprintf;
 
-import io.fastprintf.traits.CharacterTraits;
-import io.fastprintf.traits.DoubleTraits;
-import io.fastprintf.traits.NullTraits;
-import io.fastprintf.traits.BigDecimalTraits;
-import io.fastprintf.traits.BigIntegerTraits;
-import io.fastprintf.traits.BooleanTraits;
-import io.fastprintf.traits.ByteTraits;
-import io.fastprintf.traits.CharSequenceTraits;
-import io.fastprintf.traits.FloatTraits;
-import io.fastprintf.traits.FormatTraits;
-import io.fastprintf.traits.IntTraits;
-import io.fastprintf.traits.LongTraits;
-import io.fastprintf.traits.ObjectTraits;
-import io.fastprintf.traits.ShortTraits;
+import io.fastprintf.traits.*;
 import io.fastprintf.util.Preconditions;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -113,6 +101,12 @@ final class ArgsImpl implements Args {
   }
 
   @Override
+  public Args putDateTime(TemporalAccessor value) {
+    Preconditions.checkNotNull(value, "value");
+    return addTraits(new TemporalAccessorTraits(value));
+  }
+
+  @Override
   public Iterator<FormatTraits> iterator() {
     return traits.iterator();
   }
@@ -159,6 +153,8 @@ final class ArgsImpl implements Args {
       return putBigInteger((BigInteger) value);
     } else if (value instanceof BigDecimal) {
       return putBigDecimal((BigDecimal) value);
+    } else if (value instanceof TemporalAccessor) {
+      return putDateTime((TemporalAccessor) value);
     } else {
       return putRaw(value);
     }

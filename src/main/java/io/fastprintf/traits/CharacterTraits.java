@@ -1,7 +1,10 @@
 package io.fastprintf.traits;
 
+import io.fastprintf.PrintfException;
 import io.fastprintf.number.FloatForm;
 import io.fastprintf.number.IntForm;
+
+import java.time.temporal.TemporalAccessor;
 
 public final class CharacterTraits implements FormatTraits {
 
@@ -39,5 +42,10 @@ public final class CharacterTraits implements FormatTraits {
   @Override
   public Object value() {
     return value;
+  }
+
+  @Override
+  public TemporalAccessor asTemporalAccessor() {
+    throw new PrintfException("Cannot convert Character to TemporalAccessor");
   }
 }

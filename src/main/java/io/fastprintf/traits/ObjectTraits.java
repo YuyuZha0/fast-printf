@@ -1,13 +1,17 @@
 package io.fastprintf.traits;
 
-import io.fastprintf.util.Utils;
 import io.fastprintf.PrintfException;
 import io.fastprintf.number.FloatForm;
 import io.fastprintf.number.IntForm;
+import io.fastprintf.util.Utils;
 
 import java.lang.reflect.Array;
+import java.time.Instant;
+import java.time.temporal.TemporalAccessor;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Calendar;
+import java.util.Date;
 
 public final class ObjectTraits implements FormatTraits {
 
@@ -74,6 +78,21 @@ public final class ObjectTraits implements FormatTraits {
       return FloatForm.valueOf(((Number) value).doubleValue());
     }
     throw new PrintfException(value.getClass().getName() + " is not a number");
+  }
+
+  @Override
+  public TemporalAccessor asTemporalAccessor() {
+    if (value instanceof Date) {
+      return ((Date) value).toInstant();
+    }
+    if (value instanceof Calendar) {
+      return ((Calendar) value).toInstant();
+    }
+    if (value instanceof Number) {
+      return Instant.ofEpochMilli(((Number) value).longValue());
+    }
+    throw new PrintfException(
+        value.getClass().getName() + "cannot be converted to TemporalAccessor");
   }
 
   @Override

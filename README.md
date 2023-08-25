@@ -13,28 +13,35 @@
 <dependency>
     <groupId>io.github.yuyuzha0</groupId>
     <artifactId>fast-printf</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
 </dependency>
 ```
 
 ```java
+import java.time.LocalDateTime;
+
 import io.fastprintf.Args;
 import io.fastprintf.FastPrintf;
 
 public class Usage {
-    @Test
     public void usage() {
         // The `FastPrintf` instance should be created once and reused.
-        FastPrintf fastPrintf = FastPrintf.compile("%#08X, %05.2f, %.5S");
+        FastPrintf fastPrintf = FastPrintf.compile("%#08X, %05.2f, %.5S, %{yyyy-MM-dd HH:mm:ss}t");
+        LocalDateTime dateTime = LocalDateTime.of(2023, 12, 31, 23, 59, 59);
 
-        String format = fastPrintf.format(123456789L, Math.PI, "Hello World");
-        assertEquals("0X75BCD15, 03.14, HELLO", format);
+        String format = fastPrintf.format(123456789L, Math.PI, "Hello World", dateTime);
+        assertEquals("0X75BCD15, 03.14, HELLO, 2023-12-31 23:59:59", format);
 
-        Args args = Args.of(123456789L, Math.PI, "Hello World");
-        assertEquals("0X75BCD15, 03.14, HELLO", fastPrintf.format(args));
+        Args args = Args.of(123456789L, Math.PI, "Hello World", dateTime);
+        assertEquals("0X75BCD15, 03.14, HELLO, 2023-12-31 23:59:59", fastPrintf.format(args));
 
-        Args args1 = Args.create().putLong(123456789L).putDouble(Math.PI).putString("Hello World");
-        assertEquals("0X75BCD15, 03.14, HELLO", fastPrintf.format(args1));
+        Args args1 =
+                Args.create()
+                        .putLong(123456789L)
+                        .putDouble(Math.PI)
+                        .putString("Hello World")
+                        .putDateTime(dateTime);
+        assertEquals("0X75BCD15, 03.14, HELLO, 2023-12-31 23:59:59", fastPrintf.format(args1));
     }
 }
 ```
@@ -43,7 +50,7 @@ public class Usage {
 
 ### Syntax
 
-`%[flags][width][.precision]specifier`
+`%[flags][width][.precision][{date-time-pattern}]specifier`
 
 ### Specifiers
 
@@ -65,6 +72,8 @@ public class Usage {
 | c         | Character                                                                | a                          |
 | s         | String of characters                                                     | sample                     |
 | S         | String of characters, uppercase                                          | SAMPLE                     |
+| t         | Date/Time string                                                         | -                          |
+| T         | Date/Time string, uppercase                                              | -                          |
 | p         | Java Pointer address (Like `Object.toString()` output format)            | java.lang.Integer@707f7052 |
 | n         | Nothing printed.                                                         |                            |
 | %         | A % followed by another % character will write a single % to the stream. | %                          |

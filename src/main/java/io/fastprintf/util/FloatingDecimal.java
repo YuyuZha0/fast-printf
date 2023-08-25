@@ -316,7 +316,6 @@ public final class FloatingDecimal {
       int nLeadZero = 0;
       int nTrailZero = 0;
 
-      skipLeadingZerosLoop:
       while (i < len) {
         c = in.charAt(i);
         if (c == '0') {
@@ -336,7 +335,6 @@ public final class FloatingDecimal {
         }
         i++;
       }
-      digitLoop:
       while (i < len) {
         c = in.charAt(i);
         if (c >= '1' && c <= '9') {
@@ -414,7 +412,6 @@ public final class FloatingDecimal {
             i++;
         }
         int expAt = i;
-        expLoop:
         while (i < len) {
           if (expVal >= reallyBig) {
             // the next character will cause integer
@@ -2043,7 +2040,6 @@ public final class FloatingDecimal {
       FDBigInteger bigD = null;
       int prevD2 = 0;
 
-      correctionLoop:
       while (true) {
         // here ieeeBits can't be NaN, Infinity or zero
         int binexp = (int) (ieeeBits >>> EXP_SHIFT);
@@ -2166,7 +2162,7 @@ public final class FloatingDecimal {
           // Most of the time ( I hope ) it is about 1 anyway.
           ieeeBits += overvalue ? -1 : 1; // nextDown or nextUp
           if (ieeeBits == 0
-              || ieeeBits == DoubleConsts.EXP_BIT_MASK) { // 0.0 or Double.POSITIVE_INFINITY
+                  || ieeeBits == DoubleConsts.EXP_BIT_MASK) { // 0.0 or Double.POSITIVE_INFINITY
             break; // oops. Fell off end of range.
           }
           continue; // try again.
@@ -2348,7 +2344,6 @@ public final class FloatingDecimal {
       FDBigInteger bigD = null;
       int prevD2 = 0;
 
-      correctionLoop:
       while (true) {
         // here ieeeBits can't be NaN, Infinity or zero
         int binexp = ieeeBits >>> SINGLE_EXP_SHIFT;
@@ -2471,7 +2466,7 @@ public final class FloatingDecimal {
           // Most of the time ( I hope ) it is about 1 anyway.
           ieeeBits += overvalue ? -1 : 1; // nextDown or nextUp
           if (ieeeBits == 0
-              || ieeeBits == FloatConsts.EXP_BIT_MASK) { // 0.0 or Float.POSITIVE_INFINITY
+                  || ieeeBits == FloatConsts.EXP_BIT_MASK) { // 0.0 or Float.POSITIVE_INFINITY
             break; // oops. Fell off end of range.
           }
           continue; // try again.

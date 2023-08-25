@@ -5,6 +5,8 @@ import io.fastprintf.number.IntForm;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.Instant;
+import java.time.temporal.TemporalAccessor;
 
 public final class BigIntegerTraits implements FormatTraits {
 
@@ -32,6 +34,12 @@ public final class BigIntegerTraits implements FormatTraits {
   @Override
   public int asInt() {
     return value.intValue();
+  }
+
+  @Override
+  public TemporalAccessor asTemporalAccessor() {
+    long millis = value.longValue();
+    return Instant.ofEpochMilli(millis);
   }
 
   @Override

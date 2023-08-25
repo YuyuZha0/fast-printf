@@ -6,6 +6,7 @@ import io.fastprintf.appender.FixedStringAppender;
 import io.fastprintf.util.Preconditions;
 import io.fastprintf.util.Utils;
 
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -48,12 +49,13 @@ final class Compiler {
       recursiveDecrease();
       return;
     }
-    // %[flags][width][.precision]specifier */
+    // %[flags][width][.precision][{date-time-formatter}]specifier
     EnumSet<Flag> flags = flags();
     int width = width();
     int precision = precision();
+    DateTimeFormatter dateTimeFormatter = dateTimeFormatter();
     Specifier specifier = specifier();
-    FormatContext context = FormatContext.create(flags, width, precision);
+    FormatContext context = FormatContext.create(flags, width, precision, dateTimeFormatter);
     appenders.add(new DefaultAppender(specifier, context));
     recursiveDecrease();
   }
@@ -97,7 +99,11 @@ final class Compiler {
     if (w.isEmpty()) {
       return FormatContext.UNSET;
     }
-    return Integer.parseInt(w);
+    try {
+      return Integer.parseInt(w);
+    } catch (NumberFormatException e) {
+      throw new PrintfSyntaxException("Invalid width", source, lookahead);
+    }
   }
 
   private int precision() {
@@ -126,7 +132,30 @@ final class Compiler {
       return 0;
       // throw new PrintfSyntaxException("Invalid precision", source, lookahead);
     }
-    return Integer.parseInt(p);
+    try {
+      return Integer.parseInt(p);
+    } catch (NumberFormatException e) {
+      throw new PrintfSyntaxException("Invalid precision", source, lookahead);
+    }
+  }
+
+  private DateTimeFormatter dateTimeFormatter() {
+    checkSource();
+    if (source.charAt(lookahead) != '{') {
+      return null;
+    }
+    int start = lookahead + 1;
+    int end = source.indexOf('}', start + 1);
+    if (end == -1) {
+      throw new PrintfSyntaxException("Enclosed \"{}\" for date time pattern", source, lookahead);
+    }
+    String pattern = source.substring(start, end);
+    lookahead = end + 1;
+    try {
+      return DateTimeFormatter.ofPattern(pattern);
+    } catch (IllegalArgumentException e) {
+      throw new PrintfSyntaxException("Invalid date time pattern", source, lookahead);
+    }
   }
 
   private Specifier specifier() {

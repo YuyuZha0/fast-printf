@@ -18,6 +18,8 @@ public enum Specifier {
   CHARACTER('c'),
   STRING('s'),
   STRING_UPPERCASE('S'),
+  DATE_AND_TIME('t'),
+  DATE_AND_TIME_UPPERCASE('T'),
   NOTHING_PRINTED('n'),
   POINTER('p'),
   PERCENT_SIGN('%');

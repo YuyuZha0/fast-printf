@@ -3,6 +3,9 @@ package io.fastprintf.traits;
 import io.fastprintf.number.FloatForm;
 import io.fastprintf.number.IntForm;
 
+import java.time.Instant;
+import java.time.temporal.TemporalAccessor;
+
 public final class IntTraits implements FormatTraits {
 
   private final int value;
@@ -34,5 +37,10 @@ public final class IntTraits implements FormatTraits {
   @Override
   public Object value() {
     return value;
+  }
+
+  @Override
+  public TemporalAccessor asTemporalAccessor() {
+    return Instant.ofEpochSecond(value);
   }
 }

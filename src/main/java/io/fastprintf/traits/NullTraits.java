@@ -4,6 +4,8 @@ import io.fastprintf.PrintfException;
 import io.fastprintf.number.FloatForm;
 import io.fastprintf.number.IntForm;
 
+import java.time.temporal.TemporalAccessor;
+
 public final class NullTraits implements FormatTraits {
 
   private static final NullTraits INSTANCE = new NullTraits();
@@ -27,6 +29,11 @@ public final class NullTraits implements FormatTraits {
   @Override
   public FloatForm asFloatForm() {
     throw new PrintfException("null cannot be converted to float");
+  }
+
+  @Override
+  public TemporalAccessor asTemporalAccessor() {
+    throw new PrintfException("null cannot be converted to TemporalAccessor");
   }
 
   @Override

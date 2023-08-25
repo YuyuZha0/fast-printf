@@ -5,6 +5,7 @@ import io.fastprintf.appender.DefaultAppender;
 import io.fastprintf.appender.FixedStringAppender;
 import org.junit.Test;
 
+import java.time.format.DateTimeFormatter;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -140,11 +141,31 @@ public class CompilerTest {
 
   @Test
   public void test7() {
-    Compiler compiler = new Compiler("%%%%");
+    Compiler compiler = new Compiler("%%\u0025\u0025");
     compiler.compile();
     List<Appender> appenders = compiler.getAppenders();
     assertEquals(2, appenders.size());
     assertFixed(appenders.get(0), "%");
     assertFixed(appenders.get(1), "%");
+  }
+
+  @Test
+  public void test8() {
+    Compiler compiler = new Compiler("Date time: %16{yyyy-MM-dd HH:mm:ss}t");
+    compiler.compile();
+    List<Appender> appenders = compiler.getAppenders();
+    assertEquals(2, appenders.size());
+    assertFixed(appenders.get(0), "Date time: ");
+    Appender appender = appenders.get(1);
+    assertTrue(appender instanceof DefaultAppender);
+    DefaultAppender defaultAppender = (DefaultAppender) appender;
+    assertEquals(Specifier.DATE_AND_TIME, defaultAppender.getSpecifier());
+    FormatContext context = defaultAppender.getContext();
+    assertEquals(EnumSet.noneOf(Flag.class), context.getFlags());
+    assertEquals(16, context.getWidth());
+    assertEquals(FormatContext.UNSET, context.getPrecision());
+    assertEquals(
+        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").toString(),
+        context.getDateTimeFormatter().toString());
   }
 }

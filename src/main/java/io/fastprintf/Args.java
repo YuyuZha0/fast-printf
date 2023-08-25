@@ -5,6 +5,7 @@ import io.fastprintf.util.Preconditions;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,6 +51,8 @@ public interface Args extends Iterable<FormatTraits> {
   Args putFloat(float value);
 
   Args putDouble(double value);
+
+  Args putDateTime(TemporalAccessor value);
 
   default Args putString(String value) {
     return putCharSequence(value);

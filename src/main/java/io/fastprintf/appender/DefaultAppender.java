@@ -1,12 +1,12 @@
 package io.fastprintf.appender;
 
 import io.fastprintf.Flag;
+import io.fastprintf.FormatContext;
 import io.fastprintf.PrintfException;
 import io.fastprintf.Specifier;
 import io.fastprintf.seq.Seq;
-import io.fastprintf.util.Preconditions;
-import io.fastprintf.FormatContext;
 import io.fastprintf.traits.FormatTraits;
+import io.fastprintf.util.Preconditions;
 
 import java.util.Iterator;
 import java.util.List;
@@ -71,6 +71,11 @@ public final class DefaultAppender implements Appender {
       case STRING_UPPERCASE:
         return (FormatContext context, FormatTraits traits) ->
             SeqFormatter.s(context, traits).upperCase();
+      case DATE_AND_TIME:
+        return SeqFormatter::t;
+      case DATE_AND_TIME_UPPERCASE:
+        return (FormatContext context, FormatTraits traits) ->
+            SeqFormatter.t(context, traits).upperCase();
       case CHARACTER:
         return SeqFormatter::c;
       case POINTER:

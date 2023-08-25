@@ -365,7 +365,7 @@ public /*@ spec_bigint_math @*/ final class FDBigInteger {
   @ ensures AP(result, \old(idx + 1)) == \old((AP(src, idx) + UNSIGNED(prev) << (idx*32)) << bitcount);
   @*/
   private static void leftShift(
-          int[] src, int idx, int[] result, int bitcount, int anticount, int prev) {
+      int[] src, int idx, int[] result, int bitcount, int anticount, int prev) {
     for (; idx > 0; idx--) {
       int v = (prev << bitcount);
       prev = src[idx - 1];

@@ -3,6 +3,7 @@ package io.fastprintf;
 import io.fastprintf.util.Preconditions;
 
 import java.io.Serializable;
+import java.time.format.DateTimeFormatter;
 import java.util.EnumSet;
 
 public final class FormatContext implements Serializable {
@@ -14,16 +15,20 @@ public final class FormatContext implements Serializable {
   private final EnumSet<Flag> flags;
   private final int width;
   private final int precision;
+  private final DateTimeFormatter dateTimeFormatter;
 
-  private FormatContext(EnumSet<Flag> flags, int width, int precision) {
+  private FormatContext(
+      EnumSet<Flag> flags, int width, int precision, DateTimeFormatter dateTimeFormatter) {
     this.flags = flags;
     this.width = width;
     this.precision = precision;
+    this.dateTimeFormatter = dateTimeFormatter;
   }
 
-  public static FormatContext create(EnumSet<Flag> flags, int width, int precision) {
+  public static FormatContext create(
+      EnumSet<Flag> flags, int width, int precision, DateTimeFormatter dateTimeFormatter) {
     Preconditions.checkNotNull(flags, "flags");
-    return new FormatContext(EnumSet.copyOf(flags), width, precision);
+    return new FormatContext(EnumSet.copyOf(flags), width, precision, dateTimeFormatter);
   }
 
   public static FormatContext create(String flags) {
@@ -39,7 +44,7 @@ public final class FormatContext implements Serializable {
         flagSet.add(Flag.valueOf(flags.charAt(i)));
       }
     }
-    return new FormatContext(flagSet, w, p);
+    return new FormatContext(flagSet, w, p, null);
   }
 
   public int getWidth() {
@@ -47,7 +52,7 @@ public final class FormatContext implements Serializable {
   }
 
   public FormatContext setWidth(int newWidth) {
-    return new FormatContext(EnumSet.copyOf(flags), newWidth, precision);
+    return new FormatContext(EnumSet.copyOf(flags), newWidth, precision, dateTimeFormatter);
   }
 
   public boolean isWidthSet() {
@@ -59,7 +64,7 @@ public final class FormatContext implements Serializable {
   }
 
   public FormatContext setPrecision(int newPrecision) {
-    return new FormatContext(EnumSet.copyOf(flags), width, newPrecision);
+    return new FormatContext(EnumSet.copyOf(flags), width, newPrecision, dateTimeFormatter);
   }
 
   public boolean isPrecisionSet() {
@@ -82,13 +87,18 @@ public final class FormatContext implements Serializable {
     if (flag == null || flags.contains(flag)) {
       return this;
     }
-    FormatContext newContext = new FormatContext(EnumSet.copyOf(flags), width, precision);
+    FormatContext newContext =
+        new FormatContext(EnumSet.copyOf(flags), width, precision, dateTimeFormatter);
     newContext.flags.add(flag);
     return newContext;
   }
 
   public boolean hasFlag(Flag flag) {
     return flag != null && flags.contains(flag);
+  }
+
+  public DateTimeFormatter getDateTimeFormatter() {
+    return dateTimeFormatter;
   }
 
   @Override

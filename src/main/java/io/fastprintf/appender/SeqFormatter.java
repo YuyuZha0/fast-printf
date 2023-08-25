@@ -1,13 +1,17 @@
 package io.fastprintf.appender;
 
 import io.fastprintf.Flag;
-import io.fastprintf.seq.Seq;
 import io.fastprintf.FormatContext;
 import io.fastprintf.number.FloatForm;
 import io.fastprintf.number.FloatLayout;
 import io.fastprintf.number.IntForm;
+import io.fastprintf.seq.Seq;
 import io.fastprintf.traits.FormatTraits;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAccessor;
 import java.util.function.Function;
 
 public final class SeqFormatter {
@@ -286,6 +290,20 @@ public final class SeqFormatter {
     Seq seq = Seq.wrap(Integer.toHexString(System.identityHashCode(value)));
     seq = seq.prepend(Seq.ch('@'));
     seq = seq.prepend(Seq.wrap(value.getClass().getName()));
+    return spaceJustify(context, seq);
+  }
+
+  static Seq t(FormatContext context, FormatTraits traits) {
+    DateTimeFormatter formatter = context.getDateTimeFormatter();
+    if (formatter == null) {
+      formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+    }
+    TemporalAccessor temporalAccessor = traits.asTemporalAccessor();
+    if (temporalAccessor instanceof Instant) {
+      Instant instant = (Instant) temporalAccessor;
+      temporalAccessor = instant.atZone(ZoneId.systemDefault());
+    }
+    Seq seq = Seq.wrap(formatter.format(temporalAccessor));
     return spaceJustify(context, seq);
   }
 }
