@@ -53,8 +53,7 @@ public final class BigIntegerWrapper implements IntForm {
 
   private void ensureNonNegative() {
     if (signum < 0) {
-      String msg = "Negative BigInteger(-" + value.toString() + ") cannot be converted to unsigned";
-      throw new PrintfException(msg);
+      throw new PrintfException("Negative BigInteger(-%s) cannot be converted to unsigned", value);
     }
   }
 }

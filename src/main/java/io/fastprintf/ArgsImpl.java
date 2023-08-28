@@ -23,6 +23,10 @@ final class ArgsImpl implements Args {
     this(new ArrayList<>());
   }
 
+  ArgsImpl(int size) {
+    this(new ArrayList<>(size));
+  }
+
   private Args addTraits(FormatTraits traits) {
     this.traits.add(traits);
     return this;

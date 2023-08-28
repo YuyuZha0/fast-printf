@@ -13,7 +13,7 @@
 <dependency>
     <groupId>io.github.yuyuzha0</groupId>
     <artifactId>fast-printf</artifactId>
-    <version>1.0.1</version>
+    <version>1.1.0</version>
 </dependency>
 ```
 
@@ -72,8 +72,8 @@ public class Usage {
 | c         | Character                                                                | a                          |
 | s         | String of characters                                                     | sample                     |
 | S         | String of characters, uppercase                                          | SAMPLE                     |
-| t         | Date/Time string                                                         | -                          |
-| T         | Date/Time string, uppercase                                              | -                          |
+| t         | Date/Time string                                                         | 2023-12-31 23:59:59        |
+| T         | Date/Time string, uppercase                                              | 2023-12-31 23:59:59        |
 | p         | Java Pointer address (Like `Object.toString()` output format)            | java.lang.Integer@707f7052 |
 | n         | Nothing printed.                                                         |                            |
 | %         | A % followed by another % character will write a single % to the stream. | %                          |

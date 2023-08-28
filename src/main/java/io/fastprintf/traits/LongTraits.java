@@ -2,8 +2,8 @@ package io.fastprintf.traits;
 
 import io.fastprintf.number.FloatForm;
 import io.fastprintf.number.IntForm;
+import io.fastprintf.util.Utils;
 
-import java.time.Instant;
 import java.time.temporal.TemporalAccessor;
 
 public final class LongTraits implements FormatTraits {
@@ -41,6 +41,6 @@ public final class LongTraits implements FormatTraits {
 
   @Override
   public TemporalAccessor asTemporalAccessor() {
-    return Instant.ofEpochMilli(value);
+    return Utils.longToInstant(value);
   }
 }

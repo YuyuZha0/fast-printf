@@ -5,8 +5,10 @@ import org.junit.Test;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
@@ -131,5 +133,19 @@ public class FastPrintfTest {
             .putString("Hello World")
             .putDateTime(dateTime);
     assertEquals("0X75BCD15, 03.14, HELLO, 2023-12-31 23:59:59", fastPrintf.format(args1));
+  }
+
+  @Test
+  public void testFormatIntTime() {
+    long now = System.currentTimeMillis();
+    FastPrintf fastPrintf = FastPrintf.compile("%t, %T");
+    Args args = Args.of(now, now / 1000L);
+    String format = fastPrintf.format(args);
+    DateTimeFormatter formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+    assertEquals(
+        formatter.format(Instant.ofEpochMilli(now).atZone(ZoneId.systemDefault()))
+            + ", "
+            + formatter.format(Instant.ofEpochSecond(now / 1000L).atZone(ZoneId.systemDefault())),
+        format);
   }
 }

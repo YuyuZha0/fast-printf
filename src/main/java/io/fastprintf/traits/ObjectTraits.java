@@ -6,7 +6,6 @@ import io.fastprintf.number.IntForm;
 import io.fastprintf.util.Utils;
 
 import java.lang.reflect.Array;
-import java.time.Instant;
 import java.time.temporal.TemporalAccessor;
 import java.util.Arrays;
 import java.util.Base64;
@@ -69,7 +68,7 @@ public final class ObjectTraits implements FormatTraits {
     if (value instanceof Number) {
       return IntForm.valueOf(((Number) value).longValue());
     }
-    throw new PrintfException(value.getClass().getName() + " is not a number");
+    throw new PrintfException("%s is not a number", value);
   }
 
   @Override
@@ -77,7 +76,7 @@ public final class ObjectTraits implements FormatTraits {
     if (value instanceof Number) {
       return FloatForm.valueOf(((Number) value).doubleValue());
     }
-    throw new PrintfException(value.getClass().getName() + " is not a number");
+    throw new PrintfException("%s is not a number", value);
   }
 
   @Override
@@ -89,10 +88,9 @@ public final class ObjectTraits implements FormatTraits {
       return ((Calendar) value).toInstant();
     }
     if (value instanceof Number) {
-      return Instant.ofEpochMilli(((Number) value).longValue());
+      return Utils.longToInstant(((Number) value).longValue());
     }
-    throw new PrintfException(
-        value.getClass().getName() + "cannot be converted to TemporalAccessor");
+    throw new PrintfException("%s cannot be converted to TemporalAccessor", value);
   }
 
   @Override
@@ -100,7 +98,7 @@ public final class ObjectTraits implements FormatTraits {
     if (value instanceof Number) {
       return ((Number) value).intValue();
     }
-    throw new PrintfException(value + " cannot be converted to int");
+    throw new PrintfException("%s cannot be converted to int", value);
   }
 
   @Override

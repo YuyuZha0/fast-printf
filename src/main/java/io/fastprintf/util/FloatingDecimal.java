@@ -2162,7 +2162,7 @@ public final class FloatingDecimal {
           // Most of the time ( I hope ) it is about 1 anyway.
           ieeeBits += overvalue ? -1 : 1; // nextDown or nextUp
           if (ieeeBits == 0
-                  || ieeeBits == DoubleConsts.EXP_BIT_MASK) { // 0.0 or Double.POSITIVE_INFINITY
+              || ieeeBits == DoubleConsts.EXP_BIT_MASK) { // 0.0 or Double.POSITIVE_INFINITY
             break; // oops. Fell off end of range.
           }
           continue; // try again.
@@ -2466,7 +2466,7 @@ public final class FloatingDecimal {
           // Most of the time ( I hope ) it is about 1 anyway.
           ieeeBits += overvalue ? -1 : 1; // nextDown or nextUp
           if (ieeeBits == 0
-                  || ieeeBits == FloatConsts.EXP_BIT_MASK) { // 0.0 or Float.POSITIVE_INFINITY
+              || ieeeBits == FloatConsts.EXP_BIT_MASK) { // 0.0 or Float.POSITIVE_INFINITY
             break; // oops. Fell off end of range.
           }
           continue; // try again.

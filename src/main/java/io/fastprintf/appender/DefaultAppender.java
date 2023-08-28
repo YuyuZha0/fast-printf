@@ -89,7 +89,7 @@ public final class DefaultAppender implements Appender {
 
   private int nextInt(Iterator<FormatTraits> iterator) {
     if (!iterator.hasNext()) {
-      throw new PrintfException("Missing argument for specifier: " + specifier);
+      throw new PrintfException("Missing argument for specifier: %s", specifier);
     }
     return iterator.next().asInt();
   }

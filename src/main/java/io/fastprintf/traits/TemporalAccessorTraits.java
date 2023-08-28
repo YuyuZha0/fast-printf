@@ -44,7 +44,7 @@ public final class TemporalAccessorTraits implements FormatTraits {
 
   private long getEpochSecond() {
     if (!value.isSupported(ChronoField.INSTANT_SECONDS))
-      throw new PrintfException("Can't get seconds from: " + value);
+      throw new PrintfException("Can't get seconds from: %s", value);
     return value.getLong(ChronoField.INSTANT_SECONDS);
   }
 

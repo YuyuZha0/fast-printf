@@ -2,6 +2,7 @@ package io.fastprintf.util;
 
 import org.junit.Test;
 
+import java.time.Instant;
 import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
@@ -77,5 +78,34 @@ public class UtilsTest {
     assertEquals("", Utils.join(",", null));
     assertEquals("", Utils.join(",", new String[] {}));
     assertEquals("1,2,null", Utils.join(",", new Integer[] {1, 2, null}));
+  }
+
+  @Test
+  public void testLenientFormat() {
+    assertEquals("1", Utils.lenientFormat("%s", 1));
+    assertEquals("1", Utils.lenientFormat("%s", "1"));
+    assertEquals("1", Utils.lenientFormat("%s", new Object[] {1}));
+    assertEquals("1", Utils.lenientFormat("%s", new Object[] {"1"}));
+    assertEquals("1 [2]", Utils.lenientFormat("%s", new Object[] {1, 2}));
+
+    assertEquals("Hello: 1, 2", Utils.lenientFormat("Hello: %s, %s", new Object[] {"1", "2"}));
+    assertEquals("Hello: 1, 2", Utils.lenientFormat("Hello: %s, %s", "1", "2"));
+    assertEquals("Hello: 1, 2", Utils.lenientFormat("Hello: %s, %s", 1, 2));
+    assertEquals("Hello: 1, 2", Utils.lenientFormat("Hello: %s, %s", new Object[] {1, 2}));
+
+    assertEquals("Hello: 1, 2 [3]", Utils.lenientFormat("Hello: %s, %s", new Object[] {1, 2, 3}));
+    assertEquals("(Object[])null", Utils.lenientFormat("%s", null));
+    assertEquals("null", Utils.lenientFormat("%s", new Object[] {null}));
+    assertEquals("null", Utils.lenientFormat(null));
+  }
+
+  @Test
+  public void testLongToInstant() {
+    long now = System.currentTimeMillis();
+    Instant instant = Utils.longToInstant(now);
+    assertEquals(now, instant.toEpochMilli());
+
+    Instant instant2 = Utils.longToInstant(now / 1000);
+    assertEquals(now / 1000, instant2.getEpochSecond());
   }
 }

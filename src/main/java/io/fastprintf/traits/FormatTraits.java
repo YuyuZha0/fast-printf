@@ -21,7 +21,7 @@ public interface FormatTraits {
   int asInt();
 
   default TemporalAccessor asTemporalAccessor() {
-    throw new PrintfException("Cannot convert [" + value() + "] to TemporalAccessor");
+    throw new PrintfException("Cannot convert [%s] to TemporalAccessor", value());
   }
 
   default char asChar() {
