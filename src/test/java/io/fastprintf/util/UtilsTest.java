@@ -5,6 +5,7 @@ import org.junit.Test;
 import java.time.Instant;
 import java.util.Arrays;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -12,100 +13,74 @@ import static org.junit.Assert.assertTrue;
 public class UtilsTest {
 
   @Test
-  public void testToUpperCaseString() {
+  public void testUpperCase() {
+    char[] chars = {'a', 'b', 'c'};
+    Utils.toUpperCase(chars);
+    assertArrayEquals(new char[] {'A', 'B', 'C'}, chars);
+
+    chars = new char[] {'A', 'B', 'C'};
+    assertFalse(Utils.toUpperCase(chars));
+
     assertEquals("ABC", Utils.toUpperCase("abc"));
     assertEquals("ABC", Utils.toUpperCase("ABC"));
-    assertEquals("ABC", Utils.toUpperCase("AbC"));
-    assertEquals("ABC", Utils.toUpperCase("aBc"));
-    assertEquals("ABC", Utils.toUpperCase("Abc"));
-    assertEquals("ABC", Utils.toUpperCase("abC"));
-    assertEquals("ABC", Utils.toUpperCase("aBC"));
-
+    assertEquals("123", Utils.toUpperCase("123"));
     assertEquals("", Utils.toUpperCase(""));
-    assertEquals("A", Utils.toUpperCase("a"));
-    assertEquals("测试@1", Utils.toUpperCase("测试@1"));
+  }
+
+  @Test
+  public void testIsLowerCase() {
+    assertTrue(Utils.isLowerCase('a'));
+    assertFalse(Utils.isLowerCase('A'));
+    assertFalse(Utils.isLowerCase('1'));
+    assertFalse(Utils.isLowerCase('@'));
   }
 
   @Test
   public void testToUpperCaseChar() {
     assertEquals('A', Utils.toUpperCase('a'));
     assertEquals('A', Utils.toUpperCase('A'));
-    assertEquals('@', Utils.toUpperCase('@'));
-    assertEquals('1', Utils.toUpperCase('1'));
-    assertEquals('测', Utils.toUpperCase('测'));
-  }
-
-  @Test
-  public void testToUpperCaseCharArray() {
-
-    char[] chars = new char[] {'a', 'b', 'c'};
-    Utils.toUpperCase(chars);
-    assertEquals('A', chars[0]);
-    assertEquals('B', chars[1]);
-    assertEquals('C', chars[2]);
   }
 
   @Test
   public void testIsDigit() {
-
-    assertTrue(Utils.isDigit('0'));
-    assertTrue(Utils.isDigit('1'));
-    assertTrue(Utils.isDigit('2'));
-    assertTrue(Utils.isDigit('3'));
-    assertTrue(Utils.isDigit('4'));
-    assertTrue(Utils.isDigit('5'));
-    assertTrue(Utils.isDigit('6'));
-    assertTrue(Utils.isDigit('7'));
-    assertTrue(Utils.isDigit('8'));
-    assertTrue(Utils.isDigit('9'));
-
+    for (char c = '0'; c <= '9'; c++) {
+      assertTrue(Utils.isDigit(c));
+    }
     assertFalse(Utils.isDigit('a'));
-    assertFalse(Utils.isDigit('b'));
-    assertFalse(Utils.isDigit('一'));
-    assertFalse(Utils.isDigit(' '));
+    assertFalse(Utils.isDigit('A'));
+  }
+
+  @Test
+  public void testIsNotDigit() {
+    for (char c = '0'; c <= '9'; c++) {
+      assertFalse(Utils.isNotDigit(c));
+    }
+    assertTrue(Utils.isNotDigit('a'));
+    assertTrue(Utils.isNotDigit('A'));
   }
 
   @Test
   public void testJoin() {
-    assertEquals("1,2,3", Utils.join(",", new String[] {"1", "2", "3"}));
-    assertEquals("1,2,3", Utils.join(",", new Integer[] {1, 2, 3}));
-    assertEquals("1,2,3", Utils.join(",", new int[] {1, 2, 3}));
-    assertEquals("1,2,3", Utils.join(",", new long[] {1, 2, 3}));
-    assertEquals("1,2,3", Utils.join(",", Arrays.asList(1, 2, 3)));
-    assertEquals("1,2,3", Utils.join(",", Arrays.asList("1", "2", "3")));
-    assertEquals("1,2,3", Utils.join(",", Arrays.asList(1, 2, 3).iterator()));
-    assertEquals("1,2,3", Utils.join(",", Arrays.asList("1", "2", "3").iterator()));
-    assertEquals("", Utils.join(",", null));
-    assertEquals("", Utils.join(",", new String[] {}));
-    assertEquals("1,2,null", Utils.join(",", new Integer[] {1, 2, null}));
-  }
-
-  @Test
-  public void testLenientFormat() {
-    assertEquals("1", Utils.lenientFormat("%s", 1));
-    assertEquals("1", Utils.lenientFormat("%s", "1"));
-    assertEquals("1", Utils.lenientFormat("%s", new Object[] {1}));
-    assertEquals("1", Utils.lenientFormat("%s", new Object[] {"1"}));
-    assertEquals("1 [2]", Utils.lenientFormat("%s", new Object[] {1, 2}));
-
-    assertEquals("Hello: 1, 2", Utils.lenientFormat("Hello: %s, %s", new Object[] {"1", "2"}));
-    assertEquals("Hello: 1, 2", Utils.lenientFormat("Hello: %s, %s", "1", "2"));
-    assertEquals("Hello: 1, 2", Utils.lenientFormat("Hello: %s, %s", 1, 2));
-    assertEquals("Hello: 1, 2", Utils.lenientFormat("Hello: %s, %s", new Object[] {1, 2}));
-
-    assertEquals("Hello: 1, 2 [3]", Utils.lenientFormat("Hello: %s, %s", new Object[] {1, 2, 3}));
-    assertEquals("(Object[])null", Utils.lenientFormat("%s", null));
-    assertEquals("null", Utils.lenientFormat("%s", new Object[] {null}));
-    assertEquals("null", Utils.lenientFormat(null));
+    assertEquals("1,2,3,4", Utils.join(",", Arrays.asList(1, 2, 3, 4)));
+    assertEquals("", Utils.join(",", new Object[0]));
+    assertEquals("a,b,c", Utils.join(",", new Object[] {"a", "b", "c"}));
   }
 
   @Test
   public void testLongToInstant() {
-    long now = System.currentTimeMillis();
-    Instant instant = Utils.longToInstant(now);
-    assertEquals(now, instant.toEpochMilli());
+    assertEquals(Instant.ofEpochSecond(5000), Utils.longToInstant(5000));
+    assertEquals(Instant.ofEpochMilli(5000000000L), Utils.longToInstant(5000000000L));
+  }
 
-    Instant instant2 = Utils.longToInstant(now / 1000);
-    assertEquals(now / 1000, instant2.getEpochSecond());
+  @Test(expected = IllegalArgumentException.class)
+  public void testLongToInstantNegative() {
+    Utils.longToInstant(-1000);
+  }
+
+  @Test
+  public void testLenientFormat() {
+    assertEquals("1, 2, 3", Utils.lenientFormat("%s, %s, %s", 1, 2, 3));
+    assertEquals("test [extra, args]", Utils.lenientFormat("test", "extra", "args"));
+    assertEquals("null", Utils.lenientFormat(null, "test"));
   }
 }

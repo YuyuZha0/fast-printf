@@ -6,6 +6,7 @@ import io.fastprintf.appender.FixedStringAppender;
 import org.junit.Test;
 
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 
