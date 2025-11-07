@@ -9,17 +9,17 @@ public interface Seq extends CharSequence {
 
   int INDEX_NOT_FOUND = -1;
 
-  static SimpleSeq ch(char c) {
+  static AtomicSeq ch(char c) {
     return Repeated.ofSingleChar(c);
   }
 
-  static SimpleSeq repeated(char c, int count) {
+  static AtomicSeq repeated(char c, int count) {
     Preconditions.checkArgument(count >= 1, "count < 1");
     if (count == 1) return ch(c);
     return new Repeated(c, count);
   }
 
-  static SimpleSeq wrap(String s) {
+  static AtomicSeq wrap(String s) {
     Preconditions.checkNotNull(s, "s");
     int length = s.length();
     if (length > 0) {
@@ -29,11 +29,11 @@ public interface Seq extends CharSequence {
     return empty();
   }
 
-  static SimpleSeq wrap(String s, int start) {
+  static AtomicSeq wrap(String s, int start) {
     return wrap(s, start, s.length());
   }
 
-  static SimpleSeq wrap(String s, int start, int end) {
+  static AtomicSeq wrap(String s, int start, int end) {
     Preconditions.checkNotNull(s, "s");
     int length = s.length();
     Preconditions.checkPositionIndexes(start, end, length);
@@ -42,13 +42,13 @@ public interface Seq extends CharSequence {
     return new StrView(s, start, end - start);
   }
 
-  static SimpleSeq forArray(char[] ch, int start, int length) {
+  static AtomicSeq forArray(char[] ch, int start, int length) {
     Preconditions.checkNotNull(ch, "ch");
     Preconditions.checkPositionIndexes(start, start + length, ch.length);
     return new CharArray(ch, start, length, false);
   }
 
-  static SimpleSeq forArray(char[] ch) {
+  static AtomicSeq forArray(char[] ch) {
     Preconditions.checkNotNull(ch, "ch");
     return new CharArray(ch, 0, ch.length, false);
   }
@@ -59,7 +59,7 @@ public interface Seq extends CharSequence {
     return Concat.concat(left, right);
   }
 
-  static SimpleSeq empty() {
+  static AtomicSeq empty() {
     return EmptySeq.INSTANCE;
   }
 

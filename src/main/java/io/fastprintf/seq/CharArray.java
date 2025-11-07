@@ -5,7 +5,7 @@ import io.fastprintf.util.Utils;
 import java.io.IOException;
 import java.util.Arrays;
 
-public final class CharArray implements SimpleSeq {
+public final class CharArray implements AtomicSeq {
 
   private final char[] ch;
   private final int start;

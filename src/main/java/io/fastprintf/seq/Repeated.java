@@ -6,7 +6,7 @@ import io.fastprintf.util.Utils;
 import java.io.IOException;
 import java.util.Arrays;
 
-public final class Repeated implements SimpleSeq {
+public final class Repeated implements AtomicSeq {
 
   private static final Repeated[] SINGLE_CHAR_REPEATED = new Repeated[128];
 
@@ -48,7 +48,7 @@ public final class Repeated implements SimpleSeq {
   }
 
   @Override
-  public SimpleSeq subSequence(int start, int end) {
+  public AtomicSeq subSequence(int start, int end) {
     Preconditions.checkPositionIndexes(start, end, count);
     if (start == end) return Seq.empty();
     return new Repeated(c, end - start);
