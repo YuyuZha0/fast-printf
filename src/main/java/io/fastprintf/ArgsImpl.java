@@ -115,7 +115,7 @@ final class ArgsImpl implements Args {
     return traits.iterator();
   }
 
-  private Args putRaw(Object value) {
+  private Args putObject(Object value) {
     if (value instanceof FormatTraits) {
       return addTraits((FormatTraits) value);
     }
@@ -160,7 +160,7 @@ final class ArgsImpl implements Args {
     } else if (value instanceof TemporalAccessor) {
       return putDateTime((TemporalAccessor) value);
     } else {
-      return putRaw(value);
+      return putObject(value);
     }
   }
 }

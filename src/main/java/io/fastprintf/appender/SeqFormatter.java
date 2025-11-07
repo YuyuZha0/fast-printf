@@ -7,7 +7,6 @@ import io.fastprintf.number.FloatLayout;
 import io.fastprintf.number.IntForm;
 import io.fastprintf.seq.Seq;
 import io.fastprintf.traits.FormatTraits;
-
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -173,7 +172,7 @@ public final class SeqFormatter {
     if (dot >= 0) {
       outPrecision = mantissa.length() - (dot + 1);
     }
-    if (outPrecision == precision) {
+    if (outPrecision >= precision) {
       return mantissa;
     }
     if (dot < 0) {
@@ -200,22 +199,78 @@ public final class SeqFormatter {
     return signAndJustify(context, v0, value.isNegative());
   }
 
-  private static Seq truncateDotAndZero(Seq v0) {
-    int length = v0.length();
-    int index = length - 1;
-    while (index >= 1 && v0.charAt(index) == '0') {
-      --index;
+  /** Helper for %g that strips trailing zeros from the fractional part. */
+  private static Seq stripTrailingZeros(Seq mantissa) {
+    int dotIndex = mantissa.indexOf('.');
+    if (dotIndex == Seq.INDEX_NOT_FOUND) {
+      return mantissa; // No fractional part, nothing to strip
     }
-    if (index >= 1 && v0.charAt(index) == '.') {
-      --index;
+
+    int lastCharIndex = mantissa.length() - 1;
+    // Find last non-zero character in the fractional part
+    while (lastCharIndex > dotIndex && mantissa.charAt(lastCharIndex) == '0') {
+      lastCharIndex--;
     }
-    return v0.subSequence(0, index + 1);
+
+    // If the last non-zero character is the dot itself, strip the dot too
+    if (lastCharIndex == dotIndex) {
+      lastCharIndex--;
+    }
+
+    return mantissa.subSequence(0, lastCharIndex + 1);
+  }
+
+  /** Helper for %#g that pads with trailing zeros to meet the specified precision. */
+  private static Seq padToPrecision(Seq mantissa, int precision) {
+    // Count existing significant digits
+    int sigDigits = 0;
+    boolean nonZeroSeen = false;
+    for (int i = 0; i < mantissa.length(); i++) {
+      char c = mantissa.charAt(i);
+      if (c >= '1' && c <= '9') nonZeroSeen = true;
+      if (nonZeroSeen && c != '.') sigDigits++;
+    }
+    // Handle "0" or "0.0" which have one significant digit
+    if (!nonZeroSeen && mantissa.indexOf('0') != -1) {
+      sigDigits = 1;
+    }
+
+    int zerosToPad = precision - sigDigits;
+
+    // Ensure decimal point exists
+    if (mantissa.indexOf('.') == -1) {
+      mantissa = mantissa.append(Seq.ch('.'));
+    }
+
+    if (zerosToPad > 0) {
+      mantissa = mantissa.append(Seq.repeated('0', zerosToPad));
+    }
+    return mantissa;
+  }
+
+  /** Formats the mantissa for %g when it chooses decimal representation. */
+  private static Seq formatGDecimal(FormatContext context, FloatLayout layout, int precision) {
+    if (context.hasFlag(Flag.ALTERNATE)) {
+      return padToPrecision(layout.getMantissa(), precision);
+    } else {
+      return stripTrailingZeros(layout.getMantissa());
+    }
+  }
+
+  /** Formats the mantissa and exponent for %g when it chooses scientific representation. */
+  private static Seq formatGScientific(FormatContext context, FloatLayout layout) {
+    Seq mantissa = layout.getMantissa();
+    if (!context.hasFlag(Flag.ALTERNATE)) {
+      mantissa = stripTrailingZeros(mantissa);
+    }
+    return mantissa.append(Seq.ch('e')).append(layout.getExponent());
   }
 
   static Seq g(FormatContext context, FloatForm value) {
     if (value.isNaN() || value.isInfinite()) {
       return nanOrInfinity(context, value);
     }
+
     int precision = 6;
     if (context.isPrecisionSet()) {
       precision = context.getPrecision();
@@ -223,12 +278,16 @@ public final class SeqFormatter {
         precision = 1;
       }
     }
+
     FloatLayout layout = value.generalLayout(precision);
-    Seq v0 = truncateDotAndZero(layout.getMantissa());
-    Seq exp = layout.getExponent();
-    if (exp != null) {
-      v0 = v0.append(Seq.ch('e'));
-      v0 = v0.append(exp);
+    Seq v0;
+
+    if (layout.getExponent() == null) {
+      // Use decimal ('f'-style) representation
+      v0 = formatGDecimal(context, layout, precision);
+    } else {
+      // Use scientific ('e'-style) representation
+      v0 = formatGScientific(context, layout);
     }
 
     return signAndJustify(context, v0, value.isNegative());

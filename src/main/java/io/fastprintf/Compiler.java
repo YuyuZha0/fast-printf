@@ -5,7 +5,6 @@ import io.fastprintf.appender.DefaultAppender;
 import io.fastprintf.appender.FixedStringAppender;
 import io.fastprintf.util.Preconditions;
 import io.fastprintf.util.Utils;
-
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -41,7 +40,7 @@ final class Compiler {
   }
 
   private void forPattern() {
-    checkSource();
+    checkSource("Format string terminates in the middle of a format specifier");
     char c = source.charAt(lookahead);
     if (c == '%') {
       lookahead++;
@@ -62,11 +61,14 @@ final class Compiler {
 
   private EnumSet<Flag> flags() {
     EnumSet<Flag> flags = EnumSet.noneOf(Flag.class);
-    while (true) {
-      checkSource();
+    while (!endOfSource()) {
       Flag flag = Flag.valueOf(source.charAt(lookahead));
       if (flag == null) {
         break;
+      }
+      if (flags.contains(flag)) {
+        throw new PrintfSyntaxException(
+            "Duplicate flag '" + flag + "'", source, lookahead);
       }
       flags.add(flag);
       lookahead++;
@@ -74,26 +76,25 @@ final class Compiler {
     return flags;
   }
 
-  private void checkSource() {
+  private void checkSource(String message) {
     if (endOfSource()) {
-      throw new PrintfSyntaxException("Unexpected end of source", source, lookahead);
+      throw new PrintfSyntaxException(message, source, lookahead);
     }
   }
 
   private int width() {
-    checkSource();
+    checkSource("Format string lacks width or specifier");
     final int start = lookahead;
     if (source.charAt(lookahead) == '*') {
       lookahead++;
       return FormatContext.PRECEDING;
     }
-    while (true) {
+    while (!endOfSource()) {
       char c = source.charAt(lookahead);
-      if (c == '.' || Utils.isNotDigit(c)) {
+      if (Utils.isNotDigit(c)) {
         break;
       }
       lookahead++;
-      checkSource();
     }
     String w = source.substring(start, lookahead);
     if (w.isEmpty()) {
@@ -102,67 +103,96 @@ final class Compiler {
     try {
       return Integer.parseInt(w);
     } catch (NumberFormatException e) {
-      throw new PrintfSyntaxException("Invalid width", source, lookahead);
+      throw new PrintfSyntaxException("Invalid width: '" + w + "'", source, start);
     }
   }
 
   private int precision() {
-    checkSource();
-    if (source.charAt(lookahead) != '.') {
+    if (endOfSource() || source.charAt(lookahead) != '.') {
       return FormatContext.UNSET;
     }
-    lookahead++;
-    checkSource();
+    lookahead++; // Skip '.'
+    checkSource("Format string terminates after '.'");
+
     if (source.charAt(lookahead) == '*') {
       lookahead++;
       return FormatContext.PRECEDING;
     }
-    checkSource();
+
     final int start = lookahead;
-    while (true) {
+    while (!endOfSource()) {
       char c = source.charAt(lookahead);
       if (Utils.isNotDigit(c)) {
         break;
       }
       lookahead++;
-      checkSource();
     }
     String p = source.substring(start, lookahead);
     if (p.isEmpty()) {
+      // e.g. "%.s"
       return 0;
-      // throw new PrintfSyntaxException("Invalid precision", source, lookahead);
     }
     try {
       return Integer.parseInt(p);
     } catch (NumberFormatException e) {
-      throw new PrintfSyntaxException("Invalid precision", source, lookahead);
+      throw new PrintfSyntaxException("Invalid precision: '" + p + "'", source, start);
     }
   }
 
   private DateTimeFormatter dateTimeFormatter() {
-    checkSource();
-    if (source.charAt(lookahead) != '{') {
+    if (endOfSource() || source.charAt(lookahead) != '{') {
       return null;
     }
-    int start = lookahead + 1;
-    int end = source.indexOf('}', start + 1);
-    if (end == -1) {
-      throw new PrintfSyntaxException("Enclosed \"{}\" for date time pattern", source, lookahead);
+    int patternStart = lookahead + 1;
+
+    // Robustly find the closing brace, respecting single quotes.
+    int scanPos = patternStart;
+    boolean inQuote = false;
+    int patternEnd = -1;
+
+    while (scanPos < source.length()) {
+      char c = source.charAt(scanPos);
+      if (c == '\'') {
+        // Handle escaped single quote ''
+        if (scanPos + 1 < source.length() && source.charAt(scanPos + 1) == '\'') {
+          scanPos++; // Skip the second quote so it doesn't toggle the state
+        } else {
+          inQuote = !inQuote; // Toggle quote state
+        }
+      } else if (c == '}' && !inQuote) {
+        patternEnd = scanPos; // Found the unquoted, matching brace
+        break;
+      }
+      scanPos++;
     }
-    String pattern = source.substring(start, end);
-    lookahead = end + 1;
+
+    if (patternEnd == -1) {
+      throw new PrintfSyntaxException(
+          "Unclosed date/time pattern starting at index " + lookahead, source, lookahead);
+    }
+
+    String pattern = source.substring(patternStart, patternEnd);
+    if (pattern.isEmpty()) {
+      throw new PrintfSyntaxException("Empty date/time pattern", source, patternStart);
+    }
+
+    lookahead = patternEnd + 1;
+
     try {
       return DateTimeFormatter.ofPattern(pattern);
     } catch (IllegalArgumentException e) {
-      throw new PrintfSyntaxException("Invalid date time pattern", source, lookahead);
+      throw new PrintfSyntaxException(
+          "Invalid date/time pattern: '" + pattern + "'", source, patternStart, e);
     }
   }
 
   private Specifier specifier() {
-    checkSource();
-    Specifier specifier = Specifier.valueOf(source.charAt(lookahead));
+    checkSource("Format string lacks specifier");
+    char c = source.charAt(lookahead);
+    Specifier specifier = Specifier.valueOf(c);
     if (specifier == null) {
-      throw new PrintfSyntaxException("Invalid specifier", source, lookahead);
+      throw new PrintfSyntaxException(
+          "Unknown format conversion specifier '" + c + "'", source, lookahead);
     }
     lookahead++;
     return specifier;
