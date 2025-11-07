@@ -1,9 +1,3 @@
-Of course. The original `README.md` is good and functional, but it can be refined to be more compelling, clear, and comprehensive for new users.
-
-Here is a refined version that enhances the structure, clarifies the value proposition, and improves readability.
-
-***
-
 # fast-printf
 
 [![Build Status](https://img.shields.io/travis/com/yuyuzha0/fast-printf.svg?style=flat-square)](https://travis-ci.com/yuyuzha0/fast-printf)
