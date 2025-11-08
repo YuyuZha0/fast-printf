@@ -61,7 +61,7 @@ public class DefaultAppenderTest {
     List<Seq> collect = new ArrayList<>();
     List<FormatTraits> traits = Collections.singletonList(new IntTraits(42));
 
-    appender.append(collect, traits.iterator());
+    appender.append(collect::add, traits.iterator());
 
     assertEquals("Should have one sequence in the list", 1, collect.size());
     assertEquals("   42", collect.get(0).toString());
@@ -74,7 +74,7 @@ public class DefaultAppenderTest {
     List<Seq> collect = new ArrayList<>();
     List<FormatTraits> traits = Arrays.asList(new IntTraits(10), new CharSequenceTraits("test"));
 
-    appender.append(collect, traits.iterator());
+    appender.append(collect::add, traits.iterator());
 
     assertEquals(1, collect.size());
     assertEquals("      test", collect.get(0).toString());
@@ -87,7 +87,7 @@ public class DefaultAppenderTest {
     List<Seq> collect = new ArrayList<>();
     List<FormatTraits> traits = Arrays.asList(new IntTraits(-10), new CharSequenceTraits("test"));
 
-    appender.append(collect, traits.iterator());
+    appender.append(collect::add, traits.iterator());
 
     assertEquals(1, collect.size());
     assertEquals("test      ", collect.get(0).toString());
@@ -100,7 +100,7 @@ public class DefaultAppenderTest {
     List<Seq> collect = new ArrayList<>();
     List<FormatTraits> traits = Arrays.asList(new IntTraits(3), new CharSequenceTraits("hello"));
 
-    appender.append(collect, traits.iterator());
+    appender.append(collect::add, traits.iterator());
 
     assertEquals(1, collect.size());
     assertEquals("hel", collect.get(0).toString());
@@ -113,7 +113,7 @@ public class DefaultAppenderTest {
     List<Seq> collect = new ArrayList<>();
     List<FormatTraits> traits = Arrays.asList(new IntTraits(-5), new CharSequenceTraits("hello"));
 
-    appender.append(collect, traits.iterator());
+    appender.append(collect::add, traits.iterator());
 
     assertEquals(1, collect.size());
     assertEquals("hello", collect.get(0).toString());
@@ -127,7 +127,7 @@ public class DefaultAppenderTest {
     List<FormatTraits> traits =
         Arrays.asList(new IntTraits(10), new IntTraits(3), new CharSequenceTraits("hello"));
 
-    appender.append(collect, traits.iterator());
+    appender.append(collect::add, traits.iterator());
 
     assertEquals(1, collect.size());
     assertEquals("       hel", collect.get(0).toString());
@@ -140,7 +140,7 @@ public class DefaultAppenderTest {
     List<Seq> collect = new ArrayList<>();
     List<FormatTraits> traits = Collections.emptyList(); // No arguments provided
 
-    appender.append(collect, traits.iterator());
+    appender.append(collect::add, traits.iterator());
   }
 
   @Test(expected = PrintfException.class)
@@ -152,7 +152,7 @@ public class DefaultAppenderTest {
     List<Seq> collect = new ArrayList<>();
     List<FormatTraits> traits = Collections.emptyList(); // Missing width argument
 
-    appender.append(collect, traits.iterator());
+    appender.append(collect::add, traits.iterator());
   }
 
   @Test(expected = PrintfException.class)
@@ -165,7 +165,7 @@ public class DefaultAppenderTest {
     // Missing precision argument, but has main argument
     List<FormatTraits> traits = Collections.singletonList(new IntTraits(123));
 
-    appender.append(collect, traits.iterator());
+    appender.append(collect::add, traits.iterator());
   }
 
   @Test

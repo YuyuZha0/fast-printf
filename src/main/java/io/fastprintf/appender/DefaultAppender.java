@@ -8,8 +8,8 @@ import io.fastprintf.seq.Seq;
 import io.fastprintf.traits.FormatTraits;
 import io.fastprintf.util.Preconditions;
 import java.util.Iterator;
-import java.util.List;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
 public final class DefaultAppender implements Appender {
 
@@ -96,7 +96,7 @@ public final class DefaultAppender implements Appender {
   }
 
   @Override
-  public void append(List<Seq> collect, Iterator<FormatTraits> traitsIterator) {
+  public void append(Consumer<? super Seq> collect, Iterator<FormatTraits> traitsIterator) {
     FormatContext context = this.context;
     if (context.isPrecedingWidth()) {
       int w = nextInt(traitsIterator);
@@ -111,7 +111,7 @@ public final class DefaultAppender implements Appender {
       context = context.setPrecision(p >= 0 ? p : FormatContext.UNSET);
     }
     if (traitsIterator.hasNext()) {
-      collect.add(format(context, traitsIterator.next()));
+      collect.accept(format(context, traitsIterator.next()));
     } else {
       throw new PrintfException("Missing argument for specifier: " + specifier);
     }

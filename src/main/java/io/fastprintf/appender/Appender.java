@@ -5,8 +5,9 @@ import io.fastprintf.traits.FormatTraits;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Consumer;
 
 public interface Appender {
 
-  void append(List<Seq> collect, Iterator<FormatTraits> traitsIterator);
+  void append(Consumer<? super Seq> collect, Iterator<FormatTraits> traitsIterator);
 }

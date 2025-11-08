@@ -77,8 +77,7 @@ public class AtomicSeqIterableTest {
   @Test
   public void test_upperCase() {
     Seq upper = iterable.upperCase();
-    // The default implementation uses Seq.join, which returns a SeqArray
-    assertTrue(upper instanceof SeqArray);
+    assertTrue(upper instanceof AtomicSeqIterable);
     assertEquals("ABCDEFG", upper.toString());
     assertEquals(7, upper.length());
   }

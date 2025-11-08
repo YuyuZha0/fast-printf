@@ -1,25 +1,24 @@
 package io.fastprintf;
 
 import io.fastprintf.appender.Appender;
-import io.fastprintf.seq.Seq;
 import io.fastprintf.traits.FormatTraits;
 import io.fastprintf.util.Preconditions;
-
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.function.IntFunction;
 
 /** GRAMMAR: %[flags][width][.precision]specifier */
 final class FastPrintfImpl implements FastPrintf {
 
   private final Appender[] appenders;
+  private final int stringBuilderInitialCapacity;
   private final ThreadLocal<StringBuilder> threadLocalBuilder;
   private final IntFunction<StringBuilder> stringBuilderFactory;
 
-  private FastPrintfImpl(Appender[] appenders, boolean enableThreadLocalCache) {
+  private FastPrintfImpl(
+      Appender[] appenders, int stringBuilderInitialCapacity, boolean enableThreadLocalCache) {
     this.appenders = appenders;
+    this.stringBuilderInitialCapacity = stringBuilderInitialCapacity;
     if (enableThreadLocalCache) {
       this.threadLocalBuilder = ThreadLocal.withInitial(StringBuilder::new);
       this.stringBuilderFactory =
@@ -38,29 +37,20 @@ final class FastPrintfImpl implements FastPrintf {
   static FastPrintfImpl compile(String format) {
     Compiler compiler = new Compiler(format);
     compiler.compile();
-    return new FastPrintfImpl(compiler.getAppenders().toArray(new Appender[0]), false);
-  }
-
-  private static int precomputeLength(List<Seq> collect) {
-    int totalLength = 0;
-    for (Seq seq : collect) {
-      totalLength += seq.length();
-    }
-    return totalLength;
+    int sourceLength = Math.max(format.length(), 10);
+    return new FastPrintfImpl(
+        compiler.getAppenders().toArray(new Appender[0]),
+        Math.addExact(sourceLength, sourceLength >> 1), // 1.5x format length as initial capacity
+        false);
   }
 
   @Override
   public String format(Args args) {
     Preconditions.checkNotNull(args, "args");
     Iterator<FormatTraits> iterator = args.iterator();
-    List<Seq> collect = new ArrayList<>();
+    StringBuilder builder = stringBuilderFactory.apply(stringBuilderInitialCapacity);
     for (Appender appender : appenders) {
-      appender.append(collect, iterator);
-    }
-    int totalLength = precomputeLength(collect);
-    StringBuilder builder = stringBuilderFactory.apply(totalLength);
-    for (Seq seq : collect) {
-      seq.appendTo(builder);
+      appender.append(seq -> seq.appendTo(builder), iterator);
     }
     return builder.toString();
   }
@@ -70,26 +60,24 @@ final class FastPrintfImpl implements FastPrintf {
     Preconditions.checkNotNull(builder, "builder");
     Preconditions.checkNotNull(args, "args");
     Iterator<FormatTraits> iterator = args.iterator();
-    List<Seq> collect = new ArrayList<>();
-    for (Appender appender : appenders) {
-      appender.append(collect, iterator);
-    }
+
     if (builder instanceof StringBuilder) {
-      int totalLength = precomputeLength(collect);
       StringBuilder stringBuilder = (StringBuilder) builder;
-      int oldLength = stringBuilder.length();
-      stringBuilder.ensureCapacity(oldLength + totalLength);
-      for (Seq seq : collect) {
-        seq.appendTo(stringBuilder);
+      for (Appender appender : appenders) {
+        appender.append(seq -> seq.appendTo(stringBuilder), iterator);
       }
       return builder;
     }
-    try {
-      for (Seq seq : collect) {
-        seq.appendTo(builder);
-      }
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+    for (Appender appender : appenders) {
+      appender.append(
+          seq -> {
+            try {
+              seq.appendTo(builder);
+            } catch (IOException e) {
+              throw new RuntimeException(e);
+            }
+          },
+          iterator);
     }
     return builder;
   }
@@ -99,6 +87,6 @@ final class FastPrintfImpl implements FastPrintf {
     if (threadLocalBuilder != null) {
       return this;
     }
-    return new FastPrintfImpl(appenders.clone(), true);
+    return new FastPrintfImpl(appenders.clone(), stringBuilderInitialCapacity, true);
   }
 }

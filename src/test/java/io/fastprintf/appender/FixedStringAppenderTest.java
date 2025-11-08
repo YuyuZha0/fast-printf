@@ -35,7 +35,7 @@ public class FixedStringAppenderTest {
     List<Seq> seqList = new ArrayList<>();
     Iterator<FormatTraits> nullIterator = null; // The iterator is not used by this appender.
 
-    appender.append(seqList, nullIterator);
+    appender.append(seqList::add, nullIterator);
 
     assertEquals("List should contain exactly one element after append", 1, seqList.size());
     assertEquals(

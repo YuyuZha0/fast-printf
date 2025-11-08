@@ -3,9 +3,8 @@ package io.fastprintf.appender;
 import io.fastprintf.seq.Seq;
 import io.fastprintf.traits.FormatTraits;
 import io.fastprintf.util.Preconditions;
-
 import java.util.Iterator;
-import java.util.List;
+import java.util.function.Consumer;
 
 public final class FixedStringAppender implements Appender {
 
@@ -18,8 +17,8 @@ public final class FixedStringAppender implements Appender {
   }
 
   @Override
-  public void append(List<Seq> collect, Iterator<FormatTraits> traitsIterator) {
-    collect.add(seq);
+  public void append(Consumer<? super Seq> collect, Iterator<FormatTraits> traitsIterator) {
+    collect.accept(seq);
   }
 
   public String getValue() {

@@ -34,25 +34,22 @@ public interface AtomicSeqIterable extends Seq, Iterable<AtomicSeq> {
     Preconditions.checkPositionIndexes(start, end, length);
     if (start == end) return Seq.empty();
     if (start == 0 && end == length) return this;
-    Seq head = null;
+    List<AtomicSeq> buffer = new ArrayList<>();
     for (AtomicSeq seq : this) {
       int seqLength = seq.length();
       if (start < seqLength) {
         if (end <= seqLength) {
-          AtomicSeq subSeq = seq.subSequence(start, end);
-          head = head == null ? subSeq : head.append(subSeq);
+          buffer.add(seq.subSequence(start, end));
           break;
         }
-        AtomicSeq subSeq = seq.subSequence(start, seqLength);
-        head = head == null ? subSeq : head.append(subSeq);
+        buffer.add(seq.subSequence(start, seqLength));
         start = 0;
       } else {
         start -= seqLength;
       }
       end -= seqLength;
     }
-    assert head != null;
-    return head;
+    return new SeqArray(buffer.toArray(new AtomicSeq[0]), end - start);
   }
 
   /**
