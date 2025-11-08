@@ -41,7 +41,7 @@ public interface Seq extends CharSequence {
    * Creates an atomic sequence containing a character repeated a specified number of times.
    *
    * @param c the character to repeat.
-   * @param count the number of times to repeat the character (must be >= 1).
+   * @param count the number of times to repeat the character (must be &ge; 1).
    * @return a new {@code AtomicSeq} instance.
    */
   static AtomicSeq repeated(char c, int count) {
