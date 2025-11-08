@@ -91,6 +91,11 @@ final class SeqArray implements AtomicSeqIterable {
     return array[0];
   }
 
+  @Override
+  public int elementCount() {
+    return array.length;
+  }
+
   /** A simple, efficient iterator over the internal array of atomic sequences. */
   private static final class Itr implements Iterator<AtomicSeq> {
     private final AtomicSeq[] array;

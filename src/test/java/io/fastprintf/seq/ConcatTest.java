@@ -17,9 +17,10 @@ public class ConcatTest {
   public void testBasicConcatenation() {
     Seq hello = Seq.wrap("Hello");
     Seq world = Seq.wrap(" World");
-    Seq seq = Concat.concat(hello, world);
+    Concat seq = Concat.concat(hello, world);
 
     assertEquals(11, seq.length());
+    assertEquals(2, seq.elementCount());
     assertEquals("Hello World", seq.toString());
 
     assertEquals('H', seq.charAt(0));
@@ -131,6 +132,7 @@ public class ConcatTest {
     Seq ab = Concat.concat(Seq.wrap("A"), Seq.wrap("B"));
     Seq cd = Concat.concat(Seq.wrap("C"), Seq.wrap("D"));
     AtomicSeqIterable seq = Concat.concat(ab, cd);
+    assertEquals(4, seq.elementCount());
 
     List<String> result =
         StreamSupport.stream(seq.spliterator(), false)
@@ -146,6 +148,7 @@ public class ConcatTest {
     Seq chain = Seq.wrap("A").append(Seq.wrap("B")).append(Seq.wrap("C")).append(Seq.wrap("D"));
     AtomicSeqIterable seq = (AtomicSeqIterable) chain;
 
+    assertEquals(4, seq.elementCount());
     List<String> result =
         StreamSupport.stream(seq.spliterator(), false)
             .map(Object::toString)
@@ -163,6 +166,7 @@ public class ConcatTest {
     Seq ab = Concat.concat(Seq.wrap("A"), Seq.wrap("B"));
     AtomicSeqIterable seq = Concat.concat(ab, arraySeq);
 
+    assertEquals(4, seq.elementCount());
     List<String> result = new ArrayList<>();
     Iterator<AtomicSeq> it = seq.iterator();
     while (it.hasNext()) {

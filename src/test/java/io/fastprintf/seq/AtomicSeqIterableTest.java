@@ -128,6 +128,11 @@ public class AtomicSeqIterableTest {
     }
 
     @Override
+    public int elementCount() {
+      return parts.size();
+    }
+
+    @Override
     public String toString() {
       StringWriter sw = new StringWriter();
       try {

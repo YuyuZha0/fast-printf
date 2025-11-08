@@ -41,11 +41,13 @@ final class Concat implements AtomicSeqIterable {
   private final Seq left;
   private final Seq right;
   private final int length;
+  private final int elementCount;
 
-  private Concat(Seq left, Seq right, int length) {
+  private Concat(Seq left, Seq right, int length, int elementCount) {
     this.left = left;
     this.right = right;
     this.length = length;
+    this.elementCount = elementCount;
   }
 
   /**
@@ -71,8 +73,8 @@ final class Concat implements AtomicSeqIterable {
   }
 
   private static Concat concat0(Seq left, Seq right) {
-    int length = left.length() + right.length();
-    return new Concat(left, right, length);
+    return new Concat(
+        left, right, left.length() + right.length(), left.elementCount() + right.elementCount());
   }
 
   @Override
@@ -107,7 +109,7 @@ final class Concat implements AtomicSeqIterable {
    */
   @Override
   public Iterator<AtomicSeq> iterator() {
-    return new ConcatIterator(this);
+    return new ConcatIterator(this, Math.max(5, elementCount >> 2));
   }
 
   /**
@@ -123,6 +125,11 @@ final class Concat implements AtomicSeqIterable {
     return left;
   }
 
+  @Override
+  public int elementCount() {
+    return elementCount;
+  }
+
   /**
    * An iterator that performs a non-recursive, depth-first traversal of the sequence tree.
    *
@@ -133,9 +140,10 @@ final class Concat implements AtomicSeqIterable {
    */
   private static final class ConcatIterator implements Iterator<AtomicSeq> {
 
-    private final Deque<Seq> deque = new ArrayDeque<>(8);
+    private final Deque<Seq> deque;
 
-    ConcatIterator(Concat concat) {
+    ConcatIterator(Concat concat, int initialStackSize) {
+      this.deque = new ArrayDeque<>(initialStackSize);
       // Start the traversal by pushing the root node onto the stack.
       // We don't need to special-case the constructor.
       deque.push(concat);

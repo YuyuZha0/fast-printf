@@ -7,7 +7,6 @@ import io.fastprintf.Specifier;
 import io.fastprintf.seq.Seq;
 import io.fastprintf.traits.FormatTraits;
 import io.fastprintf.util.Preconditions;
-
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -81,6 +80,8 @@ public final class DefaultAppender implements Appender {
       case POINTER:
         return SeqFormatter::p;
       case PERCENT_SIGN:
+        // This case is effectively dead code because the Compiler handles %%
+        // by creating a FixedStringAppender, but we leave it for completeness.
         return (FormatContext context, FormatTraits traits) -> Seq.ch('%');
       default:
         return (FormatContext context, FormatTraits traits) -> Seq.empty();

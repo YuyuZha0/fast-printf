@@ -168,7 +168,7 @@ public interface Seq extends CharSequence {
     }
     int totalLength = 0;
     for (AtomicSeq seq : atomicSeqs) {
-      Preconditions.checkNotNull(seq, "atomicSeqs contains null");
+      Preconditions.checkNotNull(seq, "seqElement");
       totalLength += seq.length();
     }
 
@@ -294,4 +294,21 @@ public interface Seq extends CharSequence {
   default boolean startsWith(char prefix) {
     return length() > 0 && charAt(0) == prefix;
   }
+
+  /**
+   * Returns the total number of atomic (leaf) sequences within this composite sequence.
+   *
+   * <p>This method allows for O(1) retrieval of the number of leaf nodes, which can be used as a
+   * heuristic for optimizations, such as pre-sizing collections or iterators.
+   *
+   * @return the number of leaf nodes.
+   */
+  int elementCount();
+
+  /**
+   * Returns {@code true} if this sequence is atomic (a leaf node), otherwise {@code false}.
+   *
+   * @return {@code true} if this is an {@link AtomicSeq}, otherwise {@code false}.
+   */
+  boolean isAtomic();
 }

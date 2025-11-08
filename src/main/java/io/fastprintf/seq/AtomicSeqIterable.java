@@ -16,8 +16,8 @@ import java.util.List;
  * <p>It provides default implementations for many {@code Seq} methods (e.g., {@code charAt}, {@code
  * subSequence}). These implementations work by iterating over the child {@code AtomicSeq} parts,
  * providing correct and consistent behavior for any composite sequence. Implementations of this
- * interface are only required to provide the {@link #unfold} method, an {@link #iterator}, and a {@link
- * #length} implementation.
+ * interface are only required to provide the {@link #unfold} method, an {@link #iterator}, and a
+ * {@link #length} implementation.
  */
 public interface AtomicSeqIterable extends Seq, Iterable<AtomicSeq> {
 
@@ -50,7 +50,11 @@ public interface AtomicSeqIterable extends Seq, Iterable<AtomicSeq> {
         end -= seqLength;
       }
     }
-    return Seq.join(atomicSeqs);
+    assert !atomicSeqs.isEmpty();
+    if (atomicSeqs.size() == 1) {
+      return atomicSeqs.get(0);
+    }
+    return new SeqArray(atomicSeqs.toArray(new AtomicSeq[0]), end - start);
   }
 
   /**
@@ -68,7 +72,7 @@ public interface AtomicSeqIterable extends Seq, Iterable<AtomicSeq> {
       }
       index -= seq.length();
     }
-    throw new AssertionError(); // Should be unreachable
+    throw new AssertionError("Unreachable"); // Should be unreachable
   }
 
   /**
@@ -124,11 +128,12 @@ public interface AtomicSeqIterable extends Seq, Iterable<AtomicSeq> {
    */
   @Override
   default Seq upperCase() {
-    List<AtomicSeq> upperCasedSeqs = new ArrayList<>();
+    AtomicSeq[] upperCasedSeqs = new AtomicSeq[elementCount()];
+    int index = 0;
     for (AtomicSeq seq : this) {
-      upperCasedSeqs.add(seq.upperCase());
+      upperCasedSeqs[index++] = seq.upperCase();
     }
-    return Seq.join(upperCasedSeqs);
+    return new SeqArray(upperCasedSeqs, length());
   }
 
   /**
@@ -140,4 +145,9 @@ public interface AtomicSeqIterable extends Seq, Iterable<AtomicSeq> {
    * @return The first child sequence to be processed next in the traversal loop.
    */
   Seq unfold(Deque<Seq> stack);
+
+  @Override
+  default boolean isAtomic() {
+    return false;
+  }
 }

@@ -7,4 +7,13 @@ public interface AtomicSeq extends Seq {
 
   @Override
   AtomicSeq upperCase();
+
+  @Override
+  default int elementCount() {
+    return 1;
+  }
+
+  default boolean isAtomic() {
+    return true;
+  }
 }
