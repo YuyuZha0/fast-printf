@@ -49,6 +49,10 @@ public interface AtomicSeqIterable extends Seq, Iterable<AtomicSeq> {
       }
       end -= seqLength;
     }
+    assert !buffer.isEmpty();
+    if (buffer.size() == 1) {
+      return buffer.get(0);
+    }
     return new SeqArray(buffer.toArray(new AtomicSeq[0]), end - start);
   }
 
