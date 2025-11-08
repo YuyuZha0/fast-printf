@@ -34,27 +34,25 @@ public interface AtomicSeqIterable extends Seq, Iterable<AtomicSeq> {
     Preconditions.checkPositionIndexes(start, end, length);
     if (start == end) return Seq.empty();
     if (start == 0 && end == length) return this;
-    List<AtomicSeq> atomicSeqs = new ArrayList<>();
+    Seq head = null;
     for (AtomicSeq seq : this) {
       int seqLength = seq.length();
       if (start < seqLength) {
         if (end <= seqLength) {
-          atomicSeqs.add(seq.subSequence(start, end));
+          AtomicSeq subSeq = seq.subSequence(start, end);
+          head = head == null ? subSeq : head.append(subSeq);
           break;
         }
-        atomicSeqs.add(seq.subSequence(start, seqLength));
+        AtomicSeq subSeq = seq.subSequence(start, seqLength);
+        head = head == null ? subSeq : head.append(subSeq);
         start = 0;
-        end -= seqLength;
       } else {
         start -= seqLength;
-        end -= seqLength;
       }
+      end -= seqLength;
     }
-    assert !atomicSeqs.isEmpty();
-    if (atomicSeqs.size() == 1) {
-      return atomicSeqs.get(0);
-    }
-    return new SeqArray(atomicSeqs.toArray(new AtomicSeq[0]), end - start);
+    assert head != null;
+    return head;
   }
 
   /**
@@ -128,12 +126,11 @@ public interface AtomicSeqIterable extends Seq, Iterable<AtomicSeq> {
    */
   @Override
   default Seq upperCase() {
-    AtomicSeq[] upperCasedSeqs = new AtomicSeq[elementCount()];
-    int index = 0;
+    List<AtomicSeq> buffer = new ArrayList<>(elementCount());
     for (AtomicSeq seq : this) {
-      upperCasedSeqs[index++] = seq.upperCase();
+      buffer.add(seq.upperCase());
     }
-    return new SeqArray(upperCasedSeqs, length());
+    return new SeqArray(buffer.toArray(new AtomicSeq[0]), length());
   }
 
   /**
