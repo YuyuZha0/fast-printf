@@ -68,6 +68,7 @@ public class FastPrintfTest {
             new ArrayList<>());
     String format = fastPrintf.format(args);
     System.out.println(format);
+    System.out.println(Double.compare(0.0, -0.0));
   }
 
   @Test(expected = PrintfException.class)

@@ -18,15 +18,21 @@ public final class DoubleWrapper implements FloatForm {
     return ch != null ? Seq.forArray(ch) : null;
   }
 
+  private static boolean startsWithMinus(String s) {
+    return s.charAt(0) == '-';
+  }
+
   private static FloatLayout simpleHexLayout(double d) {
     String s = Double.toHexString(d);
     int p = s.indexOf('p');
     assert (p >= 0);
-    return new FloatLayout(Seq.wrap(s, d >= 0 ? 2 : 3, p), addPlus(s.substring(p + 1)));
+    // Use charAt(0) for optimal performance. It's safe because toHexString() is never empty.
+    // This correctly handles -0.0, as its string representation starts with '-'.
+    return new FloatLayout(Seq.wrap(s, startsWithMinus(s) ? 3 : 2, p), addPlus(s.substring(p + 1)));
   }
 
   private static Seq addPlus(String input) {
-    if (input.charAt(0) == '-') {
+    if (startsWithMinus(input)) {
       return Seq.wrap(input);
     }
     return Seq.wrap("+" + input);
@@ -76,6 +82,7 @@ public final class DoubleWrapper implements FloatForm {
 
   @Override
   public FloatLayout hexLayout(int prec) {
+    // From java.util.Formatter#hexDouble L3440
     double d = value;
     // Let Double.toHexString handle simple cases
     if (!Double.isFinite(d) || d == 0.0 || prec == 0 || prec >= 13) {
@@ -136,7 +143,8 @@ public final class DoubleWrapper implements FloatForm {
           // Get exponent and append at the end.
           String exp = s.substring(idx + 1);
           int iexp = Integer.parseInt(exp) - 54;
-          return new FloatLayout(Seq.wrap(s, d >= 0 ? 2 : 3, idx), addPlus(Integer.toString(iexp)));
+          return new FloatLayout(
+              Seq.wrap(s, startsWithMinus(s) ? 3 : 2, idx), addPlus(Integer.toString(iexp)));
         } else {
           throw new AssertionError("Invalid hex string: " + s);
         }
