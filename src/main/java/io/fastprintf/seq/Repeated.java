@@ -2,11 +2,10 @@ package io.fastprintf.seq;
 
 import io.fastprintf.util.Preconditions;
 import io.fastprintf.util.Utils;
-
 import java.io.IOException;
 import java.util.Arrays;
 
-public final class Repeated implements AtomicSeq {
+final class Repeated implements AtomicSeq {
 
   private static final Repeated[] SINGLE_CHAR_REPEATED = new Repeated[128];
 

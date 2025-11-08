@@ -2,7 +2,7 @@ package io.fastprintf.seq;
 
 import java.io.IOException;
 
-public final class EmptySeq implements AtomicSeq {
+final class EmptySeq implements AtomicSeq {
 
   static final EmptySeq INSTANCE = new EmptySeq();
 

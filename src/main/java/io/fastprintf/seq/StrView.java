@@ -2,10 +2,9 @@ package io.fastprintf.seq;
 
 import io.fastprintf.util.Preconditions;
 import io.fastprintf.util.Utils;
-
 import java.io.IOException;
 
-public final class StrView implements AtomicSeq {
+final class StrView implements AtomicSeq {
 
   private final String str;
   private final int start;

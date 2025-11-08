@@ -20,7 +20,7 @@ public final class Preconditions {
   }
 
   public static void checkPositionIndex(int index, int size) {
-    if (index < 0 || index > size) {
+    if (index < 0 || index >= size) {
       throw new IndexOutOfBoundsException(Utils.lenientFormat("index: %s, size: %s", index, size));
     }
   }
