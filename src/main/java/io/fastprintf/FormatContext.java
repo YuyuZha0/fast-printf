@@ -1,7 +1,6 @@
 package io.fastprintf;
 
 import io.fastprintf.util.Preconditions;
-
 import java.io.Serializable;
 import java.time.format.DateTimeFormatter;
 import java.util.EnumSet;
@@ -10,6 +9,9 @@ public final class FormatContext implements Serializable {
 
   public static final int PRECEDING = Integer.MIN_VALUE;
   public static final int UNSET = -1;
+  // A sensible maximum for width or precision to prevent OutOfMemoryErrors.
+  // This guards against accidental use of large numbers like timestamps.
+  private static final int MAX_WIDTH_OR_PRECISION = 65536;
 
   private static final long serialVersionUID = 460649064794800700L;
   private final EnumSet<Flag> flags;
@@ -25,9 +27,32 @@ public final class FormatContext implements Serializable {
     this.dateTimeFormatter = dateTimeFormatter;
   }
 
+  // Helper method to centralize validation logic.
+  private static void checkValue(String name, int value) {
+    if (value < 0 && value != UNSET && value != PRECEDING) {
+      // This should ideally not be reached if callers are correct,
+      // but serves as a strong internal safeguard.
+      throw new PrintfException("%s cannot be negative, but was: %d", name, value);
+    }
+    if (value > MAX_WIDTH_OR_PRECISION) {
+      throw new PrintfException(
+          "%s %d exceeds the maximum allowed value of %d", name, value, MAX_WIDTH_OR_PRECISION);
+    }
+  }
+
+  private static void checkWidth(int width) {
+    checkValue("Width", width);
+  }
+
+  private static void checkPrecision(int precision) {
+    checkValue("Precision", precision);
+  }
+
   public static FormatContext create(
       EnumSet<Flag> flags, int width, int precision, DateTimeFormatter dateTimeFormatter) {
     Preconditions.checkNotNull(flags, "flags");
+    checkWidth(width);
+    checkPrecision(precision);
     return new FormatContext(EnumSet.copyOf(flags), width, precision, dateTimeFormatter);
   }
 
@@ -44,7 +69,7 @@ public final class FormatContext implements Serializable {
         flagSet.add(Flag.valueOf(flags.charAt(i)));
       }
     }
-    return new FormatContext(flagSet, w, p, null);
+    return create(flagSet, w, p, null);
   }
 
   public int getWidth() {
@@ -52,6 +77,8 @@ public final class FormatContext implements Serializable {
   }
 
   public FormatContext setWidth(int newWidth) {
+    // Validate the new width before creating the new instance.
+    checkWidth(newWidth);
     return new FormatContext(EnumSet.copyOf(flags), newWidth, precision, dateTimeFormatter);
   }
 
@@ -64,6 +91,8 @@ public final class FormatContext implements Serializable {
   }
 
   public FormatContext setPrecision(int newPrecision) {
+    // Validate the new precision before creating the new instance.
+    checkPrecision(newPrecision);
     return new FormatContext(EnumSet.copyOf(flags), width, newPrecision, dateTimeFormatter);
   }
 
