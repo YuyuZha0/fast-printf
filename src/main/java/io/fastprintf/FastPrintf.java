@@ -115,4 +115,35 @@ public interface FastPrintf {
    *     instance if caching is already enabled.
    */
   FastPrintf enableThreadLocalCache();
+
+  /**
+   * Returns a new {@code FastPrintf} instance configured with a specific initial capacity for its
+   * internal {@link StringBuilder}.
+   *
+   * <p>By default, this library uses a heuristic (typically 1.5 times the format string's length)
+   * to pre-size the {@code StringBuilder} used for formatting. If you have a specific workload
+   * where you know the typical output size, providing an accurate capacity can prevent the {@code
+   * StringBuilder} from resizing, offering a minor performance improvement in highly sensitive
+   * applications.
+   *
+   * <p>This method returns a new, immutable instance with the specified capacity. The original
+   * instance is not modified. If this instance already has the same capacity, it will return
+   * itself.
+   *
+   * <pre>{@code
+   * // If you know your log lines are usually around 256 characters:
+   * FastPrintf baseFormatter = FastPrintf.compile("User: %s, Action: %s, Details: %s");
+   * FastPrintf optimizedFormatter = baseFormatter.setStringBuilderInitialCapacity(256);
+   *
+   * // Use the optimized formatter for subsequent calls.
+   * optimizedFormatter.format("test-user", "login", "success");
+   * }</pre>
+   *
+   * @param capacity the positive initial capacity for the {@code StringBuilder}.
+   * @return a new {@code FastPrintf} instance with the specified capacity, or this instance if the
+   *     capacity is unchanged.
+   * @throws IllegalArgumentException if the capacity is not positive.
+   * @see #enableThreadLocalCache()
+   */
+  FastPrintf setStringBuilderInitialCapacity(int capacity);
 }

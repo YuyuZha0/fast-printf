@@ -4,6 +4,7 @@ import io.fastprintf.appender.Appender;
 import io.fastprintf.traits.FormatTraits;
 import io.fastprintf.util.Preconditions;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.function.IntFunction;
 
@@ -84,10 +85,21 @@ final class FastPrintfImpl implements FastPrintf {
   }
 
   @Override
-  public FastPrintf enableThreadLocalCache() {
+  public FastPrintfImpl enableThreadLocalCache() {
     if (threadLocalBuilder != null) {
       return this;
     }
-    return new FastPrintfImpl(appenders.clone(), stringBuilderInitialCapacity, true);
+    return new FastPrintfImpl(
+        Arrays.copyOf(appenders, appenders.length), stringBuilderInitialCapacity, true);
+  }
+
+  @Override
+  public FastPrintfImpl setStringBuilderInitialCapacity(int capacity) {
+    Preconditions.checkArgument(capacity > 0, "capacity must be positive");
+    if (this.stringBuilderInitialCapacity == capacity) {
+      return this;
+    }
+    return new FastPrintfImpl(
+        Arrays.copyOf(appenders, appenders.length), capacity, threadLocalBuilder != null);
   }
 }
