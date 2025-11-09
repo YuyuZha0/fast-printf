@@ -4,7 +4,6 @@ import io.fastprintf.PrintfException;
 import io.fastprintf.number.FloatForm;
 import io.fastprintf.number.IntForm;
 import io.fastprintf.util.Utils;
-
 import java.lang.reflect.Array;
 import java.time.temporal.TemporalAccessor;
 import java.util.Arrays;
@@ -68,6 +67,12 @@ public final class ObjectTraits implements FormatTraits {
     if (value instanceof Number) {
       return IntForm.valueOf(((Number) value).longValue());
     }
+    if (value instanceof Date) {
+      return IntForm.valueOf(((Date) value).getTime());
+    }
+    if (value instanceof Calendar) {
+      return IntForm.valueOf(((Calendar) value).getTimeInMillis());
+    }
     throw new PrintfException("%s is not a number", value);
   }
 
@@ -75,6 +80,12 @@ public final class ObjectTraits implements FormatTraits {
   public FloatForm asFloatForm() {
     if (value instanceof Number) {
       return FloatForm.valueOf(((Number) value).doubleValue());
+    }
+    if (value instanceof Date) {
+      return FloatForm.valueOf(((Date) value).getTime() / 1000D);
+    }
+    if (value instanceof Calendar) {
+      return FloatForm.valueOf(((Calendar) value).getTimeInMillis() / 1000D);
     }
     throw new PrintfException("%s is not a number", value);
   }
@@ -97,6 +108,12 @@ public final class ObjectTraits implements FormatTraits {
   public int asInt() {
     if (value instanceof Number) {
       return ((Number) value).intValue();
+    }
+    if (value instanceof Date) {
+      return (int) (((Date) value).getTime() / 1000L);
+    }
+    if (value instanceof Calendar) {
+      return (int) (((Calendar) value).getTimeInMillis() / 1000L);
     }
     throw new PrintfException("%s cannot be converted to int", value);
   }

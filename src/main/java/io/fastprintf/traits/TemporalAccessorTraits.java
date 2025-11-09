@@ -3,8 +3,8 @@ package io.fastprintf.traits;
 import io.fastprintf.PrintfException;
 import io.fastprintf.number.FloatForm;
 import io.fastprintf.number.IntForm;
-
-import java.time.temporal.ChronoField;
+import java.time.DateTimeException;
+import java.time.Instant;
 import java.time.temporal.TemporalAccessor;
 
 public final class TemporalAccessorTraits implements FormatTraits {
@@ -22,12 +22,21 @@ public final class TemporalAccessorTraits implements FormatTraits {
 
   @Override
   public FloatForm asFloatForm() {
-    double seconds = getEpochSecond();
-    if (value.isSupported(ChronoField.NANO_OF_SECOND))
-      seconds += value.getLong(ChronoField.NANO_OF_SECOND) / 1_000_000_000D;
-    else if (value.isSupported(ChronoField.MILLI_OF_SECOND))
-      seconds += value.getLong(ChronoField.MILLI_OF_SECOND) / 1_000D;
-    return FloatForm.valueOf(seconds);
+    try {
+      // First, convert the accessor to a canonical Instant. This is the
+      // most robust way to handle all types (ZonedDateTime, OffsetDateTime, etc.).
+      Instant instant = Instant.from(value);
+
+      // Then, derive the double value from the Instant's definitive epoch values.
+      double seconds = instant.getEpochSecond();
+      seconds += instant.getNano() / 1_000_000_000.0D;
+
+      return FloatForm.valueOf(seconds);
+    } catch (DateTimeException e) {
+      // This will be caught if the TemporalAccessor cannot be converted to an Instant
+      // (e.g., LocalDate, LocalDateTime), which is the desired failure behavior.
+      throw new PrintfException("Can't get epoch seconds from: %s", value, e);
+    }
   }
 
   @Override
@@ -36,16 +45,22 @@ public final class TemporalAccessorTraits implements FormatTraits {
   }
 
   private long toEpochMilli() {
-    long mills = getEpochSecond() * 1000L;
-    if (value.isSupported(ChronoField.MILLI_OF_SECOND))
-      mills += value.getLong(ChronoField.MILLI_OF_SECOND);
-    return mills;
+    try {
+      // The most robust way to get epoch milliseconds is also via Instant.
+      return Instant.from(value).toEpochMilli();
+    } catch (DateTimeException e) {
+      throw new PrintfException("Can't get epoch milliseconds from: %s", value, e);
+    }
   }
 
   private long getEpochSecond() {
-    if (!value.isSupported(ChronoField.INSTANT_SECONDS))
-      throw new PrintfException("Can't get seconds from: %s", value);
-    return value.getLong(ChronoField.INSTANT_SECONDS);
+    // This can now be simplified or even removed if not used elsewhere,
+    // but for consistency with asInt(), we can keep it.
+    try {
+      return Instant.from(value).getEpochSecond();
+    } catch (DateTimeException e) {
+      throw new PrintfException("Can't get epoch seconds from: %s", value, e);
+    }
   }
 
   @Override
