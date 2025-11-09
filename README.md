@@ -51,7 +51,7 @@ For general-purpose string formatting where performance is not critical, the sta
 
 ### Gradle
 ```groovy
-implementation 'io.github.yuyuzha0:fast-printf:1.1.0'
+implementation 'io.github.yuyuzha0:fast-printf:1.1.1'
 ```
 
 ## Usage
