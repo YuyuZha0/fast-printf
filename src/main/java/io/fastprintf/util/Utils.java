@@ -162,6 +162,7 @@ public final class Utils {
    *     forth. A {@code null} argument is converted to the four-character string {@code "null"};
    *     non-null values are converted to strings using {@link Object#toString()}.
    * @since 25.1
+   * @return the formatted string
    */
   public static String lenientFormat(String template, Object... args) {
     if (template == null) {
