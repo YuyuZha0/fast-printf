@@ -37,7 +37,8 @@ final class FastPrintfImpl implements FastPrintf {
   static FastPrintfImpl compile(String format) {
     Compiler compiler = new Compiler(format);
     compiler.compile();
-    int sourceLength = Math.max(format.length(), 10);
+    int sourceLength =
+        Math.max(format.length(), 11); // To align with StringBuilder default capacity
     return new FastPrintfImpl(
         compiler.getAppenders().toArray(new Appender[0]),
         Math.addExact(sourceLength, sourceLength >> 1), // 1.5x format length as initial capacity
