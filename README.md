@@ -1,6 +1,5 @@
 # fast-printf
 
-[![Build Status](https://img.shields.io/github/actions/workflow/status/yuyuzha0/fast-printf/main.yml?style=flat-square&branch=main)](https://github.com/yuyuzha0/fast-printf/actions)
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.yuyuzha0/fast-printf.svg?style=flat-square)](https://search.maven.org/artifact/io.github.yuyuzha0/fast-printf)
 [![License](https://img.shields.io/badge/License-GPL--2.0--with--classpath--exception-blue.svg?style=flat-square)](https://openjdk.java.net/legal/gplv2+ce.html)
 
