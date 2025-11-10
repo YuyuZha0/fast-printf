@@ -105,6 +105,10 @@
                                 </goals>
                             </execution>
                         </executions>
+                        <configuration>
+                            <!-- This disables checks for missing Javadoc comments -->
+                            <doclint>-missing</doclint>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
