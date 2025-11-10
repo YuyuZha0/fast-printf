@@ -21,14 +21,14 @@ final class Compiler {
   }
 
   void compile() {
-    recursiveDecrease();
+    parseNext();
   }
 
   private boolean endOfSource() {
     return lookahead >= source.length();
   }
 
-  private void recursiveDecrease() {
+  private void parseNext() {
     if (endOfSource()) return;
     char c = source.charAt(lookahead);
     if (c == '%') {
@@ -45,7 +45,7 @@ final class Compiler {
     if (c == '%') {
       lookahead++;
       appenders.add(new FixedStringAppender("%"));
-      recursiveDecrease();
+      parseNext();
       return;
     }
     // %[flags][width][.precision][{date-time-formatter}]specifier
@@ -56,7 +56,7 @@ final class Compiler {
     Specifier specifier = specifier();
     FormatContext context = FormatContext.create(flags, width, precision, dateTimeFormatter);
     appenders.add(new DefaultAppender(specifier, context));
-    recursiveDecrease();
+    parseNext();
   }
 
   private EnumSet<Flag> flags() {
