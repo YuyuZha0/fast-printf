@@ -14,7 +14,7 @@ import java.util.Iterator;
  * where the internal nodes are {@code Concat} instances and the leaf nodes are {@link AtomicSeq}
  * instances that hold the actual character data.
  *
- * <h3>Architectural Benefits:</h3>
+ * <h2>Architectural Benefits:</h2>
  *
  * <ul>
  *   <li><b>Fast Concatenation</b>: Appending sequences is an O(1) operation, as it only involves

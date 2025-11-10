@@ -10,7 +10,7 @@ import java.io.IOException;
  * for {@link String#format(String, Object...)} in scenarios where `glibc` compatibility and raw
  * speed are critical, such as logging, network protocols, or data serialization.
  *
- * <h3>Core Features:</h3>
+ * <h2>Core Features:</h2>
  *
  * <ul>
  *   <li><b>Ahead-of-Time Compilation</b>: Format strings are parsed once using {@link
@@ -25,7 +25,7 @@ import java.io.IOException;
  *   <li><b>No Locale Overhead</b>: Formatting is locale-agnostic for maximum performance.
  * </ul>
  *
- * <h3>Basic Usage:</h3>
+ * <h2>Basic Usage:</h2>
  *
  * <pre>{@code
  * // 1. Compile the format string once and reuse the formatter.
