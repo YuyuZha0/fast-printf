@@ -23,7 +23,6 @@ a **compile-once, run-many** approach and a sophisticated zero-copy architecture
 * 🧩 **Zero Dependencies**: A lightweight library with no external dependencies.
 * ☕ **Java 8+**: Compatible with all modern Java runtimes.
 
-
 ## Performance
 
 `fast-printf` is designed for speed. The pre-compilation and low-allocation strategy pays off significantly in tight
