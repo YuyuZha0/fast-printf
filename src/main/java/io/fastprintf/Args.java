@@ -105,6 +105,38 @@ public interface Args extends Iterable<FormatTraits> {
   }
 
   /**
+   * Creates a new, empty {@code Args} container with an initial capacity to hold an expected number
+   * of arguments.
+   *
+   * <p>This factory method is a performance optimization for cases where the number of arguments is
+   * known in advance. By pre-sizing the internal storage, it can prevent reallocations and array
+   * copying as arguments are added using the fluent {@code put} methods. This is particularly
+   * useful when building a large argument list inside a performance-critical loop.
+   *
+   * <p>If the number of arguments is unknown, prefer using the {@link #create()} method.
+   *
+   * <h3>Usage:</h3>
+   *
+   * <pre>{@code
+   * // If you know you will be adding exactly 4 arguments:
+   * Args args = Args.createWithExpectedSize(4)
+   *     .putInt(1024)
+   *     .putString("log-message")
+   *     .putBoolean(true)
+   *     .putDouble(Math.PI);
+   * formatter.format(args);
+   * }</pre>
+   *
+   * @param expectedSize the expected number of arguments that will be added.
+   * @return a new, empty {@code Args} instance with a pre-allocated capacity.
+   * @throws IllegalArgumentException if {@code expectedSize} is negative.
+   */
+  static Args createWithExpectedSize(int expectedSize) {
+    Preconditions.checkArgument(expectedSize >= 0, "expectedSize must be non-negative");
+    return new ArgsImpl(expectedSize);
+  }
+
+  /**
    * Returns an unmodifiable list of the original objects that were added to this container.
    *
    * @return a {@link List} of the original argument values.

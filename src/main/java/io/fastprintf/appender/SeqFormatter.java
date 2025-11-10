@@ -10,7 +10,11 @@ import io.fastprintf.seq.Seq;
 import io.fastprintf.traits.FormatTraits;
 import io.fastprintf.traits.RefSlot;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 import java.util.function.Function;
@@ -368,15 +372,30 @@ public final class SeqFormatter {
     return spaceJustify(context, seq);
   }
 
+  private static DateTimeFormatter bestDefaultFormatterOrThrow(TemporalAccessor ta) {
+    if (ta instanceof OffsetDateTime || ta instanceof ZonedDateTime) {
+      return DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+    } else if (ta instanceof LocalDateTime) {
+      return DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+    } else if (ta instanceof LocalDate) {
+      return DateTimeFormatter.ISO_LOCAL_DATE;
+    } else {
+      throw new PrintfException(
+          "No default DateTimeFormatter for type: %s", ta.getClass().getName());
+    }
+  }
+
   static Seq t(FormatContext context, FormatTraits traits) {
     DateTimeFormatter formatter = context.getDateTimeFormatter();
-    if (formatter == null) {
-      formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
-    }
     TemporalAccessor temporalAccessor = traits.asTemporalAccessor();
-    if (temporalAccessor instanceof Instant) {
-      Instant instant = (Instant) temporalAccessor;
-      temporalAccessor = instant.atZone(ZoneId.systemDefault());
+
+    if (formatter == null) {
+      if (temporalAccessor instanceof Instant) {
+        temporalAccessor = ((Instant) temporalAccessor).atZone(ZoneId.systemDefault());
+        formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+      } else {
+        formatter = bestDefaultFormatterOrThrow(temporalAccessor);
+      }
     }
     Seq seq = Seq.wrap(formatter.format(temporalAccessor));
     return spaceJustify(context, seq);
