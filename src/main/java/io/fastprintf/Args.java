@@ -21,7 +21,7 @@ import java.util.List;
  * <p>This interface supports a fluent builder-style API for constructing the argument list, as well
  * as static factory methods for common use cases.
  *
- * <h3>Usage Patterns:</h3>
+ * <h2>Usage Patterns:</h2>
  *
  * <p><b>1. Static Factory for Varargs (most common):</b>
  *
@@ -115,7 +115,7 @@ public interface Args extends Iterable<FormatTraits> {
    *
    * <p>If the number of arguments is unknown, prefer using the {@link #create()} method.
    *
-   * <h3>Usage:</h3>
+   * <h2>Usage:</h2>
    *
    * <pre>{@code
    * // If you know you will be adding exactly 4 arguments:
