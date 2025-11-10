@@ -6,9 +6,15 @@ import io.fastprintf.number.IntForm;
 public final class ShortTraits implements FormatTraits {
 
   private final short value;
+  private final RefSlot ref;
 
-  public ShortTraits(short value) {
+  public ShortTraits(short value, RefSlot ref) {
     this.value = value;
+    this.ref = ref;
+  }
+
+  public static ShortTraits ofPrimitive(short value) {
+    return new ShortTraits(value, RefSlot.ofPrimitive());
   }
 
   @Override
@@ -37,7 +43,12 @@ public final class ShortTraits implements FormatTraits {
   }
 
   @Override
-  public Object value() {
-    return value;
+  public RefSlot ref() {
+    return ref;
+  }
+
+  @Override
+  public Object asObject() {
+    return ref.isPrimitive() ? value : ref.get();
   }
 }

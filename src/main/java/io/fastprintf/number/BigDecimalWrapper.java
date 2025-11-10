@@ -2,7 +2,6 @@ package io.fastprintf.number;
 
 import io.fastprintf.PrintfException;
 import io.fastprintf.seq.Seq;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;

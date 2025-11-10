@@ -1,4 +1,4 @@
-package io.fastprintf.util;
+package io.fastprintf.util.internal;
 
 /*
  * Copyright (c) 1996, 2016, Oracle and/or its affiliates. All rights reserved.
@@ -282,7 +282,7 @@ public final class FloatingDecimal {
       switch (in.charAt(i)) {
         case '-':
           isNegative = true;
-          // FALLTHROUGH
+        // FALLTHROUGH
         case '+':
           i++;
           signSeen = true;
@@ -407,7 +407,7 @@ public final class FloatingDecimal {
         switch (in.charAt(++i)) {
           case '-':
             expSign = -1;
-            // FALLTHROUGH
+          // FALLTHROUGH
           case '+':
             i++;
         }
@@ -1109,6 +1109,7 @@ public final class FloatingDecimal {
       0, 3, 5, 7, 10, 12, 14, 17, 19, 21, 24, 26, 28, 31, 33, 35, 38, 40, 42, 45, 47, 49, 52, 54,
       56, 59, 61,
     };
+
     /**
      * If insignificant==(1L << ixd) i = insignificantDigitsNumber[idx] is the same as: int i; for (
      * i = 0; insignificant >= 10L; i++ ) insignificant /= 10L;

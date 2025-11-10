@@ -59,7 +59,7 @@ public class DefaultAppenderTest {
     FormatContext ctx = FormatContext.create("", 5, -1);
     DefaultAppender appender = new DefaultAppender(Specifier.SIGNED_DECIMAL_INTEGER, ctx);
     List<Seq> collect = new ArrayList<>();
-    List<FormatTraits> traits = Collections.singletonList(new IntTraits(42));
+    List<FormatTraits> traits = Collections.singletonList(IntTraits.ofPrimitive(42));
 
     appender.append(collect::add, traits.iterator());
 
@@ -72,7 +72,7 @@ public class DefaultAppenderTest {
     FormatContext ctx = FormatContext.create("", FormatContext.PRECEDING, -1);
     DefaultAppender appender = new DefaultAppender(Specifier.STRING, ctx);
     List<Seq> collect = new ArrayList<>();
-    List<FormatTraits> traits = Arrays.asList(new IntTraits(10), new CharSequenceTraits("test"));
+    List<FormatTraits> traits = Arrays.asList(IntTraits.ofPrimitive(10), new CharSequenceTraits("test"));
 
     appender.append(collect::add, traits.iterator());
 
@@ -85,7 +85,7 @@ public class DefaultAppenderTest {
     FormatContext ctx = FormatContext.create("", FormatContext.PRECEDING, -1);
     DefaultAppender appender = new DefaultAppender(Specifier.STRING, ctx);
     List<Seq> collect = new ArrayList<>();
-    List<FormatTraits> traits = Arrays.asList(new IntTraits(-10), new CharSequenceTraits("test"));
+    List<FormatTraits> traits = Arrays.asList(IntTraits.ofPrimitive(-10), new CharSequenceTraits("test"));
 
     appender.append(collect::add, traits.iterator());
 
@@ -98,7 +98,7 @@ public class DefaultAppenderTest {
     FormatContext ctx = FormatContext.create("", -1, FormatContext.PRECEDING);
     DefaultAppender appender = new DefaultAppender(Specifier.STRING, ctx);
     List<Seq> collect = new ArrayList<>();
-    List<FormatTraits> traits = Arrays.asList(new IntTraits(3), new CharSequenceTraits("hello"));
+    List<FormatTraits> traits = Arrays.asList(IntTraits.ofPrimitive(3), new CharSequenceTraits("hello"));
 
     appender.append(collect::add, traits.iterator());
 
@@ -111,7 +111,7 @@ public class DefaultAppenderTest {
     FormatContext ctx = FormatContext.create("", -1, FormatContext.PRECEDING);
     DefaultAppender appender = new DefaultAppender(Specifier.STRING, ctx);
     List<Seq> collect = new ArrayList<>();
-    List<FormatTraits> traits = Arrays.asList(new IntTraits(-5), new CharSequenceTraits("hello"));
+    List<FormatTraits> traits = Arrays.asList(IntTraits.ofPrimitive(-5), new CharSequenceTraits("hello"));
 
     appender.append(collect::add, traits.iterator());
 
@@ -125,7 +125,7 @@ public class DefaultAppenderTest {
     DefaultAppender appender = new DefaultAppender(Specifier.STRING, ctx);
     List<Seq> collect = new ArrayList<>();
     List<FormatTraits> traits =
-        Arrays.asList(new IntTraits(10), new IntTraits(3), new CharSequenceTraits("hello"));
+        Arrays.asList(IntTraits.ofPrimitive(10), IntTraits.ofPrimitive(3), new CharSequenceTraits("hello"));
 
     appender.append(collect::add, traits.iterator());
 
@@ -163,7 +163,7 @@ public class DefaultAppenderTest {
             FormatContext.create("", -1, FormatContext.PRECEDING));
     List<Seq> collect = new ArrayList<>();
     // Missing precision argument, but has main argument
-    List<FormatTraits> traits = Collections.singletonList(new IntTraits(123));
+    List<FormatTraits> traits = Collections.singletonList(IntTraits.ofPrimitive(123));
 
     appender.append(collect::add, traits.iterator());
   }

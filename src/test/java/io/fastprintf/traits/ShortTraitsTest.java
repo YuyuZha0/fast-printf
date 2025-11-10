@@ -1,9 +1,9 @@
 package io.fastprintf.traits;
 
+import static org.junit.Assert.assertEquals;
+
 import io.fastprintf.number.IntForm;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class ShortTraitsTest {
 
@@ -18,7 +18,7 @@ public class ShortTraitsTest {
   }
 
   private void verifyShort(short s) {
-    ShortTraits shortTraits = new ShortTraits(s);
+    ShortTraits shortTraits = ShortTraits.ofPrimitive(s);
     assertEquals(Short.toString(s), shortTraits.asString());
     assertEquals(s, shortTraits.asInt());
     assertEquals((char) s, shortTraits.asChar());

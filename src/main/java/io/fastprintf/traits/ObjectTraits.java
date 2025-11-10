@@ -119,7 +119,7 @@ public final class ObjectTraits implements FormatTraits {
   }
 
   @Override
-  public Object value() {
-    return value;
+  public RefSlot ref() {
+    return RefSlot.of(value);
   }
 }

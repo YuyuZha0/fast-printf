@@ -132,9 +132,7 @@ public interface Args extends Iterable<FormatTraits> {
    * @param value the {@code Boolean} value to add, or {@code null}.
    * @return this {@code Args} instance for method chaining.
    */
-  default Args putBooleanOrNull(Boolean value) {
-    return value == null ? putNull() : putBoolean(value);
-  }
+  Args putBooleanOrNull(Boolean value);
 
   /**
    * Appends a primitive {@code char} argument to the list. Avoids boxing.
@@ -150,9 +148,7 @@ public interface Args extends Iterable<FormatTraits> {
    * @param value the {@code Character} value to add, or {@code null}.
    * @return this {@code Args} instance for method chaining.
    */
-  default Args putCharOrNull(Character value) {
-    return value == null ? putNull() : putChar(value);
-  }
+  Args putCharOrNull(Character value);
 
   /**
    * Appends a primitive {@code byte} argument to the list. Avoids boxing.
@@ -168,9 +164,7 @@ public interface Args extends Iterable<FormatTraits> {
    * @param value the {@code Byte} value to add, or {@code null}.
    * @return this {@code Args} instance for method chaining.
    */
-  default Args putByteOrNull(Byte value) {
-    return value == null ? putNull() : putByte(value);
-  }
+  Args putByteOrNull(Byte value);
 
   /**
    * Appends a primitive {@code short} argument to the list. Avoids boxing.
@@ -186,9 +180,7 @@ public interface Args extends Iterable<FormatTraits> {
    * @param value the {@code Short} value to add, or {@code null}.
    * @return this {@code Args} instance for method chaining.
    */
-  default Args putShortOrNull(Short value) {
-    return value == null ? putNull() : putShort(value);
-  }
+  Args putShortOrNull(Short value);
 
   /**
    * Appends a primitive {@code int} argument to the list. Avoids boxing.
@@ -204,9 +196,7 @@ public interface Args extends Iterable<FormatTraits> {
    * @param value the {@code Integer} value to add, or {@code null}.
    * @return this {@code Args} instance for method chaining.
    */
-  default Args putIntOrNull(Integer value) {
-    return value == null ? putNull() : putInt(value);
-  }
+  Args putIntOrNull(Integer value);
 
   /**
    * Appends a primitive {@code long} argument to the list. Avoids boxing.
@@ -222,9 +212,7 @@ public interface Args extends Iterable<FormatTraits> {
    * @param value the {@code Long} value to add, or {@code null}.
    * @return this {@code Args} instance for method chaining.
    */
-  default Args putLongOrNull(Long value) {
-    return value == null ? putNull() : putLong(value);
-  }
+  Args putLongOrNull(Long value);
 
   /**
    * Appends a primitive {@code float} argument to the list. Avoids boxing.
@@ -240,9 +228,7 @@ public interface Args extends Iterable<FormatTraits> {
    * @param value the {@code Float} value to add, or {@code null}.
    * @return this {@code Args} instance for method chaining.
    */
-  default Args putFloatOrNull(Float value) {
-    return value == null ? putNull() : putFloat(value);
-  }
+  Args putFloatOrNull(Float value);
 
   /**
    * Appends a primitive {@code double} argument to the list. Avoids boxing.
@@ -258,9 +244,7 @@ public interface Args extends Iterable<FormatTraits> {
    * @param value the {@code Double} value to add, or {@code null}.
    * @return this {@code Args} instance for method chaining.
    */
-  default Args putDoubleOrNull(Double value) {
-    return value == null ? putNull() : putDouble(value);
-  }
+  Args putDoubleOrNull(Double value);
 
   /**
    * Appends a date/time object that implements {@link TemporalAccessor}.

@@ -5,16 +5,18 @@ import io.fastprintf.number.IntForm;
 
 public final class BooleanTraits implements FormatTraits {
 
-  private static final FormatTraits TRUE = new BooleanTraits(true);
-  private static final FormatTraits FALSE = new BooleanTraits(false);
+  private static final BooleanTraits TRUE = new BooleanTraits(true, RefSlot.ofPrimitive());
+  private static final BooleanTraits FALSE = new BooleanTraits(false, RefSlot.ofPrimitive());
 
   private final boolean value;
+  private final RefSlot ref;
 
-  private BooleanTraits(boolean value) {
+  public BooleanTraits(boolean value, RefSlot ref) {
     this.value = value;
+    this.ref = ref;
   }
 
-  public static FormatTraits valueOf(boolean value) {
+  public static BooleanTraits ofPrimitive(boolean value) {
     return value ? TRUE : FALSE;
   }
 
@@ -39,7 +41,12 @@ public final class BooleanTraits implements FormatTraits {
   }
 
   @Override
-  public Object value() {
-    return value;
+  public RefSlot ref() {
+    return ref;
+  }
+
+  @Override
+  public Object asObject() {
+    return ref.isPrimitive() ? value : ref.get();
   }
 }

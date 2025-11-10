@@ -1,4 +1,4 @@
-package io.fastprintf.util;
+package io.fastprintf.util.internal;
 
 /*
  * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
@@ -27,6 +27,7 @@ package io.fastprintf.util;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+
 // @ model import org.jmlspecs.models.JMLMath;
 
 /** A simple big integer package specifically for floating point base conversion. */

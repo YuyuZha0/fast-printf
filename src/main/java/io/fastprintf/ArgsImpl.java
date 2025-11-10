@@ -1,14 +1,14 @@
 package io.fastprintf;
 
 import io.fastprintf.traits.*;
-import io.fastprintf.util.Preconditions;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 final class ArgsImpl implements Args {
@@ -27,87 +27,148 @@ final class ArgsImpl implements Args {
     this(new ArrayList<>(size));
   }
 
-  private Args addTraits(FormatTraits traits) {
+  private ArgsImpl addTraits(FormatTraits traits) {
     this.traits.add(traits);
     return this;
+  }
+
+  private <T> ArgsImpl addTraits(
+      T value, BiFunction<? super T, ? super RefSlot, ? extends FormatTraits> factory) {
+    if (value == null) {
+      return putNull();
+    }
+    return addTraits(factory.apply(value, RefSlot.of(value)));
+  }
+
+  private <T> ArgsImpl addTraits(T value, Function<? super T, ? extends FormatTraits> factory) {
+    if (value == null) {
+      return putNull();
+    }
+    return addTraits(factory.apply(value));
+  }
+
+  private <T> ArgsImpl addTraitsNonNull(
+      T value, BiFunction<? super T, ? super RefSlot, ? extends FormatTraits> factory) {
+    return addTraits(factory.apply(value, RefSlot.of(value)));
+  }
+
+  private <T> ArgsImpl addTraitsNonNull(
+      T value, Function<? super T, ? extends FormatTraits> factory) {
+    return addTraits(factory.apply(value));
   }
 
   @Override
   public List<Object> values() {
     List<Object> values = new ArrayList<>(traits.size());
     for (FormatTraits trait : traits) {
-      values.add(trait.value());
+      values.add(trait.asObject());
     }
     return values;
   }
 
   @Override
-  public Args putNull() {
+  public ArgsImpl putNull() {
     return addTraits(NullTraits.getInstance());
   }
 
   @Override
-  public Args putBoolean(boolean value) {
-    return addTraits(BooleanTraits.valueOf(value));
+  public ArgsImpl putBoolean(boolean value) {
+    return addTraits(BooleanTraits.ofPrimitive(value));
   }
 
   @Override
-  public Args putChar(char value) {
-    return addTraits(new CharacterTraits(value));
+  public ArgsImpl putBooleanOrNull(Boolean value) {
+    return addTraits(value, BooleanTraits::new);
   }
 
   @Override
-  public Args putByte(byte value) {
-    return addTraits(new ByteTraits(value));
+  public ArgsImpl putChar(char value) {
+    return addTraits(CharacterTraits.ofPrimitive(value));
   }
 
   @Override
-  public Args putShort(short value) {
-    return addTraits(new ShortTraits(value));
+  public ArgsImpl putCharOrNull(Character value) {
+    return addTraits(value, CharacterTraits::new);
   }
 
   @Override
-  public Args putInt(int value) {
-    return addTraits(new IntTraits(value));
+  public ArgsImpl putByte(byte value) {
+    return addTraits(ByteTraits.ofPrimitive(value));
   }
 
   @Override
-  public Args putLong(long value) {
-    return addTraits(new LongTraits(value));
+  public ArgsImpl putByteOrNull(Byte value) {
+    return addTraits(value, ByteTraits::new);
   }
 
   @Override
-  public Args putFloat(float value) {
-    return addTraits(new FloatTraits(value));
+  public ArgsImpl putShort(short value) {
+    return addTraits(ShortTraits.ofPrimitive(value));
   }
 
   @Override
-  public Args putDouble(double value) {
-    return addTraits(new DoubleTraits(value));
+  public ArgsImpl putShortOrNull(Short value) {
+    return addTraits(value, ShortTraits::new);
   }
 
   @Override
-  public Args putCharSequence(CharSequence value) {
-    Preconditions.checkNotNull(value, "value");
-    return addTraits(new CharSequenceTraits(value));
+  public ArgsImpl putInt(int value) {
+    return addTraits(IntTraits.ofPrimitive(value));
   }
 
   @Override
-  public Args putBigInteger(BigInteger value) {
-    Preconditions.checkNotNull(value, "value");
-    return addTraits(new BigIntegerTraits(value));
+  public ArgsImpl putIntOrNull(Integer value) {
+    return addTraits(value, IntTraits::new);
   }
 
   @Override
-  public Args putBigDecimal(BigDecimal value) {
-    Preconditions.checkNotNull(value, "value");
-    return addTraits(new BigDecimalTraits(value));
+  public ArgsImpl putLong(long value) {
+    return addTraits(LongTraits.ofPrimitive(value));
   }
 
   @Override
-  public Args putDateTime(TemporalAccessor value) {
-    Preconditions.checkNotNull(value, "value");
-    return addTraits(new TemporalAccessorTraits(value));
+  public ArgsImpl putLongOrNull(Long value) {
+    return addTraits(value, LongTraits::new);
+  }
+
+  @Override
+  public ArgsImpl putFloat(float value) {
+    return addTraits(FloatTraits.ofPrimitive(value));
+  }
+
+  @Override
+  public ArgsImpl putFloatOrNull(Float value) {
+    return addTraits(value, FloatTraits::new);
+  }
+
+  @Override
+  public ArgsImpl putDouble(double value) {
+    return addTraits(DoubleTraits.ofPrimitive(value));
+  }
+
+  @Override
+  public ArgsImpl putDoubleOrNull(Double value) {
+    return addTraits(value, DoubleTraits::new);
+  }
+
+  @Override
+  public ArgsImpl putCharSequence(CharSequence value) {
+    return addTraits(value, CharSequenceTraits::new);
+  }
+
+  @Override
+  public ArgsImpl putBigInteger(BigInteger value) {
+    return addTraits(value, BigIntegerTraits::new);
+  }
+
+  @Override
+  public ArgsImpl putBigDecimal(BigDecimal value) {
+    return addTraits(value, BigDecimalTraits::new);
+  }
+
+  @Override
+  public ArgsImpl putDateTime(TemporalAccessor value) {
+    return addTraits(value, TemporalAccessorTraits::new);
   }
 
   @Override
@@ -115,20 +176,16 @@ final class ArgsImpl implements Args {
     return traits.iterator();
   }
 
-  private Args putObject(Object value) {
+  private ArgsImpl putObject(Object value) {
     if (value instanceof FormatTraits) {
       return addTraits((FormatTraits) value);
     }
-    Preconditions.checkNotNull(value, "value");
-    return addTraits(new ObjectTraits(value));
+    return addTraits(value, ObjectTraits::new);
   }
 
   @Override
   public String toString() {
-    return traits.stream()
-        .map(FormatTraits::value)
-        .map(String::valueOf)
-        .collect(Collectors.joining(", ", "[", "]"));
+    return traits.stream().map(FormatTraits::asString).collect(Collectors.joining(", ", "[", "]"));
   }
 
   @Override
@@ -136,29 +193,29 @@ final class ArgsImpl implements Args {
     if (value == null) {
       return putNull();
     } else if (value instanceof Boolean) {
-      return putBoolean((Boolean) value);
+      return addTraitsNonNull((Boolean) value, BooleanTraits::new);
     } else if (value instanceof Character) {
-      return putChar((Character) value);
+      return addTraitsNonNull((Character) value, CharacterTraits::new);
     } else if (value instanceof Byte) {
-      return putByte((Byte) value);
+      return addTraitsNonNull((Byte) value, ByteTraits::new);
     } else if (value instanceof Short) {
-      return putShort((Short) value);
+      return addTraitsNonNull((Short) value, ShortTraits::new);
     } else if (value instanceof Integer) {
-      return putInt((Integer) value);
+      return addTraitsNonNull((Integer) value, IntTraits::new);
     } else if (value instanceof Long) {
-      return putLong((Long) value);
+      return addTraitsNonNull((Long) value, LongTraits::new);
     } else if (value instanceof Float) {
-      return putFloat((Float) value);
+      return addTraitsNonNull((Float) value, FloatTraits::new);
     } else if (value instanceof Double) {
-      return putDouble((Double) value);
+      return addTraitsNonNull((Double) value, DoubleTraits::new);
     } else if (value instanceof CharSequence) {
-      return putCharSequence((CharSequence) value);
+      return addTraitsNonNull((CharSequence) value, CharSequenceTraits::new);
     } else if (value instanceof BigInteger) {
-      return putBigInteger((BigInteger) value);
+      return addTraitsNonNull((BigInteger) value, BigIntegerTraits::new);
     } else if (value instanceof BigDecimal) {
-      return putBigDecimal((BigDecimal) value);
+      return addTraitsNonNull((BigDecimal) value, BigDecimalTraits::new);
     } else if (value instanceof TemporalAccessor) {
-      return putDateTime((TemporalAccessor) value);
+      return addTraitsNonNull((TemporalAccessor) value, TemporalAccessorTraits::new);
     } else {
       return putObject(value);
     }

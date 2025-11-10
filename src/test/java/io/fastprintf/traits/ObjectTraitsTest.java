@@ -39,7 +39,7 @@ public class ObjectTraitsTest {
   }
 
   @Test
-  public void asString_withCharArray_shouldReturnStringValue() {
+  public void asString_withCharArray_shouldReturnStringRef() {
     char[] chars = new char[] {'h', 'e', 'l', 'l', 'o'};
     ObjectTraits traits = new ObjectTraits(chars);
     assertEquals("hello", traits.asString());
@@ -62,20 +62,20 @@ public class ObjectTraitsTest {
   // --- Numeric Conversion Tests (asIntForm, asFloatForm, asInt) ---
 
   @Test
-  public void asIntForm_withNumber_shouldReturnValueAsLong() {
+  public void asIntForm_withNumber_shouldReturnRefAsLong() {
     ObjectTraits traits = new ObjectTraits(123.45); // Double
     assertEquals("123", traits.asIntForm().toDecimalString());
   }
 
   @Test
-  public void asFloatForm_withNumber_shouldReturnValueAsDouble() {
+  public void asFloatForm_withNumber_shouldReturnRefAsDouble() {
     ObjectTraits traits = new ObjectTraits(new BigDecimal("123.456"));
     // Using toString to avoid double precision issues in test
     assertEquals("123.456", traits.asFloatForm().toString());
   }
 
   @Test
-  public void asInt_withNumber_shouldReturnValueAsInt() {
+  public void asInt_withNumber_shouldReturnRefAsInt() {
     ObjectTraits traits = new ObjectTraits(123.45);
     assertEquals(123, traits.asInt());
   }
@@ -174,9 +174,9 @@ public class ObjectTraitsTest {
   // --- value() Test ---
 
   @Test
-  public void value_shouldReturnOriginalObject() {
+  public void ref_shouldReturnOriginalObject() {
     Object obj = new Object();
     ObjectTraits traits = new ObjectTraits(obj);
-    assertSame(obj, traits.value());
+    assertSame(obj, traits.ref().get());
   }
 }

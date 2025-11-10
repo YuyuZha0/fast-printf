@@ -69,8 +69,8 @@ public final class TemporalAccessorTraits implements FormatTraits {
   }
 
   @Override
-  public Object value() {
-    return value;
+  public RefSlot ref() {
+    return RefSlot.of(value);
   }
 
   @Override

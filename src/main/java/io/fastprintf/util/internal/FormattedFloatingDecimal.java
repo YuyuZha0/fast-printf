@@ -1,4 +1,4 @@
-package io.fastprintf.util;
+package io.fastprintf.util.internal;
 
 /*
  * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.

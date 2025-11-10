@@ -2,11 +2,13 @@ package io.fastprintf.appender;
 
 import io.fastprintf.Flag;
 import io.fastprintf.FormatContext;
+import io.fastprintf.PrintfException;
 import io.fastprintf.number.FloatForm;
 import io.fastprintf.number.FloatLayout;
 import io.fastprintf.number.IntForm;
 import io.fastprintf.seq.Seq;
 import io.fastprintf.traits.FormatTraits;
+import io.fastprintf.traits.RefSlot;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -345,10 +347,24 @@ public final class SeqFormatter {
   }
 
   static Seq p(FormatContext context, FormatTraits traits) {
-    Object value = traits.value();
+    RefSlot slot = traits.ref();
+    if (slot.isPrimitive()) {
+      throw new PrintfException("The '%p' specifier cannot be used with primitive types.");
+    }
+    Object value = slot.get();
+
+    // 2. Handle the null case explicitly
+    if (value == null) {
+      // The formatter decides on the representation for null, e.g., glibc's "(nil)"
+      return spaceJustify(context, Seq.wrap("null"));
+    }
+
+    // 3. Perform all formatting logic here
     Seq seq = Seq.wrap(Integer.toHexString(System.identityHashCode(value)));
     seq = seq.prepend(Seq.ch('@'));
     seq = seq.prepend(Seq.wrap(value.getClass().getName()));
+
+    // 4. Apply justification
     return spaceJustify(context, seq);
   }
 

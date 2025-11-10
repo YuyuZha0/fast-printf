@@ -2,7 +2,6 @@ package io.fastprintf.traits;
 
 import io.fastprintf.number.FloatForm;
 import io.fastprintf.number.IntForm;
-
 import java.math.BigDecimal;
 
 public final class BigDecimalTraits implements FormatTraits {
@@ -34,7 +33,7 @@ public final class BigDecimalTraits implements FormatTraits {
   }
 
   @Override
-  public Object value() {
-    return value;
+  public RefSlot ref() {
+    return RefSlot.of(value);
   }
 }

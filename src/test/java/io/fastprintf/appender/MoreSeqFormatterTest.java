@@ -225,9 +225,9 @@ public class MoreSeqFormatterTest {
 
   @Test
   public void testCharacter_c() {
-    assertEquals("    a", SeqFormatter.c(parsePattern("%5c"), new CharacterTraits('a')).toString());
+    assertEquals("    a", SeqFormatter.c(parsePattern("%5c"), CharacterTraits.ofPrimitive('a')).toString());
     assertEquals(
-        "a    ", SeqFormatter.c(parsePattern("%-5c"), new CharacterTraits('a')).toString());
+        "a    ", SeqFormatter.c(parsePattern("%-5c"), CharacterTraits.ofPrimitive('a')).toString());
   }
 
   @Test

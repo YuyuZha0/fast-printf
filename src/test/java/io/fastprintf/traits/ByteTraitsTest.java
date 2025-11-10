@@ -1,9 +1,9 @@
 package io.fastprintf.traits;
 
+import static org.junit.Assert.assertEquals;
+
 import io.fastprintf.number.IntForm;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class ByteTraitsTest {
 
@@ -15,7 +15,7 @@ public class ByteTraitsTest {
   }
 
   private void verifyByte(byte b) {
-    ByteTraits byteTraits = new ByteTraits(b);
+    ByteTraits byteTraits = ByteTraits.ofPrimitive(b);
     assertEquals(Byte.toString(b), byteTraits.asString());
     assertEquals(b, byteTraits.asInt());
     assertEquals((char) b, byteTraits.asChar());

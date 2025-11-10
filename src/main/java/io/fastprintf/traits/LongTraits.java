@@ -3,15 +3,20 @@ package io.fastprintf.traits;
 import io.fastprintf.number.FloatForm;
 import io.fastprintf.number.IntForm;
 import io.fastprintf.util.Utils;
-
 import java.time.temporal.TemporalAccessor;
 
 public final class LongTraits implements FormatTraits {
 
   private final long value;
+  private final RefSlot ref;
 
-  public LongTraits(long value) {
+  public LongTraits(long value, RefSlot ref) {
     this.value = value;
+    this.ref = ref;
+  }
+
+  public static LongTraits ofPrimitive(long value) {
+    return new LongTraits(value, RefSlot.ofPrimitive());
   }
 
   @Override
@@ -35,12 +40,17 @@ public final class LongTraits implements FormatTraits {
   }
 
   @Override
-  public Object value() {
-    return value;
+  public RefSlot ref() {
+    return ref;
   }
 
   @Override
   public TemporalAccessor asTemporalAccessor() {
     return Utils.longToInstant(value);
+  }
+
+  @Override
+  public Object asObject() {
+    return ref.isPrimitive() ? value : ref.get();
   }
 }

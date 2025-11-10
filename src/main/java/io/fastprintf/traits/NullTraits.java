@@ -3,7 +3,6 @@ package io.fastprintf.traits;
 import io.fastprintf.PrintfException;
 import io.fastprintf.number.FloatForm;
 import io.fastprintf.number.IntForm;
-
 import java.time.temporal.TemporalAccessor;
 
 public final class NullTraits implements FormatTraits {
@@ -47,7 +46,7 @@ public final class NullTraits implements FormatTraits {
   }
 
   @Override
-  public Object value() {
-    return null;
+  public RefSlot ref() {
+    return RefSlot.ofNull();
   }
 }

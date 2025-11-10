@@ -3,15 +3,20 @@ package io.fastprintf.traits;
 import io.fastprintf.PrintfException;
 import io.fastprintf.number.FloatForm;
 import io.fastprintf.number.IntForm;
-
 import java.time.temporal.TemporalAccessor;
 
 public final class CharacterTraits implements FormatTraits {
 
   private final char value;
+  private final RefSlot ref;
 
-  public CharacterTraits(char value) {
+  public CharacterTraits(char value, RefSlot ref) {
     this.value = value;
+    this.ref = ref;
+  }
+
+  public static CharacterTraits ofPrimitive(char value) {
+    return new CharacterTraits(value, RefSlot.ofPrimitive());
   }
 
   @Override
@@ -40,12 +45,17 @@ public final class CharacterTraits implements FormatTraits {
   }
 
   @Override
-  public Object value() {
-    return value;
+  public RefSlot ref() {
+    return ref;
   }
 
   @Override
   public TemporalAccessor asTemporalAccessor() {
     throw new PrintfException("Cannot convert Character to TemporalAccessor");
+  }
+
+  @Override
+  public Object asObject() {
+    return ref.isPrimitive() ? value : ref.get();
   }
 }

@@ -3,7 +3,6 @@ package io.fastprintf.traits;
 import io.fastprintf.number.FloatForm;
 import io.fastprintf.number.IntForm;
 import io.fastprintf.util.Utils;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.temporal.TemporalAccessor;
@@ -42,7 +41,7 @@ public final class BigIntegerTraits implements FormatTraits {
   }
 
   @Override
-  public Object value() {
-    return value;
+  public RefSlot ref() {
+    return RefSlot.of(value);
   }
 }

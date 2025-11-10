@@ -6,9 +6,15 @@ import io.fastprintf.number.IntForm;
 public final class FloatTraits implements FormatTraits {
 
   private final float value;
+  private final RefSlot ref;
 
-  public FloatTraits(float value) {
+  public FloatTraits(float value, RefSlot ref) {
     this.value = value;
+    this.ref = ref;
+  }
+
+  public static FloatTraits ofPrimitive(float value) {
+    return new FloatTraits(value, RefSlot.ofPrimitive());
   }
 
   @Override
@@ -32,7 +38,12 @@ public final class FloatTraits implements FormatTraits {
   }
 
   @Override
-  public Object value() {
-    return value;
+  public RefSlot ref() {
+    return ref;
+  }
+
+  @Override
+  public Object asObject() {
+    return ref.isPrimitive() ? value : ref.get();
   }
 }

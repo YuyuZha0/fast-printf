@@ -1,7 +1,6 @@
 package io.fastprintf.number;
 
 import io.fastprintf.PrintfException;
-
 import java.math.BigInteger;
 
 public final class BigIntegerWrapper implements IntForm {

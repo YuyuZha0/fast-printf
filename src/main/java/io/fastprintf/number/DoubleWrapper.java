@@ -1,8 +1,8 @@
 package io.fastprintf.number;
 
 import io.fastprintf.seq.Seq;
-import io.fastprintf.util.DoubleConsts;
-import io.fastprintf.util.FormattedFloatingDecimal;
+import io.fastprintf.util.internal.DoubleConsts;
+import io.fastprintf.util.internal.FormattedFloatingDecimal;
 
 public final class DoubleWrapper implements FloatForm {
 

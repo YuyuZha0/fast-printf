@@ -67,8 +67,7 @@ final class Compiler {
         break;
       }
       if (flags.contains(flag)) {
-        throw new PrintfSyntaxException(
-            "Duplicate flag '" + flag + "'", source, lookahead);
+        throw new PrintfSyntaxException("Duplicate flag '" + flag + "'", source, lookahead);
       }
       flags.add(flag);
       lookahead++;

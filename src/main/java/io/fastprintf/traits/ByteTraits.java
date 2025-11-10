@@ -6,9 +6,15 @@ import io.fastprintf.number.IntForm;
 public final class ByteTraits implements FormatTraits {
 
   private final byte value;
+  private final RefSlot ref;
 
-  public ByteTraits(byte value) {
+  public ByteTraits(byte value, RefSlot ref) {
     this.value = value;
+    this.ref = ref;
+  }
+
+  public static ByteTraits ofPrimitive(byte value) {
+    return new ByteTraits(value, RefSlot.ofPrimitive());
   }
 
   @Override
@@ -37,7 +43,12 @@ public final class ByteTraits implements FormatTraits {
   }
 
   @Override
-  public Object value() {
-    return value;
+  public RefSlot ref() {
+    return ref;
+  }
+
+  @Override
+  public Object asObject() {
+    return ref.isPrimitive() ? value : ref.get();
   }
 }
