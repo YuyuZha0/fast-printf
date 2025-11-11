@@ -150,7 +150,7 @@ public class CompilerTest {
 
   @Test
   public void test8() {
-    Compiler compiler = new Compiler("Date time: %16{yyyy-MM-dd HH:mm:ss}t");
+    Compiler compiler = new Compiler("Date time: %16t{yyyy-MM-dd HH:mm:ss}");
     compiler.compile();
     List<Appender> appenders = compiler.getAppenders();
     assertEquals(2, appenders.size());
@@ -171,7 +171,7 @@ public class CompilerTest {
   @Test
   public void testDateTimePatternParsing() {
     // Valid simple pattern
-    Compiler compiler1 = new Compiler("%{yyyy-MM-dd}t");
+    Compiler compiler1 = new Compiler("%t{yyyy-MM-dd}");
     compiler1.compile();
     DefaultAppender appender1 = (DefaultAppender) compiler1.getAppenders().get(0);
     DateTimeFormatter dtf1 = appender1.getContext().getDateTimeFormatter();
@@ -184,7 +184,7 @@ public class CompilerTest {
     assertTrue(dtfString.contains("DayOfMonth"));
 
     // Valid pattern with quoted literals (single quotes)
-    Compiler compiler2 = new Compiler("%{'Date is 'yyyy-MM-dd}t");
+    Compiler compiler2 = new Compiler("%t{'Date is 'yyyy-MM-dd}");
     compiler2.compile();
     DefaultAppender appender2 = (DefaultAppender) compiler2.getAppenders().get(0);
     DateTimeFormatter dtf2 = appender2.getContext().getDateTimeFormatter();
@@ -202,7 +202,7 @@ public class CompilerTest {
   @Test(expected = PrintfSyntaxException.class)
   public void testDateTimePatternInvalidPatternLetter() {
     // This should fail because "J" is not a valid DateTimeFormatter pattern letter.
-    Compiler compiler = new Compiler("%{J}t");
+    Compiler compiler = new Compiler("%t{J}");
     compiler.compile();
   }
 
@@ -210,7 +210,7 @@ public class CompilerTest {
   public void testDateTimePatternWithNestedBraceSucceeds() {
     // This test validates that the robust parser correctly handles a literal
     // (and quoted) brace inside the pattern.
-    Compiler compiler = new Compiler("%{yyyy-MM-dd'T'HH:mm:ss'}'}t");
+    Compiler compiler = new Compiler("%t{yyyy-MM-dd'T'HH:mm:ss'}'}");
     compiler.compile();
     DefaultAppender appender = (DefaultAppender) compiler.getAppenders().get(0);
     assertNotNull(appender.getContext().getDateTimeFormatter());
@@ -221,29 +221,6 @@ public class CompilerTest {
             .getDateTimeFormatter()
             .format(java.time.LocalDate.of(2023, 1, 1).atStartOfDay());
     assertEquals("2023-01-01T00:00:00}", formatted);
-  }
-
-  @Test
-  public void testDateTimePatternIsParsedCorrectly() {
-    // This test verifies that the compiler associates a date/time pattern
-    // with the IMMEDIATE next specifier ('d' in this case), and treats
-    // the rest of the string as a literal.
-    Compiler compiler = new Compiler("%{MM}d literal text");
-    compiler.compile();
-    List<Appender> appenders = compiler.getAppenders();
-    assertEquals(2, appenders.size());
-
-    // Check the first appender: should be a DefaultAppender for %{MM}d
-    assertTrue(appenders.get(0) instanceof DefaultAppender);
-    DefaultAppender dateAppender = (DefaultAppender) appenders.get(0);
-    assertEquals(Specifier.SIGNED_DECIMAL_INTEGER, dateAppender.getSpecifier());
-    assertNotNull(dateAppender.getContext().getDateTimeFormatter());
-    assertEquals(
-        DateTimeFormatter.ofPattern("MM").toString(),
-        dateAppender.getContext().getDateTimeFormatter().toString());
-
-    // Check the subsequent fixed string
-    assertFixed(appenders.get(1), " literal text");
   }
 
   @Test
@@ -296,7 +273,7 @@ public class CompilerTest {
 
     // 4. Date/Time Pattern Edge Cases
     try {
-      new Compiler("%{}t").compile();
+      new Compiler("%t{}").compile();
       org.junit.Assert.fail("Should throw on empty date/time pattern");
     } catch (PrintfSyntaxException e) {
       assertEquals("Empty date/time pattern", e.getDescription());

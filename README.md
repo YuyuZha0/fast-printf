@@ -80,7 +80,7 @@ import java.time.LocalDateTime;
 public class Example {
     // Compile once and reuse. The FastPrintf instance is immutable and thread-safe.
     private static final FastPrintf FORMATTER = FastPrintf.compile(
-            "ID: %#08X, Score: %05.2f, User: %.5S, Time: %{yyyy-MM-dd HH:mm:ss}t"
+            "ID: %#08X, Score: %05.2f, User: %.5S, Time: %t{yyyy-MM-dd HH:mm:ss}"
     );
 
     public static void main(String[] args) {
@@ -134,7 +134,7 @@ The performance of `fast-printf` comes from three key architectural pillars:
 ## API Reference
 
 The format string syntax is:
-`%[flags][width][.precision][{date-time-pattern}]specifier`
+`%[flags][width][.precision]specifier[{date-time-pattern}]`
 
 ---
 
@@ -142,8 +142,8 @@ The format string syntax is:
 
 A powerful extension is the ability to provide an inline `DateTimeFormatter` pattern for the `%t` and `%T` specifiers.
 
-* **Syntax**: `%{pattern}t`
-* **Example**: `%{yyyy-MM-dd'T'HH:mm:ss.SSSZ}t`
+* **Syntax**: `%t{pattern}`
+* **Example**: `%t{yyyy-MM-dd'T'HH:mm:ss.SSSZ}`
 * **Default**: If no pattern is provided (`%t`), it defaults to `DateTimeFormatter.ISO_OFFSET_DATE_TIME`.
 
 ---
