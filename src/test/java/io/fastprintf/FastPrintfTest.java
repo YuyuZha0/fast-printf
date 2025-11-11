@@ -110,7 +110,7 @@ public class FastPrintfTest {
 
   private void assertDateTime(String pattern, TemporalAccessor value) {
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
-    FastPrintf fastPrintf = FastPrintf.compile("%{" + pattern + "}t");
+    FastPrintf fastPrintf = FastPrintf.compile("%t{" + pattern + "}");
     String format = fastPrintf.format(value);
     assertEquals(formatter.format(value), format);
   }
@@ -118,7 +118,7 @@ public class FastPrintfTest {
   @Test
   public void usage() {
     // The `FastPrintf` instance should be created once and reused.
-    FastPrintf fastPrintf = FastPrintf.compile("%#08X, %05.2f, %.5S, %{yyyy-MM-dd HH:mm:ss}t");
+    FastPrintf fastPrintf = FastPrintf.compile("%#08X, %05.2f, %.5S, %t{yyyy-MM-dd HH:mm:ss}");
     LocalDateTime dateTime = LocalDateTime.of(2023, 12, 31, 23, 59, 59);
 
     String format = fastPrintf.format(123456789L, Math.PI, "Hello World", dateTime);

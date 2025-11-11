@@ -47,4 +47,8 @@ public enum Specifier {
   public String toString() {
     return Character.toString(c);
   }
+
+  public boolean isDateTimeSpecifier() {
+    return this == DATE_AND_TIME || this == DATE_AND_TIME_UPPERCASE;
+  }
 }

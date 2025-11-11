@@ -48,12 +48,15 @@ final class Compiler {
       parseNext();
       return;
     }
-    // %[flags][width][.precision][{date-time-formatter}]specifier
+    // %[flags][width][.precision]specifier[{date-time-formatter}]
     EnumSet<Flag> flags = flags();
     int width = width();
     int precision = precision();
-    DateTimeFormatter dateTimeFormatter = dateTimeFormatter();
     Specifier specifier = specifier();
+    DateTimeFormatter dateTimeFormatter = null;
+    if (specifier.isDateTimeSpecifier()) {
+      dateTimeFormatter = dateTimeFormatter();
+    }
     FormatContext context = FormatContext.create(flags, width, precision, dateTimeFormatter);
     appenders.add(new DefaultAppender(specifier, context));
     parseNext();

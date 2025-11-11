@@ -34,7 +34,7 @@ public class FastPrintfAdvancedFeaturesTest {
     // `%S` and `%T` are glibc-compliant specifiers for uppercasing output,
     // which is extremely convenient for normalizing things like log levels or statuses.
     // We use a specific ZonedDateTime to test AM/PM conversion, as it's locale-dependent.
-    FastPrintf formatter = FastPrintf.compile("Status: %S, Time: %{hh:mm a}T");
+    FastPrintf formatter = FastPrintf.compile("Status: %S, Time: %T{hh:mm a}");
 
     // Use a time that will produce "pm" to verify it becomes "PM".
     ZonedDateTime dateTime =
@@ -54,7 +54,7 @@ public class FastPrintfAdvancedFeaturesTest {
     // This is a powerful feature unique to fast-printf, allowing inline date patterns.
     // It avoids the need to manage DateTimeFormatter instances in business logic.
     FastPrintf formatter =
-        FastPrintf.compile("Default: %t, Custom: %{yyyy/MM/dd}t, Literal: %{'at' HH:mm}t");
+        FastPrintf.compile("Default: %t, Custom: %t{yyyy/MM/dd}, Literal: %t{'at' HH:mm}");
 
     LocalDateTime dateTime = LocalDateTime.of(2023, 5, 1, 15, 45, 30);
 
