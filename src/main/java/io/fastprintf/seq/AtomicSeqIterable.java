@@ -95,6 +95,7 @@ public interface AtomicSeqIterable extends Seq, Iterable<AtomicSeq> {
    */
   @Override
   default void appendTo(StringBuilder sb) {
+    sb.ensureCapacity(sb.length() + length());
     for (AtomicSeq seq : this) {
       seq.appendTo(sb);
     }
