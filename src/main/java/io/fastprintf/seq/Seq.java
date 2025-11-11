@@ -109,7 +109,7 @@ public interface Seq extends CharSequence {
   static AtomicSeq forArray(char[] ch, int start, int length) {
     Preconditions.checkNotNull(ch, "ch");
     Preconditions.checkPositionIndexes(start, start + length, ch.length);
-    return new CharArray(ch, start, length, false);
+    return CharArray.wrap(ch, start, length);
   }
 
   /**
@@ -122,7 +122,7 @@ public interface Seq extends CharSequence {
    */
   static AtomicSeq forArray(char[] ch) {
     Preconditions.checkNotNull(ch, "ch");
-    return new CharArray(ch, 0, ch.length, false);
+    return CharArray.wrap(ch, 0, ch.length);
   }
 
   /**
