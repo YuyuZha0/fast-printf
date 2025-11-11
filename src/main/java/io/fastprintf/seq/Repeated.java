@@ -58,7 +58,7 @@ final class Repeated implements AtomicSeq {
     if (count == 1) {
       return String.valueOf(c);
     }
-    return new String(toCharArray());
+    return String.valueOf(toCharArray());
   }
 
   private char[] toCharArray() {

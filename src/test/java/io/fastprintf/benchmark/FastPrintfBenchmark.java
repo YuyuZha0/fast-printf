@@ -1,6 +1,8 @@
 package io.fastprintf.benchmark;
 
 import io.fastprintf.FastPrintf;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -11,9 +13,6 @@ import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
-
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
 
 @Warmup(iterations = 3, time = 5)
 @Measurement(iterations = 3, time = 5)
@@ -26,9 +25,9 @@ import java.util.concurrent.TimeUnit;
  *
  * <pre>
 Benchmark                                      Mode  Cnt     Score     Error  Units
-FastPrintfBenchmark.fastPrintf                 avgt    6   906.942 ±  14.372  ns/op
-FastPrintfBenchmark.fastPrintfWithThreadLocal  avgt    6  1009.801 ± 127.089  ns/op
-FastPrintfBenchmark.jdkPrintf                  avgt    6  3766.802 ± 129.694  ns/op
+FastPrintfBenchmark.fastPrintf                 avgt    6   853.778 ±  53.800  ns/op
+FastPrintfBenchmark.fastPrintfWithThreadLocal  avgt    6   820.278 ±  10.841  ns/op
+FastPrintfBenchmark.jdkPrintf                  avgt    6  3754.164 ± 125.044  ns/op
  *     </pre>
  */
 public class FastPrintfBenchmark {

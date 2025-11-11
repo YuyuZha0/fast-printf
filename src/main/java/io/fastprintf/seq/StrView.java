@@ -5,15 +5,22 @@ import io.fastprintf.util.Utils;
 import java.io.IOException;
 
 final class StrView implements AtomicSeq {
+  private static final int LOOP_UNROLL_THRESHOLD = 16;
 
   private final String str;
   private final int start;
   private final int length;
+  private final boolean upperCase;
 
   StrView(String str, int start, int length) {
+    this(str, start, length, false);
+  }
+
+  private StrView(String str, int start, int length, boolean upperCase) {
     this.str = str;
     this.start = start;
     this.length = length;
+    this.upperCase = upperCase;
   }
 
   @Override
@@ -22,7 +29,11 @@ final class StrView implements AtomicSeq {
     if (start == end) {
       return Seq.empty();
     }
-    return new StrView(str, this.start + start, end - start);
+    if (end == start + 1) {
+      char c = str.charAt(this.start + start);
+      return Repeated.ofSingleChar(upperCase ? Utils.toUpperCase(c) : c);
+    }
+    return new StrView(str, this.start + start, end - start, upperCase);
   }
 
   @Override
@@ -32,16 +43,22 @@ final class StrView implements AtomicSeq {
 
   @Override
   public char charAt(int index) {
-    return str.charAt(start + index);
+    Preconditions.checkPositionIndex(index, length);
+    char ch = str.charAt(start + index);
+    return upperCase ? Utils.toUpperCase(ch) : ch;
   }
 
   @Override
   public String toString() {
+    if (upperCase) {
+      char[] chars = toCharArray();
+      Utils.toUpperCase(chars);
+      return String.valueOf(chars);
+    }
     return str.substring(start, start + length);
   }
 
-  @Override
-  public int indexOf(char c) {
+  private int fastIndexOf(char c) {
     int index = str.indexOf(c, start);
     if (index == -1 || index >= start + length) {
       return INDEX_NOT_FOUND;
@@ -50,7 +67,33 @@ final class StrView implements AtomicSeq {
   }
 
   @Override
+  public int indexOf(char c) {
+    if (upperCase) {
+      if (Utils.isLowerCase(c)) {
+        return INDEX_NOT_FOUND;
+      } else if (!Utils.isUpperCase(c)) {
+        return fastIndexOf(c);
+      }
+      for (int i = 0; i < length; i++) {
+        char ch = str.charAt(start + i);
+        if (Utils.toUpperCase(ch) == c) {
+          return i;
+        }
+      }
+      return INDEX_NOT_FOUND;
+    } else {
+      return fastIndexOf(c);
+    }
+  }
+
+  @Override
   public void appendTo(Appendable appendable) throws IOException {
+    if (upperCase) {
+      for (int i = start; i < start + length; i++) {
+        appendable.append(Utils.toUpperCase(str.charAt(i)));
+      }
+      return;
+    }
     appendable.append(str, start, start + length);
   }
 
@@ -62,6 +105,19 @@ final class StrView implements AtomicSeq {
 
   @Override
   public void appendTo(StringBuilder sb) {
+    if (upperCase) {
+      if (length < LOOP_UNROLL_THRESHOLD) {
+        sb.ensureCapacity(sb.length() + length);
+        for (int i = start; i < start + length; i++) {
+          sb.append(Utils.toUpperCase(str.charAt(i)));
+        }
+      } else {
+        char[] chars = toCharArray();
+        Utils.toUpperCase(chars);
+        sb.append(chars);
+      }
+      return;
+    }
     // This method contains a performance-critical optimization to avoid the
     // notoriously slow, character-by-character loop in AbstractStringBuilder's
     // default `append(CharSequence, ...)` implementation. The goal is to always
@@ -83,7 +139,7 @@ final class StrView implements AtomicSeq {
     // a temporary char[] array to force the use of the fast `append(char[])` overload,
     // which uses a single bulk memory copy. The threshold '16' is a common, empirically
     // determined crossover point for this trade-off.
-    if (length < 16) {
+    if (length < LOOP_UNROLL_THRESHOLD) {
       // For short strings, call the standard ranged append. This will unfortunately
       // use the slow, character-by-character loop because StringBuilder does not
       // override it with a fast path for CharSequence. However, the total overhead
@@ -101,8 +157,9 @@ final class StrView implements AtomicSeq {
 
   @Override
   public AtomicSeq upperCase() {
-    char[] chars = toCharArray();
-    Utils.toUpperCase(chars);
-    return Seq.forArray(chars);
+    if (upperCase) {
+      return this;
+    }
+    return new StrView(str, start, length, true);
   }
 }
