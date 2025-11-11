@@ -1,11 +1,13 @@
 package io.fastprintf.benchmark;
 
+import io.fastprintf.Args;
 import io.fastprintf.FastPrintf;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
+import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
@@ -25,9 +27,10 @@ import org.openjdk.jmh.annotations.Warmup;
  *
  * <pre>
 Benchmark                                      Mode  Cnt     Score     Error  Units
-FastPrintfBenchmark.fastPrintf                 avgt    6   853.778 ±  53.800  ns/op
-FastPrintfBenchmark.fastPrintfWithThreadLocal  avgt    6   820.278 ±  10.841  ns/op
-FastPrintfBenchmark.jdkPrintf                  avgt    6  3754.164 ± 125.044  ns/op
+FastPrintfBenchmark.fastPrintf                 avgt    6  1014.888 ±  65.189  ns/op
+FastPrintfBenchmark.fastPrintfPrimitive        avgt    6  1010.094 ±  16.045  ns/op
+FastPrintfBenchmark.fastPrintfWithThreadLocal  avgt    6   998.360 ±  51.938  ns/op
+FastPrintfBenchmark.jdkPrintf                  avgt    6  4075.616 ± 363.936  ns/op
  *     </pre>
  */
 public class FastPrintfBenchmark {
@@ -37,35 +40,49 @@ public class FastPrintfBenchmark {
   private static final FastPrintf FAST_PRINTF = FastPrintf.compile(FORMAT);
   private static final FastPrintf FAST_PRINTF2 = FAST_PRINTF.enableThreadLocalCache();
 
-  private long[] numbers;
-  private int index;
+  private Long v1;
+  private Long v2;
+  private Long v3;
+  private Double d1;
+  private Double d2;
+  private Double d3;
 
-  @Setup
+  @Setup(Level.Invocation)
   public void setup() {
-    numbers = ThreadLocalRandom.current().longs(1024).toArray();
-    index = 0;
-  }
-
-  private long nextLong() {
-    return numbers[(index++) & 1023];
+    ThreadLocalRandom random = ThreadLocalRandom.current();
+    v1 = random.nextLong();
+    v2 = random.nextLong();
+    v3 = random.nextLong();
+    d1 = random.nextDouble() * 1e6;
+    d2 = random.nextDouble() * 1e6;
+    d3 = random.nextDouble() * 1e6;
   }
 
   @Benchmark
   public String fastPrintf() {
-    Long v = nextLong();
-    return FAST_PRINTF.format(v, v, v, v, v, v);
+    return FAST_PRINTF.format(v1, v2, v3, d1, d2, d3);
+  }
+
+  @Benchmark
+  public String fastPrintfPrimitive() {
+    Args args =
+        Args.createWithExpectedSize(6)
+            .putLong(v1)
+            .putLong(v2)
+            .putLong(v3)
+            .putDouble(d1)
+            .putDouble(d2)
+            .putDouble(d3);
+    return FAST_PRINTF.format(args);
   }
 
   @Benchmark
   public String fastPrintfWithThreadLocal() {
-    Long v = nextLong();
-    return FAST_PRINTF2.format(v, v, v, v, v, v);
+    return FAST_PRINTF2.format(v1, v2, v3, d1, d2, d3);
   }
 
   @Benchmark
   public String jdkPrintf() {
-    Long l = nextLong();
-    Double d = l.doubleValue();
-    return String.format(FORMAT, l, l, l, d, d, d);
+    return String.format(FORMAT, v1, v2, v3, d1, d2, d3);
   }
 }

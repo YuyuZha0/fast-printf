@@ -86,6 +86,11 @@ final class Repeated implements AtomicSeq {
 
   @Override
   public void appendTo(StringBuilder sb) {
+    // This is an excellent micro-optimization. For the very common case of a single
+    // character (count == 1), the single sb.append(c) call will handle its own
+    // capacity check efficiently. We only need to pre-allocate for the loop when
+    // count > 1 to prevent the possibility of multiple reallocations within that loop.
+    if (count > 1) sb.ensureCapacity(sb.length() + count);
     for (int i = 0; i < count; i++) {
       sb.append(c);
     }
