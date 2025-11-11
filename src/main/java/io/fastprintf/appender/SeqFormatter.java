@@ -165,19 +165,23 @@ public final class SeqFormatter {
       precision = context.getPrecision();
     }
     FloatLayout layout = value.decimalLayout(precision);
-    Seq mantissa = addZeros(layout.getMantissa(), precision);
-    if (precision == 0 && context.hasFlag(Flag.ALTERNATE)) {
-      mantissa = mantissa.append(Seq.ch('.'));
-    }
+    Seq mantissa =
+        formatFractionalPart(layout.getMantissa(), precision, context.hasFlag(Flag.ALTERNATE));
     return signAndJustify(context, mantissa, value.isNegative());
   }
 
-  private static Seq addZeros(Seq mantissa, int precision) {
+  private static Seq formatFractionalPart(
+      Seq mantissa, int precision, boolean reserveDotWhenNoFraction) {
     int dot = mantissa.indexOf('.');
+    if (precision == 0 && dot == Seq.INDEX_NOT_FOUND) {
+      return reserveDotWhenNoFraction ? mantissa.append(Seq.ch('.')) : mantissa;
+    }
     int outPrecision = 0;
     if (dot >= 0) {
       outPrecision = mantissa.length() - (dot + 1);
     }
+    // Trust that the FloatForm layer has already rounded. If the mantissa has
+    // more precision than requested, we do not truncate it here.
     if (outPrecision >= precision) {
       return mantissa;
     }
@@ -196,10 +200,7 @@ public final class SeqFormatter {
       precision = context.getPrecision();
     }
     FloatLayout layout = value.scientificLayout(precision);
-    Seq v0 = addZeros(layout.getMantissa(), precision);
-    if (precision == 0 && context.hasFlag(Flag.ALTERNATE)) {
-      v0 = v0.append(Seq.ch('.'));
-    }
+    Seq v0 = formatFractionalPart(layout.getMantissa(), precision, context.hasFlag(Flag.ALTERNATE));
     v0 = v0.append(Seq.ch('e'));
     v0 = v0.append(layout.getExponent());
     return signAndJustify(context, v0, value.isNegative());
@@ -303,17 +304,16 @@ public final class SeqFormatter {
     if (value.isNaN() || value.isInfinite()) {
       return nanOrInfinity(context, value);
     }
-    int precision = 0;
+    int precision =
+        13; // Use 13 to let double to fallback to simpleHexLayout for full precision, and safe for
+    // BigDecimal
     if (context.isPrecisionSet()) {
       precision = context.getPrecision();
-      if (precision == 0) {
-        precision = 1;
-      }
     }
-    FloatLayout layout = value.hexLayout(precision);
-    Seq v0 = addZeros(layout.getMantissa(), precision);
-    if (precision == 0 && context.hasFlag(Flag.ALTERNATE)) {
-      v0 = v0.append(Seq.ch('.'));
+    FloatLayout layout = value.hexLayout(precision); // Use 0 to get full precision
+    Seq v0 = layout.getMantissa();
+    if (context.isPrecisionSet()) {
+      v0 = formatFractionalPart(v0, precision, context.hasFlag(Flag.ALTERNATE));
     }
     v0 = v0.append(Seq.ch('p')).append(layout.getExponent());
     int signum = value.signum();
