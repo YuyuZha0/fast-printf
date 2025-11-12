@@ -1,0 +1,35 @@
+name: Release to Maven Central
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+
+      - name: Configure Maven Settings for Central
+        run: |
+          mkdir -p ~/.m2
+          # Use the 'central' server ID in the generated settings.xml
+          echo "<settings><servers><server><id>central</id><username>${{ secrets.MAVEN_CENTRAL_USERNAME }}</username><password>${{ secrets.MAVEN_CENTRAL_TOKEN }}</password></server></servers></settings>" > ~/.m2/settings.xml
+
+      - name: Deploy to Maven Central
+        # The command changes from 'deploy' to 'publish'
+        run: mvn -B clean deploy -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }}
