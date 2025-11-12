@@ -2,9 +2,13 @@ package io.fastprintf.benchmark;
 
 import io.fastprintf.Args;
 import io.fastprintf.FastPrintf;
+import java.util.Base64;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
+import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
@@ -12,13 +16,6 @@ import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
-
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
 
 @Warmup(iterations = 3, time = 5)
 @Measurement(iterations = 3, time = 5)
@@ -31,49 +28,40 @@ import java.util.concurrent.TimeUnit;
  *
  * <pre>
  * Benchmark                                Mode  Cnt    Score    Error  Units
- * JoinBenchmark.fastPrintf                 avgt    6  423.544 ± 39.884  ns/op
- * JoinBenchmark.fastPrintfWithThreadLocal  avgt    6  418.718 ± 36.527  ns/op
- * JoinBenchmark.stringJoin                 avgt    6  298.388 ± 16.167  ns/op
+ * JoinBenchmark.fastPrintf                 avgt    6  349.548 ±  9.540  ns/op
+ * JoinBenchmark.fastPrintfWithBuilder      avgt    6  365.438 ± 33.032  ns/op
+ * JoinBenchmark.fastPrintfWithThreadLocal  avgt    6  309.684 ± 40.986  ns/op
+ * JoinBenchmark.jdkStringFormat            avgt    6  449.457 ±  5.022  ns/op
+ * JoinBenchmark.stringJoin                 avgt    6  292.194 ±  2.453  ns/op
  * </pre>
  */
 public class JoinBenchmark {
 
-  private static final FastPrintf FAST_PRINTF = FastPrintf.compile("%s, %s, %s, %s, %s, %s");
+  private static final String FORMAT_STRING = "%s, %s, %s, %s, %s, %s";
+  private static final FastPrintf FAST_PRINTF = FastPrintf.compile(FORMAT_STRING);
   private static final FastPrintf FAST_PRINTF2 = FAST_PRINTF.enableThreadLocalCache();
-  private List<Object> objects;
-  private Iterator<Object> iterator;
+  private Object[] objects;
 
-  @Setup
+  @Setup(Level.Invocation)
   public void setup() {
-    List<Object> objects = new ArrayList<>(300 * 6);
     ThreadLocalRandom random = ThreadLocalRandom.current();
-    for (int i = 0; i < 300; ++i) {
-      objects.add(random.nextInt());
-      objects.add(random.nextLong());
-      objects.add(random.nextFloat());
-      objects.add(random.nextDouble());
-      objects.add(random.nextBoolean());
-      byte[] bytes = new byte[16];
-      random.nextBytes(bytes);
-      objects.add(new String(bytes, StandardCharsets.UTF_8));
-    }
-    this.objects = objects;
-    iterator = objects.iterator();
-  }
-
-  public Object next() {
-    if (iterator.hasNext()) {
-      return iterator.next();
-    } else {
-      iterator = objects.iterator();
-      return next();
-    }
+    byte[] randomBytes = new byte[12];
+    random.nextBytes(randomBytes);
+    objects =
+        new Object[] {
+          random.nextInt(),
+          random.nextLong(),
+          random.nextDouble() * 1E6,
+          Base64.getEncoder().encodeToString(randomBytes),
+          random.nextBoolean(),
+          null
+        };
   }
 
   @Benchmark
   public String stringJoin() {
-    Object[] args = new Object[] {next(), next(), next(), next(), next(), next()};
-    StringBuilder builder = new StringBuilder();
+    Object[] args = this.objects;
+    StringBuilder builder = new StringBuilder(args.length * 16);
     builder.append(args[0]);
     for (int i = 1; i < args.length; ++i) {
       builder.append(", ").append(args[i]);
@@ -83,13 +71,31 @@ public class JoinBenchmark {
 
   @Benchmark
   public String fastPrintf() {
-    Args args = Args.of(next(), next(), next(), next(), next(), next());
+    Args args = Args.of(objects);
+    return FAST_PRINTF.format(args);
+  }
+
+  @Benchmark
+  public String fastPrintfWithBuilder() {
+    Args args =
+        Args.createWithExpectedSize(objects.length)
+            .putInt((Integer) objects[0])
+            .putLong((Long) objects[1])
+            .putDouble((Double) objects[2])
+            .putString((String) objects[3])
+            .putBoolean((Boolean) objects[4])
+            .putNull();
     return FAST_PRINTF.format(args);
   }
 
   @Benchmark
   public String fastPrintfWithThreadLocal() {
-    Args args = Args.of(next(), next(), next(), next(), next(), next());
+    Args args = Args.of(objects);
     return FAST_PRINTF2.format(args);
+  }
+
+  @Benchmark
+  public String jdkStringFormat() {
+    return String.format(FORMAT_STRING, objects);
   }
 }
