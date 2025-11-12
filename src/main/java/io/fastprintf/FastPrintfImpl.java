@@ -11,6 +11,8 @@ import java.util.function.IntFunction;
 /** GRAMMAR: %[flags][width][.precision]specifier */
 final class FastPrintfImpl implements FastPrintf {
 
+  private static final int STRING_BUILDER_MAX_RETAINED_CAPACITY = 65536;
+
   private final Appender[] appenders;
   private final int stringBuilderInitialCapacity;
   private final ThreadLocal<StringBuilder> threadLocalBuilder;
@@ -22,11 +24,18 @@ final class FastPrintfImpl implements FastPrintf {
     this.stringBuilderInitialCapacity = stringBuilderInitialCapacity;
     if (enableThreadLocalCache) {
       this.threadLocalBuilder = ThreadLocal.withInitial(StringBuilder::new);
+
       this.stringBuilderFactory =
           len -> {
             StringBuilder builder = threadLocalBuilder.get();
-            builder.setLength(0);
-            builder.ensureCapacity(len);
+            // Avoid retaining excessively large buffers
+            if (builder.capacity() > STRING_BUILDER_MAX_RETAINED_CAPACITY) {
+              builder = new StringBuilder(len);
+              threadLocalBuilder.set(builder);
+            } else {
+              builder.setLength(0);
+              builder.ensureCapacity(len);
+            }
             return builder;
           };
     } else {
