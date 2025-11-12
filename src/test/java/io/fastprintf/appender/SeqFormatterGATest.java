@@ -154,7 +154,7 @@ public class SeqFormatterGATest {
     // The smallest subnormal double
     double subnormal = Double.MIN_VALUE; // 4.9E-324, which is 0x0.00...01p-1022
     System.out.println(Double.toHexString(subnormal)); // 0x0.0000000000001p-1022
-    assertEquals("0x0.0000000000001p-1022", formatA("", -1, 0, subnormal));
+    assertEquals("0x1.0p-1074", formatA("", -1, 0, subnormal));
     assertEquals("0x1.0p-1074", formatA("", -1, 1, subnormal));
   }
 

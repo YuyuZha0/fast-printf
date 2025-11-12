@@ -309,6 +309,9 @@ public final class SeqFormatter {
     // BigDecimal
     if (context.isPrecisionSet()) {
       precision = context.getPrecision();
+      if (precision == 0) { // Special case: follow the exact behavior of Java's Formatter
+        precision = 1;
+      }
     }
     FloatLayout layout = value.hexLayout(precision); // Use 0 to get full precision
     Seq v0 = layout.getMantissa();
