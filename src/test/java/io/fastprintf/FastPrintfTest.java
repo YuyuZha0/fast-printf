@@ -1,8 +1,8 @@
 package io.fastprintf;
 
-import io.fastprintf.util.Utils;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
+import io.fastprintf.util.Utils;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -12,9 +12,10 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
 public class FastPrintfTest {
 
@@ -148,5 +149,58 @@ public class FastPrintfTest {
             + ", "
             + formatter.format(Instant.ofEpochSecond(now / 1000L).atZone(ZoneId.systemDefault())),
         format);
+  }
+
+  @Test
+  public void testHexDecimalAlginWithJDK() {
+    List<String> patterns =
+        Arrays.asList(
+            "%a",
+            "%A", "%#a", "%#A", "%.0a", "%.1a", "%.2a", "%.3a", "%.4a", "%.5a", "%.6a", "%.7a",
+                "%#.6A", "%+.7A"
+                );
+    double[] values =
+        new double[] {
+          0.0,
+          -0.0,
+          1.0,
+          -1.0,
+          Math.PI,
+          -Math.PI,
+          1.2345E-10,
+          -1.2345E-10,
+          1.2345E+10,
+          -1.2345E+10,
+          Float.MIN_VALUE,
+          -Float.MAX_VALUE,
+          Double.MAX_VALUE,
+          -Double.MAX_VALUE,
+          Double.MIN_VALUE,
+          -Double.MIN_VALUE,
+          Double.POSITIVE_INFINITY,
+          Double.NEGATIVE_INFINITY,
+          Double.NaN
+        };
+    for (String pattern : patterns) {
+      FastPrintf fastPrintf = FastPrintf.compile(pattern);
+      for (double value : values) {
+        assertAEqualsJDK(fastPrintf, pattern, value);
+      }
+    }
+  }
+
+  private void assertAEqualsJDK(FastPrintf fastPrintf, String format, double value) {
+    String fastPrintfResult = fastPrintf.format(value);
+    String jdkResult = String.format(format, value);
+    String msg =
+        String.format(
+            "format: '%s', value: %s, jdk: [%s](%d), fast-printf: [%s](%d)",
+            format,
+            value,
+            jdkResult,
+            jdkResult.length(),
+            fastPrintfResult,
+            fastPrintfResult.length());
+    assertEquals(msg, jdkResult, fastPrintfResult.replaceAll("(?<=[pP])\\+", ""));
   }
 }
