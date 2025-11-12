@@ -202,21 +202,15 @@ final class Compiler {
 
   private void forFixedString() {
     int length = source.length();
-    int start = lookahead;
-    boolean meetPercent = false;
-    while (lookahead < length) {
-      char c = source.charAt(lookahead);
-      if (c == '%') {
-        meetPercent = true;
-        break;
-      }
-      lookahead++;
+    int nextPercent = source.indexOf('%', lookahead);
+    if (nextPercent == -1) {
+      appenders.add(new FixedStringAppender(source.substring(lookahead, length)));
+      lookahead = length;
+      return;
     }
-    appenders.add(new FixedStringAppender(source.substring(start, lookahead)));
-    if (meetPercent) {
-      lookahead++;
-      forPattern();
-    }
+    appenders.add(new FixedStringAppender(source.substring(lookahead, nextPercent)));
+    lookahead = nextPercent + 1;
+    forPattern();
   }
 
   List<Appender> getAppenders() {
