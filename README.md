@@ -79,7 +79,7 @@ often sufficient.
 ### Gradle
 
 ```groovy
-implementation 'io.github.yuyuzha0:fast-printf:1.2.0'
+implementation 'io.github.yuyuzha0:fast-printf:1.2.1'
 ```
 
 ## Usage
