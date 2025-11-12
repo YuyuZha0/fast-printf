@@ -23,18 +23,36 @@ final class FastPrintfImpl implements FastPrintf {
     this.appenders = appenders;
     this.stringBuilderInitialCapacity = stringBuilderInitialCapacity;
     if (enableThreadLocalCache) {
+      // Initialize with a default-sized builder to avoid startup costs for every thread.
+      // The user's initial capacity will be applied on the first format call.
       this.threadLocalBuilder = ThreadLocal.withInitial(StringBuilder::new);
 
       this.stringBuilderFactory =
-          len -> {
+          requiredCapacity -> {
             StringBuilder builder = threadLocalBuilder.get();
-            // Avoid retaining excessively large buffers
-            if (builder.capacity() > STRING_BUILDER_MAX_RETAINED_CAPACITY) {
-              builder = new StringBuilder(len);
+            int currentCapacity = builder.capacity();
+
+            // This is the core logic:
+            // We only reset the builder if it has grown unnecessarily large.
+            // "Unnecessarily large" means:
+            // 1. Its current capacity exceeds our maximum retention limit.
+            // AND
+            // 2. The capacity required for THIS specific call is within that limit.
+            // This prevents churn when the user intentionally sets a large initial capacity.
+            if (currentCapacity > STRING_BUILDER_MAX_RETAINED_CAPACITY
+                && requiredCapacity <= STRING_BUILDER_MAX_RETAINED_CAPACITY) {
+
+              // The buffer is too big and we don't need it this time.
+              // Create a new, reasonably-sized builder and replace the old one.
+              builder = new StringBuilder(requiredCapacity);
               threadLocalBuilder.set(builder);
+
             } else {
+              // In all other cases, we reuse the existing builder:
+              // - If it's within the size limit.
+              // - If it's large, but the user is asking for a large buffer anyway (avoids churn).
               builder.setLength(0);
-              builder.ensureCapacity(len);
+              builder.ensureCapacity(requiredCapacity);
             }
             return builder;
           };
