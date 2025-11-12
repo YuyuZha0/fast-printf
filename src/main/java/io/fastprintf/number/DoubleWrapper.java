@@ -2,7 +2,7 @@ package io.fastprintf.number;
 
 import io.fastprintf.seq.Seq;
 import io.fastprintf.util.internal.DoubleConsts;
-import io.fastprintf.util.internal.FormattedFloatingDecimal;
+import io.fastprintf.util.internal.FormattedFPDecimal;
 
 public final class DoubleWrapper implements FloatForm {
 
@@ -53,9 +53,8 @@ public final class DoubleWrapper implements FloatForm {
     return Double.isInfinite(value);
   }
 
-  private FloatLayout toLayout(int precision, FormattedFloatingDecimal.Form form) {
-    FormattedFloatingDecimal fd =
-        FormattedFloatingDecimal.valueOf(Math.abs(value), precision, form);
+  private FloatLayout toLayout(int precision, char form) {
+    FormattedFPDecimal fd = FormattedFPDecimal.valueOf(Math.abs(value), precision, form);
     return new FloatLayout(seqOrNull(fd.getMantissa()), seqOrNull(fd.getExponent()));
   }
 
@@ -64,7 +63,7 @@ public final class DoubleWrapper implements FloatForm {
     if (value == 0D) {
       return new FloatLayout(Seq.ch('0'), null);
     }
-    return toLayout(precision, FormattedFloatingDecimal.Form.GENERAL);
+    return toLayout(precision, FormattedFPDecimal.GENERAL);
   }
 
   @Override
@@ -72,12 +71,12 @@ public final class DoubleWrapper implements FloatForm {
     if (value == 0D) {
       return new FloatLayout(Seq.ch('0'), Seq.wrap("+00"));
     }
-    return toLayout(precision, FormattedFloatingDecimal.Form.SCIENTIFIC);
+    return toLayout(precision, FormattedFPDecimal.SCIENTIFIC);
   }
 
   @Override
   public FloatLayout decimalLayout(int precision) {
-    return toLayout(precision, FormattedFloatingDecimal.Form.DECIMAL_FLOAT);
+    return toLayout(precision, FormattedFPDecimal.PLAIN);
   }
 
   @Override

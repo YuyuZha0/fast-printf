@@ -19,9 +19,9 @@ import org.openjdk.jmh.annotations.*;
 *
 * <pre>
 Benchmark                                         Mode  Cnt     Score    Error  Units
-ComplexFormatBenchmark.fastPrintf                 avgt    6   588.770 ± 14.020  ns/op
-ComplexFormatBenchmark.fastPrintfWithThreadLocal  avgt    6   658.017 ± 30.933  ns/op
-ComplexFormatBenchmark.jdkPrintf                  avgt    6  2747.689 ± 54.827  ns/op
+ComplexFormatBenchmark.fastPrintf                 avgt    6   394.190 ± 23.151  ns/op
+ComplexFormatBenchmark.fastPrintfWithThreadLocal  avgt    6   465.661 ± 18.407  ns/op
+ComplexFormatBenchmark.jdkPrintf                  avgt    6  1218.066 ± 12.141  ns/op
 * </pre>
 */
 public class ComplexFormatBenchmark {

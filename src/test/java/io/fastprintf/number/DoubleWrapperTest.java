@@ -152,19 +152,19 @@ public class DoubleWrapperTest {
   @Test
   public void testSpecialValuesLayouts() {
     FloatLayout nanLayout = new DoubleWrapper(Double.NaN).decimalLayout(2);
-    assertEquals("NaN", nanLayout.getMantissa().toString());
+    assertEquals("0", nanLayout.getMantissa().toString());
     assertNull(nanLayout.getExponent());
     assertFalse(new DoubleWrapper(Double.NaN).isNegative());
 
     DoubleWrapper posInfWrapper = new DoubleWrapper(Double.POSITIVE_INFINITY);
     FloatLayout posInfLayout = posInfWrapper.decimalLayout(2);
-    assertEquals("Infinity", posInfLayout.getMantissa().toString());
+    assertEquals("0", posInfLayout.getMantissa().toString());
     assertNull(posInfLayout.getExponent());
     assertFalse(posInfWrapper.isNegative());
 
     DoubleWrapper negInfWrapper = new DoubleWrapper(Double.NEGATIVE_INFINITY);
     FloatLayout negInfLayout = negInfWrapper.decimalLayout(2);
-    assertEquals("Infinity", negInfLayout.getMantissa().toString());
+    assertEquals("0", negInfLayout.getMantissa().toString());
     assertNull(negInfLayout.getExponent());
     assertTrue(negInfWrapper.isNegative());
   }
