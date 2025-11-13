@@ -16,26 +16,61 @@ on:
 
 jobs:
   build:
-
+    # Use a matrix to test on multiple JDKs
     strategy:
       matrix:
         java: [ 8, 11, 17, 21 ]
+        # To avoid canceling all jobs if one fails, you might add:
+      fail-fast: false
 
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read # Changed from 'write' to 'read' as it's safer and sufficient
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v4
         with:
           java-version: ${{ matrix.java }}
           distribution: 'temurin'
           cache: maven
-      - name: Build with Maven
-        run: mvn -B package --file pom.xml
 
-      # Optional: Uploads the full dependency graph to GitHub to improve the quality of Dependabot alerts this repository can receive
+      - name: Build and Test with Maven
+        # CHANGE: Use 'verify' instead of 'package'. The 'verify' lifecycle phase
+        # runs after 'test' and is the standard phase for running checks like JaCoCo.
+        # This will now generate the jacoco.xml report.
+        run: mvn -B verify --file pom.xml -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }}
+
+      # NEW STEP: Upload the coverage report to Codecov.
+      # This step will only run on the JDK 21 job, as specified by the 'if' condition.
+      # This ensures we only upload one canonical report.
+      - name: Upload coverage to Codecov
+        if: matrix.java == 21
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }} # Use the secret you created in GitHub
+          # Optional: Specify file path if it's not the default
+          # files: ./target/site/jacoco/jacoco.xml
+
+  # SEPARATE JOB for dependency graph submission.
+  # It's good practice to separate this from the main build matrix
+  # so it only runs once, not for every JDK version.
+  dependency-graph:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # This job needs write permissions for the submission
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
       - name: Update dependency graph
         uses: advanced-security/maven-dependency-submission-action@571e99aab1055c2e71a1e2309b9691de18d6b7d6
