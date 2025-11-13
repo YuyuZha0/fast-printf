@@ -7,6 +7,17 @@ import java.time.temporal.TemporalAccessor;
 
 public final class IntTraits implements FormatTraits {
 
+  private static final int CACHE_LOW = -128;
+  private static final int CACHE_HIGH = 127;
+  private static final IntTraits[] CACHE;
+
+  static {
+    CACHE = new IntTraits[CACHE_HIGH - CACHE_LOW + 1];
+    for (int i = 0; i < CACHE.length; i++) {
+      CACHE[i] = new IntTraits(i + CACHE_LOW, RefSlot.ofPrimitive());
+    }
+  }
+
   private final int value;
   private final RefSlot ref;
 
@@ -16,6 +27,9 @@ public final class IntTraits implements FormatTraits {
   }
 
   public static IntTraits ofPrimitive(int value) {
+    if (value >= CACHE_LOW && value <= CACHE_HIGH) {
+      return CACHE[value - CACHE_LOW];
+    }
     return new IntTraits(value, RefSlot.ofPrimitive());
   }
 
