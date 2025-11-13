@@ -1,6 +1,6 @@
 # fast-printf
 
-[![codecov](https://codecov.io/gh/YuyuZha0/fast-printf/graph/badge.svg?token=YOUR_BADGE_TOKEN)](https://codecov.io/gh/YuyuZha0/fast-printf)
+[![codecov](https://codecov.io/github/YuyuZha0/fast-printf/graph/badge.svg?token=UPPTCS4DRS)](https://codecov.io/github/YuyuZha0/fast-printf)
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.yuyuzha0/fast-printf.svg?style=flat-square)](https://search.maven.org/artifact/io.github.yuyuzha0/fast-printf)
 [![License](https://img.shields.io/badge/License-GPL--2.0--with--classpath--exception-blue.svg?style=flat-square)](https://openjdk.java.net/legal/gplv2+ce.html)
 
