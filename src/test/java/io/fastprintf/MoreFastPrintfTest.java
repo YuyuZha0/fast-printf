@@ -175,4 +175,36 @@ public class MoreFastPrintfTest {
     // This should not throw an exception
     assertEquals("1", f.format(1, 2, 3));
   }
+
+  @Test
+  public void testDefault_formatWithArgs() {
+    // This test explicitly calls the `String format(Args args)` default method.
+    // This is necessary to ensure code coverage tools see this path as tested.
+    FastPrintf f = FastPrintf.compile("Hello %s, value is %d");
+    Args args = Args.create().putString("World").putInt(42);
+
+    String result = f.format(args);
+
+    assertEquals("Hello World, value is 42", result);
+  }
+
+  @Test
+  public void testDefault_formatWithVarargs() {
+    // This test explicitly calls the `String format(Object... values)` default method.
+    // While other tests may implicitly call this, having a dedicated test makes
+    // the intent to cover this specific default method clear.
+    FastPrintf f = FastPrintf.compile("Numbers: %.1f and %x");
+
+    String result = f.format(12.345, 255);
+
+    assertEquals("Numbers: 12.3 and ff", result);
+  }
+
+  @Test
+  public void testDefault_formatWithNoArgs() {
+    // Edge case for the default varargs method.
+    FastPrintf f = FastPrintf.compile("Static text");
+    String result = f.format(); // Calls format() with a zero-length array
+    assertEquals("Static text", result);
+  }
 }
