@@ -76,5 +76,7 @@ public final class DoubleConsts {
   }
 
   /** Don't let anyone instantiate this class. */
-  private DoubleConsts() {}
+  private DoubleConsts() {
+    throw new IllegalStateException("Unexpected instantiation of DoubleConsts");
+  }
 }
