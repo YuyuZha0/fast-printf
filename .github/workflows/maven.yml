@@ -19,7 +19,7 @@ jobs:
 
     strategy:
       matrix:
-        java: [ 8, 11, 17 ]
+        java: [ 8, 11, 17, 21 ]
 
     runs-on: ubuntu-latest
     permissions:
