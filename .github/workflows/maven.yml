@@ -42,7 +42,7 @@ jobs:
         # CHANGE: Use 'verify' instead of 'package'. The 'verify' lifecycle phase
         # runs after 'test' and is the standard phase for running checks like JaCoCo.
         # This will now generate the jacoco.xml report.
-        run: mvn -B verify --file pom.xml -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }}
+        run: mvn -B verify --file pom.xml -Dgpg.skip=true
 
       # NEW STEP: Upload the coverage report to Codecov.
       # This step will only run on the JDK 21 job, as specified by the 'if' condition.
