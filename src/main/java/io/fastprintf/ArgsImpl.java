@@ -220,4 +220,9 @@ final class ArgsImpl implements Args {
       return putObject(value);
     }
   }
+
+  @Override
+  public ArgsImpl putString(String value) {
+    return putCharSequence(value);
+  }
 }

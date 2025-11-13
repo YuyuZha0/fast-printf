@@ -72,14 +72,14 @@ often sufficient.
 <dependency>
     <groupId>io.github.yuyuzha0</groupId>
     <artifactId>fast-printf</artifactId>
-    <version>1.2.1</version>
+    <version>1.2.2</version>
 </dependency>
 ```
 
 ### Gradle
 
 ```groovy
-implementation 'io.github.yuyuzha0:fast-printf:1.2.1'
+implementation 'io.github.yuyuzha0:fast-printf:1.2.2'
 ```
 
 ## Usage
