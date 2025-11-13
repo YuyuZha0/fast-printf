@@ -65,7 +65,7 @@ final class MultiplyHigh {
    * @param y the second value
    * @return the high 64 bits of the product.
    */
-  private static long slowMultiplyHigh(long x, long y) {
+  static long slowMultiplyHigh(long x, long y) {
     // Use technique from section 8-2 of Henry S. Warren, Jr.,
     // Hacker's Delight (2nd ed.) (Addison Wesley, 2013), 173-174.
     long x1 = x >> 32;
