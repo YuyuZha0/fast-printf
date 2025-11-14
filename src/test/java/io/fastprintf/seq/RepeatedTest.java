@@ -159,4 +159,25 @@ public class RepeatedTest {
     new Repeated('a', 0).appendTo(sb);
     assertEquals("start-", sb.toString());
   }
+
+  /**
+   * Directly tests the public static helper method `appendRepeated`. This ensures the fallback
+   * logic used on older JDKs is correct and can be tested in isolation.
+   */
+  @Test
+  public void testAppendRepeated_staticHelper() {
+    // Test loop path
+    StringBuilder sb1 = new StringBuilder();
+    Repeated.appendRepeated(sb1, new Repeated('P', 0));
+    assertEquals("", sb1.toString());
+    Repeated.appendRepeated(sb1, new Repeated('a', 1));
+    assertEquals("a", sb1.toString());
+    Repeated.appendRepeated(sb1, new Repeated('a', 5));
+    assertEquals("aaaaaa", sb1.toString());
+
+    // Test array path
+    StringBuilder sb2 = new StringBuilder();
+    Repeated.appendRepeated(sb2, new Repeated('b', 20));
+    assertEquals("bbbbbbbbbbbbbbbbbbbb", sb2.toString());
+  }
 }
