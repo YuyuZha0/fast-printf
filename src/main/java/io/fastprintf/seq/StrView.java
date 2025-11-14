@@ -117,41 +117,14 @@ final class StrView implements AtomicSeq {
       }
       return;
     }
-    // This method contains a performance-critical optimization to avoid the
-    // notoriously slow, character-by-character loop in AbstractStringBuilder's
-    // default `append(CharSequence, ...)` implementation. The goal is to always
-    // use one of StringBuilder's fast-path overloads, which use native
-    // System.arraycopy().
-
-    // OPTIMIZATION 1: Handle the case where this view covers the entire backing string.
-    // The `StringBuilder.append(String)` overload is the most direct and has the
-    // simplest, fastest code path in the JDK.
     if (start == 0 && length == str.length()) {
       sb.append(str);
       return;
     }
 
-    // HEURISTIC: Choose between the slow loop and an allocation-based fast path.
-    // For very short substrings, the overhead of the slow `for`-loop inside
-    // `AbstractStringBuilder` is acceptable and cheaper than allocating a new object.
-    // For longer substrings, it is significantly faster to pay the cost of allocating
-    // a temporary char[] array to force the use of the fast `append(char[])` overload,
-    // which uses a single bulk memory copy. The threshold '16' is a common, empirically
-    // determined crossover point for this trade-off.
-    if (length < ARRAY_APPEND_THRESHOLD) {
-      // For short strings, call the standard ranged append. This will unfortunately
-      // use the slow, character-by-character loop because StringBuilder does not
-      // override it with a fast path for CharSequence. However, the total overhead
-      // is small enough to be acceptable.
-      sb.append(str, start, start + length);
-    } else {
-      // For longer strings, explicitly create a temporary character array from our
-      // substring. This forces the call to `StringBuilder.append(char[])`, which
-      // is a highly optimized fast path that uses `System.arraycopy()`. The cost
-      // of this one-time allocation is far outweighed by the performance gain of
-      // avoiding the slow loop for a large number of characters.
-      sb.append(toCharArray());
-    }
+    // On JDK 8, this substring append is slow due to a loop-based implementation, but we do not
+    // specialize for that here.
+    sb.append(str, start, start + length);
   }
 
   @Override
