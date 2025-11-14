@@ -8,7 +8,6 @@ import java.util.Arrays;
 final class Repeated implements AtomicSeq {
 
   private static final Repeated[] SINGLE_CHAR_REPEATED = new Repeated[128];
-  private static final int ARRAY_APPEND_THRESHOLD = 16;
 
   static {
     for (int i = 0; i < SINGLE_CHAR_REPEATED.length; i++) {
@@ -91,7 +90,7 @@ final class Repeated implements AtomicSeq {
   @Override
   public void appendTo(StringBuilder sb) {
     if (count == 0) return;
-    if (count <= ARRAY_APPEND_THRESHOLD) {
+    if (count < ARRAY_APPEND_THRESHOLD) {
       // This is an excellent micro-optimization. For the very common case of a single
       // character (count == 1), the single sb.append(c) call will handle its own
       // capacity check efficiently. We only need to pre-allocate for the loop when

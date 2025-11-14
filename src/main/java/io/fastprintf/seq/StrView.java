@@ -5,7 +5,6 @@ import io.fastprintf.util.Utils;
 import java.io.IOException;
 
 final class StrView implements AtomicSeq {
-  private static final int LOOP_UNROLL_THRESHOLD = 16;
 
   private final String str;
   private final int start;
@@ -106,7 +105,7 @@ final class StrView implements AtomicSeq {
   @Override
   public void appendTo(StringBuilder sb) {
     if (upperCase) {
-      if (length < LOOP_UNROLL_THRESHOLD) {
+      if (length < ARRAY_APPEND_THRESHOLD) {
         sb.ensureCapacity(sb.length() + length);
         for (int i = start; i < start + length; i++) {
           sb.append(Utils.toUpperCase(str.charAt(i)));
@@ -139,7 +138,7 @@ final class StrView implements AtomicSeq {
     // a temporary char[] array to force the use of the fast `append(char[])` overload,
     // which uses a single bulk memory copy. The threshold '16' is a common, empirically
     // determined crossover point for this trade-off.
-    if (length < LOOP_UNROLL_THRESHOLD) {
+    if (length < ARRAY_APPEND_THRESHOLD) {
       // For short strings, call the standard ranged append. This will unfortunately
       // use the slow, character-by-character loop because StringBuilder does not
       // override it with a fast path for CharSequence. However, the total overhead
