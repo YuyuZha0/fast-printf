@@ -207,4 +207,62 @@ public class MoreFastPrintfTest {
     String result = f.format(); // Calls format() with a zero-length array
     assertEquals("Static text", result);
   }
+
+  // Add these methods to your existing FastPrintfTest.java class
+
+  /**
+   * This test explicitly calls the `String format(Args args)` default method to ensure it is marked
+   * as covered by testing tools. It verifies that the convenience method correctly delegates to the
+   * core formatting logic and produces the expected string output.
+   */
+  @Test
+  public void testDefault_formatWithArgsObject() {
+    // Arrange: Create a formatter and a matching Args object
+    FastPrintf f = FastPrintf.compile("User ID: %d, Name: %s, Score: %.2f");
+    Args args = Args.create().putInt(101).putString("test-user").putDouble(99.876);
+    String expected = "User ID: 101, Name: test-user, Score: 99.88";
+
+    // Act: Call the specific default method under test
+    String actual = f.format(args);
+
+    // Assert: Verify the result is correct
+    assertEquals(
+        "The format(Args) method should produce the correct string output", expected, actual);
+  }
+
+  /**
+   * Tests the `format(Args)` default method with an empty Args object to ensure it correctly
+   * handles format strings that require no arguments.
+   */
+  @Test
+  public void testDefault_formatWithEmptyArgs() {
+    // Arrange
+    FastPrintf f = FastPrintf.compile("This is a static string with no arguments.");
+    Args args = Args.create(); // An empty Args container
+    String expected = "This is a static string with no arguments.";
+
+    // Act
+    String actual = f.format(args);
+
+    // Assert
+    assertEquals(expected, actual);
+  }
+
+  /**
+   * Tests the `format(Args)` default method with an Args object that contains a null value to
+   * verify correct handling.
+   */
+  @Test
+  public void testDefault_formatWithNullArg() {
+    // Arrange
+    FastPrintf f = FastPrintf.compile("The value is: %s");
+    Args args = Args.of((Object) null); // Create Args with a single null
+    String expected = "The value is: null";
+
+    // Act
+    String actual = f.format(args);
+
+    // Assert
+    assertEquals(expected, actual);
+  }
 }

@@ -129,4 +129,9 @@ public class PreconditionsTest {
 
     Preconditions.checkPositionIndexes(1, 6, 5);
   }
+
+  @Test
+  public void testPrivateConstructor_forCodeCoverage() throws Exception {
+    TestHelper.testPrivateConstructor_forCodeCoverage(Preconditions.class);
+  }
 }

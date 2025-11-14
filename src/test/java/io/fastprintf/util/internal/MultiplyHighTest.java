@@ -2,6 +2,7 @@ package io.fastprintf.util.internal;
 
 import static org.junit.Assert.*;
 
+import io.fastprintf.util.TestHelper;
 import java.math.BigInteger;
 import java.util.Random;
 import org.junit.Test;
@@ -107,5 +108,10 @@ public class MultiplyHighTest {
         assertEquals(message, expected, actual);
       }
     }
+  }
+
+  @Test
+  public void testPrivateConstructor_forCodeCoverage() throws Exception {
+    TestHelper.testPrivateConstructor_forCodeCoverage(MultiplyHigh.class);
   }
 }
