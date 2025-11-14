@@ -52,6 +52,41 @@ public class PreconditionsTest {
     Preconditions.checkArgument(false, "Invalid value: %s for user %s", 42, "test");
   }
 
+  // --- Tests for checkLongArgument() ---
+
+  @Test
+  public void checkLongArgument_withTrueCondition_shouldNotThrow() {
+    // Passes if no exception is thrown
+    Preconditions.checkLongArgument(true, "This should not be thrown", 1L);
+    Preconditions.checkLongArgument(100L > 50L, "Error with %s", 42L);
+  }
+
+  @Test
+  public void checkLongArgument_withFalseCondition_shouldThrowIAE() {
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage("Value must be non-negative, but was -12345");
+
+    Preconditions.checkLongArgument(
+        -12345L >= 0, "Value must be non-negative, but was %s", -12345L);
+  }
+
+  @Test
+  public void checkLongArgument_withFalseConditionAndZero_shouldThrowIAE() {
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage("Value must be positive, but was 0");
+
+    Preconditions.checkLongArgument(0L > 0, "Value must be positive, but was %s", 0L);
+  }
+
+  @Test
+  public void checkLongArgument_withFalseConditionAndLargeValue_shouldThrowIAE() {
+    long largeValue = Long.MAX_VALUE;
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage("Value is too large: " + largeValue);
+
+    Preconditions.checkLongArgument(largeValue < 100, "Value is too large: %s", largeValue);
+  }
+
   // --- Tests for checkPositionIndex() ---
 
   @Test

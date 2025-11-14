@@ -19,6 +19,29 @@ public final class Preconditions {
     }
   }
 
+  /*
+   * This overload exists purely as a performance optimization to avoid object allocation.
+   *
+   * The previous implementation in `Utils.longToInstant` was:
+   *   Preconditions.checkArgument(value >= 0, "..." + value);
+   *
+   * Refactoring this to use our standard formatting would result in:
+   *   Preconditions.checkArgument(value >= 0, "...", value); // 'value' is a primitive long
+   *
+   * This second version is cleaner, but it forces the JVM to auto-box the primitive `long` into
+   * a `new Long()` object to fit into the `Object...` varargs array of the generic
+   * `checkArgument` method.
+   *
+   * By providing this dedicated `checkLongArgument` overload, we pass the primitive `long`
+   * directly, completely avoiding that object allocation and the resulting GC pressure. For a
+   * performance-sensitive library, eliminating these small, frequent allocations is critical.
+   */
+  public static void checkLongArgument(boolean condition, String message, long value) {
+    if (!condition) {
+      throw new IllegalArgumentException(Utils.lenientFormat(message, value));
+    }
+  }
+
   public static void checkPositionIndex(int index, int size) {
     if (index < 0 || index >= size) {
       throw new IndexOutOfBoundsException(Utils.lenientFormat("index: %s, size: %s", index, size));
