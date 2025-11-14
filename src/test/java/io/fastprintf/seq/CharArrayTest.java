@@ -9,6 +9,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.util.Locale;
 import org.junit.Test;
 
 public class CharArrayTest {
@@ -213,7 +214,7 @@ public class CharArrayTest {
   // --- Utility Method Tests ---
 
   @Test
-  public void testAppendTo() throws IOException {
+  public void testAppendTo() {
     StringBuilder sb = new StringBuilder();
     AtomicSeq seq = CharArray.wrap(TEST_CHARS, 1, 4); // "ello"
     seq.appendTo(sb);
@@ -221,11 +222,22 @@ public class CharArrayTest {
   }
 
   @Test
-  public void testAppendTo_onUpperCase() throws IOException {
+  public void testAppendTo_onUpperCase() {
     StringBuilder sb = new StringBuilder();
     AtomicSeq seq = CharArray.wrap(TEST_CHARS, 1, 4).upperCase(); // "ELLO"
     seq.appendTo(sb);
     assertEquals("ELLO", sb.toString());
+  }
+
+  @Test
+  public void testAppendTo_onUpperCase_large() {
+    StringBuilder sb = new StringBuilder();
+    String largeString = "Hello World, this is a larger string to test appendTo functionality.";
+    assertTrue(largeString.length() > Seq.ARRAY_APPEND_THRESHOLD);
+    AtomicSeq seq =
+        CharArray.wrap(largeString.toCharArray(), 0, largeString.length()).upperCase(); // "ELLO"
+    seq.appendTo(sb);
+    assertEquals(largeString.toUpperCase(Locale.US), sb.toString());
   }
 
   @Test
