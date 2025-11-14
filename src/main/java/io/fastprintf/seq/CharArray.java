@@ -3,6 +3,7 @@ package io.fastprintf.seq;
 import io.fastprintf.util.Preconditions;
 import io.fastprintf.util.Utils;
 import java.io.IOException;
+import java.util.Arrays;
 
 final class CharArray implements AtomicSeq {
 
@@ -99,9 +100,15 @@ final class CharArray implements AtomicSeq {
   }
 
   private void appendUpperCaseTo(StringBuilder sb) {
-    sb.ensureCapacity(sb.length() + length);
-    for (int i = start; i < start + length; i++) {
-      sb.append(Utils.toUpperCase(ch[i]));
+    if (length < ARRAY_APPEND_THRESHOLD) {
+      sb.ensureCapacity(sb.length() + length);
+      for (int i = start; i < start + length; i++) {
+        sb.append(Utils.toUpperCase(ch[i]));
+      }
+    }else {
+        char[] copy = Arrays.copyOfRange(ch, start, start + length);
+        Utils.toUpperCase(copy);
+        sb.append(copy);
     }
   }
 

@@ -28,6 +28,60 @@ public interface Seq extends CharSequence {
   int INDEX_NOT_FOUND = -1;
 
   /**
+   * A performance-tuning constant used by {@link AtomicSeq} implementations to optimize {@code
+   * appendTo(StringBuilder)} operations.
+   *
+   * <p>When appending a sequence of characters to a {@link StringBuilder}, there are two primary
+   * strategies:
+   *
+   * <ol>
+   *   <li><b>Looping:</b> Appending character-by-character in a simple {@code for} loop. This
+   *       avoids any intermediate object allocation.
+   *   <li><b>Array-based:</b> Allocating a temporary {@code char[]} array, filling it, and calling
+   *       {@code StringBuilder.append(char[])} once.
+   * </ol>
+   *
+   * <p>There is a significant performance trade-off between these two approaches. The looping
+   * strategy is faster for a very small number of characters because it avoids the overhead of
+   * array allocation. The array-based strategy is significantly faster for larger numbers of
+   * characters because it leverages powerful JVM intrinsics (like {@code Arrays.fill} and {@code
+   * System.arraycopy} used by {@code append(char[])}), which the JIT compiler can often convert to
+   * highly optimized SIMD instructions.
+   *
+   * <p>The value of 16 represents an empirically determined **crossover point** based on JMH
+   * microbenchmarks. Below this threshold, the loop is generally faster; above this threshold, the
+   * array-based method provides a substantial performance gain that scales with the sequence
+   * length.
+   *
+   * <p>This constant is intended as a guideline for implementers of the {@code Seq} interface, such
+   * as {@link StrView} and {@link Repeated}, to make an optimal, data-driven choice between the two
+   * appending strategies.
+   *
+   * <h2>Usage Example:</h2>
+   *
+   * <pre>{@code
+   * @Override
+   * public void appendTo(StringBuilder sb) {
+   *     if (length < ARRAY_APPEND_THRESHOLD) {
+   *         // For short sequences, the loop is faster.
+   *         for (int i = 0; i < length; i++) {
+   *             sb.append(this.charAt(i));
+   *         }
+   *     } else {
+   *         // For longer sequences, the array path is faster.
+   *         char[] chars = toCharArray();
+   *         sb.append(chars);
+   *     }
+   * }
+   * }</pre>
+   *
+   * @see AtomicSeq#appendTo(StringBuilder)
+   * @see StrView#appendTo(StringBuilder)
+   * @see Repeated#appendTo(StringBuilder)
+   */
+  int ARRAY_APPEND_THRESHOLD = 16;
+
+  /**
    * Creates an atomic sequence containing a single character.
    *
    * @param c the character.

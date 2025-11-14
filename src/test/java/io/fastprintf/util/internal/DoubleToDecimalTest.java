@@ -2,34 +2,16 @@ package io.fastprintf.util.internal;
 
 import static org.junit.Assert.*;
 
+import io.fastprintf.util.TestHelper;
 import java.util.Random;
 import org.junit.Assume;
 import org.junit.Test;
 
 public class DoubleToDecimalTest {
 
-  private static final int JAVA_VERSION = getMajorJavaVersion();
-
-  private static int getMajorJavaVersion() {
-    String version = System.getProperty("java.version");
-    if (version.startsWith("1.")) {
-      version = version.substring(2, 3);
-    } else {
-      int dot = version.indexOf(".");
-      if (dot != -1) {
-        version = version.substring(0, dot);
-      }
-    }
-    try {
-      return Integer.parseInt(version);
-    } catch (NumberFormatException e) {
-      return -1; // Unable to parse version
-    }
-  }
-
   // Helper method to avoid duplicating assertion logic
   private void assertRendersSame(double d) {
-    Assume.assumeTrue("This test runs only on JDK 21", JAVA_VERSION >= 21);
+    Assume.assumeTrue("This test runs only on JDK 21", TestHelper.currentJavaVersion() >= 21);
 
     String expected = Double.toString(d);
 

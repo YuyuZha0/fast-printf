@@ -2,6 +2,7 @@ package io.fastprintf.number;
 
 import io.fastprintf.seq.Seq;
 import io.fastprintf.util.internal.DoubleConsts;
+import io.fastprintf.util.internal.DoubleToDecimal;
 import io.fastprintf.util.internal.FormattedFPDecimal;
 
 public final class DoubleWrapper implements FloatForm {
@@ -151,8 +152,17 @@ public final class DoubleWrapper implements FloatForm {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>Returns a string representation of the double value. This implementation intentionally uses
+   * the backported {@link DoubleToDecimal#toString(double)} utility instead of the native {@link
+   * Double#toString(double)}. This guarantees a consistent, modern, and bug-free string conversion,
+   * even when running on older JDK versions that had known issues in their native {@code toString}
+   * implementations.
+   */
   @Override
   public String toString() {
-    return Double.toString(value);
+    return DoubleToDecimal.toString(value);
   }
 }
