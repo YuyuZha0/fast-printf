@@ -124,7 +124,8 @@ public final class Utils {
   }
 
   public static Instant longToInstant(long value) {
-    Preconditions.checkArgument(value >= 0, "The value must not be negative, but was: " + value);
+    Preconditions.checkLongArgument(
+        value >= 0, "The value must not be negative, but was: %s", value);
     if (value <= MAX_UNSIGNED_INT) return Instant.ofEpochSecond(value);
     return Instant.ofEpochMilli(value);
   }

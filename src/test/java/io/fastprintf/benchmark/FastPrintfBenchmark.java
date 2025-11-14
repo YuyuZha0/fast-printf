@@ -26,36 +26,48 @@ import org.openjdk.jmh.annotations.Warmup;
  *
  *
  * <pre>
-Benchmark                                      Mode  Cnt     Score     Error  Units
-FastPrintfBenchmark.fastPrintf                 avgt    6  1014.888 ±  65.189  ns/op
-FastPrintfBenchmark.fastPrintfPrimitive        avgt    6  1010.094 ±  16.045  ns/op
-FastPrintfBenchmark.fastPrintfWithThreadLocal  avgt    6   998.360 ±  51.938  ns/op
-FastPrintfBenchmark.jdkPrintf                  avgt    6  4075.616 ± 363.936  ns/op
+Benchmark                                      Mode  Cnt     Score    Error  Units
+FastPrintfBenchmark.fastPrintf                 avgt    6   662.068 ± 25.852  ns/op
+FastPrintfBenchmark.fastPrintfPrimitive        avgt    6   644.819 ± 31.485  ns/op
+FastPrintfBenchmark.fastPrintfWithThreadLocal  avgt    6   650.900 ± 21.227  ns/op
+FastPrintfBenchmark.jdkPrintf                  avgt    6  1544.709 ± 18.232  ns/op
  *     </pre>
  */
 public class FastPrintfBenchmark {
 
+  private static final int ARRAY_SIZE = 24;
   private static final String FORMAT =
       "This is plain text: % d %% %-8X %% %#08o %% %.3f %% %-7.5g %% %+10.5e";
   private static final FastPrintf FAST_PRINTF = FastPrintf.compile(FORMAT);
   private static final FastPrintf FAST_PRINTF2 = FAST_PRINTF.enableThreadLocalCache();
 
-  private Long v1;
-  private Long v2;
-  private Long v3;
-  private Double d1;
-  private Double d2;
-  private Double d3;
+  private long[] longValues;
+  private double[] doubleValues;
+  private int index;
+  private long v1;
+  private long v2;
+  private long v3;
+  private double d1;
+  private double d2;
+  private double d3;
+
+  @Setup(Level.Trial)
+  public void setupTrial() {
+    ThreadLocalRandom random = ThreadLocalRandom.current();
+    longValues = random.longs(ARRAY_SIZE).toArray();
+    doubleValues = random.doubles(ARRAY_SIZE).map(d -> d * 1e6).toArray();
+    index = 0;
+  }
 
   @Setup(Level.Invocation)
-  public void setup() {
-    ThreadLocalRandom random = ThreadLocalRandom.current();
-    v1 = random.nextLong();
-    v2 = random.nextLong();
-    v3 = random.nextLong();
-    d1 = random.nextDouble() * 1e6;
-    d2 = random.nextDouble() * 1e6;
-    d3 = random.nextDouble() * 1e6;
+  public void setupInvocation() {
+    index = (index + 1) % (ARRAY_SIZE - 3);
+    v1 = longValues[index];
+    v2 = longValues[index + 1];
+    v3 = longValues[index + 2];
+    d1 = doubleValues[index];
+    d2 = doubleValues[index + 2];
+    d3 = doubleValues[index + 3];
   }
 
   @Benchmark
