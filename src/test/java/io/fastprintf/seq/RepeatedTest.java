@@ -168,8 +168,12 @@ public class RepeatedTest {
   public void testAppendRepeated_staticHelper() {
     // Test loop path
     StringBuilder sb1 = new StringBuilder();
+    Repeated.appendRepeated(sb1, new Repeated('P', 0));
+    assertEquals("", sb1.toString());
+    Repeated.appendRepeated(sb1, new Repeated('a', 1));
+    assertEquals("a", sb1.toString());
     Repeated.appendRepeated(sb1, new Repeated('a', 5));
-    assertEquals("aaaaa", sb1.toString());
+    assertEquals("aaaaaa", sb1.toString());
 
     // Test array path
     StringBuilder sb2 = new StringBuilder();
