@@ -197,10 +197,8 @@ public class UtilsTest {
 
   @Test
   public void testLenientFormat_NotEnoughArgs() {
-    assertEquals(
-        "Missing arg: %s", Utils.lenientFormat("Missing arg: %s"));
-    assertEquals(
-        "Two missing: %s, %s", Utils.lenientFormat("Two missing: %s, %s"));
+    assertEquals("Missing arg: %s", Utils.lenientFormat("Missing arg: %s"));
+    assertEquals("Two missing: %s, %s", Utils.lenientFormat("Two missing: %s, %s"));
   }
 
   @Test
@@ -217,5 +215,10 @@ public class UtilsTest {
   public void testLenientFormat_NoPlaceholdersWithArgs() {
     assertEquals(
         "No placeholders [arg1, arg2]", Utils.lenientFormat("No placeholders", "arg1", "arg2"));
+  }
+
+  @Test
+  public void testPrivateConstructor_forCodeCoverage() throws Exception {
+    TestHelper.testPrivateConstructor_forCodeCoverage(Utils.class);
   }
 }

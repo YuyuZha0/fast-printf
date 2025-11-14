@@ -2,8 +2,7 @@ package io.fastprintf.util.internal;
 
 import static org.junit.Assert.*;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
+import io.fastprintf.util.TestHelper;
 import org.junit.Test;
 
 public class DoubleConstsTest {
@@ -51,18 +50,6 @@ public class DoubleConstsTest {
 
   @Test
   public void testPrivateConstructor_forCodeCoverage() throws Exception {
-    // This test is purely for achieving 100% code coverage by invoking the private
-    // constructor, which is designed to prevent instantiation.
-    Constructor<DoubleConsts> constructor = DoubleConsts.class.getDeclaredConstructor();
-    constructor.setAccessible(true);
-    try {
-      constructor.newInstance();
-      fail("Expected an exception from the private constructor");
-    } catch (InvocationTargetException e) {
-      // We expect the constructor to throw an exception.
-      // Check that the cause is what we expect (e.g., IllegalStateException).
-      assertTrue(
-          e.getCause() instanceof AssertionError || e.getCause() instanceof IllegalStateException);
-    }
+    TestHelper.testPrivateConstructor_forCodeCoverage(DoubleConsts.class);
   }
 }

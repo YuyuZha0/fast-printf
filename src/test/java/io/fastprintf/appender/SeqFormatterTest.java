@@ -4,6 +4,7 @@ import io.fastprintf.Specifier;
 import io.fastprintf.number.FloatForm;
 import io.fastprintf.number.IntForm;
 import io.fastprintf.FormatContext;
+import io.fastprintf.util.TestHelper;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -190,5 +191,10 @@ public class SeqFormatterTest {
     assertA(ctx, Double.NaN, "NAN");
     assertA(ctx, Double.NEGATIVE_INFINITY, "-INFINITY");
     assertA(ctx, Double.POSITIVE_INFINITY, "INFINITY");
+  }
+
+  @Test
+  public void testPrivateConstructor_forCodeCoverage() throws Exception {
+    TestHelper.testPrivateConstructor_forCodeCoverage(SeqFormatter.class);
   }
 }
