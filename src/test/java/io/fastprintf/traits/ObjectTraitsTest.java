@@ -32,6 +32,12 @@ public class ObjectTraitsTest {
   }
 
   @Test
+  public void asString_emptyArray_shouldReturnEmptyBrackets() {
+    ObjectTraits traits = new ObjectTraits(new int[0]);
+    assertEquals("[]", traits.asString());
+  }
+
+  @Test
   public void asString_withByteArray_shouldReturnBase64() {
     byte[] bytes = new byte[] {1, 2, 3, 4, 5};
     ObjectTraits traits = new ObjectTraits(bytes);
@@ -46,10 +52,45 @@ public class ObjectTraitsTest {
   }
 
   @Test
+  public void asString_withBoolean_shouldReturnStringRef() {
+    boolean[] booleans = new boolean[] {true, false, true, false, true};
+    ObjectTraits traits = new ObjectTraits(booleans);
+    assertEquals(Arrays.toString(booleans), traits.asString());
+  }
+
+  @Test
+  public void asString_withShortArray_shouldCallArraysToString() {
+    short[] shorts = new short[] {100, 200, 300};
+    ObjectTraits traits = new ObjectTraits(shorts);
+    assertEquals(Arrays.toString(shorts), traits.asString());
+  }
+
+  @Test
   public void asString_withIntArray_shouldCallArraysToString() {
     int[] ints = new int[] {10, 20, 30};
     ObjectTraits traits = new ObjectTraits(ints);
     assertEquals(Arrays.toString(ints), traits.asString());
+  }
+
+  @Test
+  public void asString_withLongArray_shouldCallArraysToString() {
+    long[] longs = new long[] {1000L, 2000L, 3000L};
+    ObjectTraits traits = new ObjectTraits(longs);
+    assertEquals(Arrays.toString(longs), traits.asString());
+  }
+
+  @Test
+  public void asString_withFloatArray_shouldCallArraysToString() {
+    float[] floats = new float[] {1.1f, 2.2f, 3.3f};
+    ObjectTraits traits = new ObjectTraits(floats);
+    assertEquals(Arrays.toString(floats), traits.asString());
+  }
+
+  @Test
+  public void asString_withDoubleArray_shouldCallArraysToString() {
+    double[] doubles = new double[] {1.11, 2.22, 3.33};
+    ObjectTraits traits = new ObjectTraits(doubles);
+    assertEquals(Arrays.toString(doubles), traits.asString());
   }
 
   @Test

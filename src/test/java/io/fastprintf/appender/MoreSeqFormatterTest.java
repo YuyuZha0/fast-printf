@@ -1,9 +1,12 @@
 package io.fastprintf.appender;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import io.fastprintf.Flag;
 import io.fastprintf.FormatContext;
+import io.fastprintf.PrintfException;
 import io.fastprintf.number.FloatForm;
 import io.fastprintf.number.IntForm;
 import io.fastprintf.seq.Seq;
@@ -12,6 +15,11 @@ import io.fastprintf.traits.CharacterTraits;
 import io.fastprintf.traits.NullTraits;
 import io.fastprintf.traits.ObjectTraits;
 import io.fastprintf.traits.TemporalAccessorTraits;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -254,26 +262,85 @@ public class MoreSeqFormatterTest {
 
   @Test
   public void testDateTime_t_T() {
-    ZonedDateTime now = ZonedDateTime.now();
-    // Default format
-    String expectedDefault =
-        DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(ZoneId.systemDefault()).format(now);
-    String actualDefault =
-        SeqFormatter.t(parsePattern("%t"), new TemporalAccessorTraits(now)).toString();
-    assertEquals(expectedDefault, actualDefault);
-    // Custom format
-    String dtfPattern = "yyyy-MM-dd HH:mm:ss";
+    ZonedDateTime sampleZDT =
+        ZonedDateTime.of(LocalDateTime.of(2023, 10, 27, 10, 30, 0), ZoneId.of("UTC"));
+
+    // --- Branch 1: Custom Formatter ---
+    String dtfPattern = "yyyy/MM/dd HH:mm";
     String pattern = "%{" + dtfPattern + "}t";
-    String expectedCustom = DateTimeFormatter.ofPattern(dtfPattern).format(now);
+    FormatContext customContext = parsePattern(pattern);
+    String expectedCustom = DateTimeFormatter.ofPattern(dtfPattern).format(sampleZDT);
     String actualCustom =
-        SeqFormatter.t(parsePattern(pattern), new TemporalAccessorTraits(now)).toString();
-    assertEquals(expectedCustom, actualCustom);
-    // Uppercase
+        SeqFormatter.t(customContext, new TemporalAccessorTraits(sampleZDT)).toString();
+    assertEquals("Should format with custom pattern", expectedCustom, actualCustom);
+
+    // --- Branch 2: Uppercase Transformation ---
+    String dtfPatternUpper = "dd-MMM-yyyy";
+    String patternUpper = "%{" + dtfPatternUpper + "}t";
+    DateTimeFormatter dtfUpper = DateTimeFormatter.ofPattern(dtfPatternUpper, Locale.US);
+    FormatContext customContextUpper =
+        FormatContext.create(EnumSet.noneOf(Flag.class), -1, -1, dtfUpper);
     String actualUpper =
-        SeqFormatter.t(parsePattern(pattern), new TemporalAccessorTraits(now))
+        SeqFormatter.t(customContextUpper, new TemporalAccessorTraits(sampleZDT))
             .upperCase()
             .toString();
-    assertEquals(expectedCustom.toUpperCase(Locale.US), actualUpper);
+    assertEquals("Should uppercase month abbreviation", "27-OCT-2023", actualUpper);
+
+    // --- Branch 3: Default Formatter Logic ---
+    FormatContext defaultContext = parsePattern("%t");
+    // Case 3a: Instant
+    Instant sampleInstant = sampleZDT.toInstant();
+    String expectedInstant =
+        sampleInstant.atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    String actualInstant =
+        SeqFormatter.t(defaultContext, new TemporalAccessorTraits(sampleInstant)).toString();
+    assertEquals("Should use default formatter for Instant", expectedInstant, actualInstant);
+
+    // Case 3b: ZonedDateTime
+    String expectedZDT = sampleZDT.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    String actualZDT =
+        SeqFormatter.t(defaultContext, new TemporalAccessorTraits(sampleZDT)).toString();
+    assertEquals("Should use default formatter for ZonedDateTime", expectedZDT, actualZDT);
+
+    // Case 3c: OffsetDateTime
+    OffsetDateTime sampleODT = sampleZDT.toOffsetDateTime();
+    String expectedODT = sampleODT.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    String actualODT =
+        SeqFormatter.t(defaultContext, new TemporalAccessorTraits(sampleODT)).toString();
+    assertEquals("Should use default formatter for OffsetDateTime", expectedODT, actualODT);
+
+    // Case 3d: LocalDateTime
+    LocalDateTime sampleLDT = sampleZDT.toLocalDateTime();
+    String expectedLDT = sampleLDT.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+    String actualLDT =
+        SeqFormatter.t(defaultContext, new TemporalAccessorTraits(sampleLDT)).toString();
+    assertEquals("Should use default formatter for LocalDateTime", expectedLDT, actualLDT);
+
+    // Case 3e: LocalDate
+    LocalDate sampleLD = sampleZDT.toLocalDate();
+    String expectedLD = sampleLD.format(DateTimeFormatter.ISO_LOCAL_DATE);
+    String actualLD =
+        SeqFormatter.t(defaultContext, new TemporalAccessorTraits(sampleLD)).toString();
+    assertEquals("Should use default formatter for LocalDate", expectedLD, actualLD);
+
+    // --- Branch 4: Exception for Unsupported Type ---
+    try {
+      SeqFormatter.t(defaultContext, new TemporalAccessorTraits(LocalTime.now()));
+      fail("Should have thrown PrintfException for unsupported type LocalTime");
+    } catch (PrintfException e) {
+      assertTrue(
+          "Exception message should contain 'No default DateTimeFormatter'",
+          e.getMessage().contains("No default DateTimeFormatter"));
+    }
+
+    // --- Branch 5: Space Justification (Width) ---
+    FormatContext widthContext = parsePattern("%50t");
+    String actualWithWidth =
+        SeqFormatter.t(widthContext, new TemporalAccessorTraits(sampleLD)).toString();
+    assertEquals("Formatted string should have correct width", 50, actualWithWidth.length());
+    assertTrue(
+        "Formatted string should be space-padded on the left", actualWithWidth.startsWith(" "));
+    assertTrue("Formatted string should end with the date", actualWithWidth.endsWith(expectedLD));
   }
 
   private static class TestCase<T> {
