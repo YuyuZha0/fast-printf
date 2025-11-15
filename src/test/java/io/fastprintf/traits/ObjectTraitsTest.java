@@ -162,6 +162,13 @@ public class ObjectTraitsTest {
   }
 
   @Test
+  public void asInt_withDate_shouldReturnEpoSeconds() {
+    Date date = new Date(1234567890L); // A fixed time
+    ObjectTraits traits = new ObjectTraits(date);
+    assertEquals(1234567, traits.asInt());
+  }
+
+  @Test
   public void asIntForm_withCalendar_shouldReturnEpochMilliseconds() {
     Calendar cal = new GregorianCalendar();
     cal.setTimeInMillis(9876543210L);
@@ -176,6 +183,14 @@ public class ObjectTraitsTest {
     ObjectTraits traits = new ObjectTraits(cal);
     // 9876543210 ms = 9876543.21 s
     assertEquals("9876543.21", traits.asFloatForm().toString());
+  }
+
+  @Test
+  public void asInt_withCalendar_shouldReturnEpochSeconds() {
+    Calendar cal = new GregorianCalendar();
+    cal.setTimeInMillis(9876543210L);
+    ObjectTraits traits = new ObjectTraits(cal);
+    assertEquals(9876543, traits.asInt());
   }
 
   // --- asTemporalAccessor() Tests ---
