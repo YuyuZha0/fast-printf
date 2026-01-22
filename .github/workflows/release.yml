@@ -2,7 +2,7 @@ name: Release to Maven Central
 
 on:
   release:
-    types: [created]
+    types: [ created ]
   workflow_dispatch:
     inputs:
       git_tag:
@@ -12,34 +12,42 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          # 'github.event.inputs.git_tag' is for the manual run.
-          # 'github.ref' is for the automatic run when a release is created.
           ref: ${{ github.event.inputs.git_tag || github.ref }}
 
-
-      - name: Set up JDK 11
+      - name: Set up JDK 17, GPG, and Maven Settings
         uses: actions/setup-java@v4
         with:
-          java-version: '11'
+          # Use JDK 17 to build (it can cross-compile to 8 easily).
+          # This ensures compatibility with the latest Maven plugins.
+          java-version: '17'
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Import GPG key
-        uses: crazy-max/ghaction-import-gpg@v6
-        with:
-          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          # 1. Configure GPG automatically
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
 
-      - name: Configure Maven Settings for Central
+          # 2. Configure settings.xml automatically
+          server-id: central
+          server-username: MAVEN_CENTRAL_USERNAME
+          server-password: MAVEN_CENTRAL_TOKEN
+
+      - name: Publish to Maven Central
+        env:
+          # Map the secrets to environment variables so setup-java can inject them
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN }}
         run: |
-          mkdir -p ~/.m2
-          # Use the 'central' server ID in the generated settings.xml
-          echo "<settings><servers><server><id>central</id><username>${{ secrets.MAVEN_CENTRAL_USERNAME }}</username><password>${{ secrets.MAVEN_CENTRAL_TOKEN }}</password></server></servers></settings>" > ~/.m2/settings.xml
-
-      - name: Deploy to Maven Central
-        # The command changes from 'deploy' to 'publish'
-        run: mvn -B clean deploy -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }}
+          # We use 'verify' to build/test/sign, then 'central-publishing:publish' to upload.
+          # We do NOT use 'deploy' because we lack <distributionManagement> in the POM.
+          mvn -B clean verify central-publishing:publish \
+            -Pjdk9+ \
+            -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }}
