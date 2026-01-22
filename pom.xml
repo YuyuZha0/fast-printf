@@ -8,21 +8,21 @@
     <description>Fast printf for Java</description>
     <groupId>io.github.yuyuzha0</groupId>
     <artifactId>fast-printf</artifactId>
-    <version>1.2.6</version>
+    <version>1.2.7</version>
 
     <properties>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
-        <maven.compiler.release>8</maven.compiler.release>
+        <!-- Global compiler settings for safety -->
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <jmh.version>1.35</jmh.version>
+        <jmh.version>1.37</jmh.version>
         <gpg.keyname>0x838D20DB</gpg.keyname>
     </properties>
 
     <licenses>
         <license>
             <name>GNU General Public License v2 with Classpath Exception</name>
-            <url>https://openjdk.java.net/legal/gplv2+ce.html</url>
+            <url>https://openjdk.org/legal/gplv2+ce.html</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
@@ -62,6 +62,7 @@
     </dependencies>
 
     <profiles>
+        <!-- Profile for building on JDK 9, 11, 17, 21+ (Recommended for Release) -->
         <profile>
             <id>jdk9+</id>
             <activation>
@@ -71,59 +72,95 @@
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <version>3.0.0-M7</version>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>3.11.0</version>
+                        <executions>
+                            <!-- 1. Compile main source (Java 8) using -release 8 -->
+                            <execution>
+                                <id>default-compile</id>
+                                <configuration>
+                                    <release>8</release>
+                                </configuration>
+                            </execution>
+                            <!-- 2. Compile module-info (Java 9) -->
+                            <execution>
+                                <id>compile-module-info</id>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>compile</goal>
+                                </goals>
+                                <configuration>
+                                    <release>9</release>
+                                    <compileSourceRoots>
+                                        <compileSourceRoot>${project.basedir}/src/main/java-9</compileSourceRoot>
+                                    </compileSourceRoots>
+                                    <multiReleaseOutput>true</multiReleaseOutput>
+                                </configuration>
+                            </execution>
+                        </executions>
                     </plugin>
+
+                    <!-- CRITICAL: Mark JAR as Multi-Release -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <version>3.8.0</version>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <version>3.3.0</version>
                         <configuration>
-                            <release>${maven.compiler.release}</release>
+                            <archive>
+                                <manifestEntries>
+                                    <Multi-Release>true</Multi-Release>
+                                </manifestEntries>
+                            </archive>
                         </configuration>
                     </plugin>
+
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.5.0</version>
+                        <version>3.6.0</version>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
                                 <goals>
                                     <goal>jar</goal>
                                 </goals>
+                                <configuration>
+                                    <!-- CRITICAL: Prevent build failure on missing javadocs -->
+                                    <doclint>-missing</doclint>
+                                </configuration>
                             </execution>
                         </executions>
-                        <configuration>
-                            <!-- This disables checks for missing Javadoc comments -->
-                            <doclint>-missing</doclint>
-                        </configuration>
                     </plugin>
                 </plugins>
             </build>
         </profile>
+
+        <!-- Profile fallback for building on actual JDK 8 (No module-info) -->
         <profile>
             <id>jdk8</id>
             <activation>
-                <jdk>8</jdk>
+                <jdk>1.8</jdk>
             </activation>
             <build>
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-compiler-plugin</artifactId>
-                        <version>3.6.1</version>
+                        <version>3.8.1</version>
                         <configuration>
-                            <source>${maven.compiler.source}</source>
-                            <target>${maven.compiler.target}</target>
+                            <source>1.8</source>
+                            <target>1.8</target>
+                            <excludes>
+                                <exclude>module-info.java</exclude>
+                            </excludes>
                         </configuration>
                     </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.2.0</version>
+                        <version>3.4.1</version>
                         <configuration>
-                            <source>${maven.compiler.source}</source>
+                            <source>8</source>
                         </configuration>
                         <executions>
                             <execution>
@@ -131,6 +168,10 @@
                                 <goals>
                                     <goal>jar</goal>
                                 </goals>
+                                <configuration>
+                                    <!-- CRITICAL: Prevent build failure on missing javadocs -->
+                                    <doclint>-missing</doclint>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
@@ -188,7 +229,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.12</version> <!-- Use the latest version -->
+                <version>0.8.11</version>
                 <executions>
                     <execution>
                         <id>prepare-agent</id>
@@ -198,7 +239,7 @@
                     </execution>
                     <execution>
                         <id>report</id>
-                        <phase>verify</phase> <!-- Run after tests -->
+                        <phase>verify</phase>
                         <goals>
                             <goal>report</goal>
                         </goals>
@@ -207,5 +248,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>
