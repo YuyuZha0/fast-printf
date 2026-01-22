@@ -1,11 +1,14 @@
 package io.fastprintf;
 
 import io.fastprintf.appender.Appender;
+import io.fastprintf.seq.Seq;
 import io.fastprintf.traits.FormatTraits;
 import io.fastprintf.util.Preconditions;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.function.Consumer;
 import java.util.function.IntFunction;
 
 /** GRAMMAR: %[flags][width][.precision]specifier */
@@ -78,8 +81,11 @@ final class FastPrintfImpl implements FastPrintf {
     Preconditions.checkNotNull(args, "args");
     Iterator<FormatTraits> iterator = args.iterator();
     StringBuilder builder = stringBuilderFactory.apply(stringBuilderInitialCapacity);
+    // OPTIMIZATION: Create the consumer ONCE.
+    // This reduces allocation from O(N) to O(1) where N is the number of appenders.
+    Consumer<Seq> consumer = seq -> seq.appendTo(builder);
     for (Appender appender : appenders) {
-      appender.append(seq -> seq.appendTo(builder), iterator);
+      appender.append(consumer, iterator);
     }
     return builder.toString();
   }
@@ -92,21 +98,22 @@ final class FastPrintfImpl implements FastPrintf {
 
     if (builder instanceof StringBuilder) {
       StringBuilder stringBuilder = (StringBuilder) builder;
+      Consumer<Seq> consumer = seq -> seq.appendTo(stringBuilder);
       for (Appender appender : appenders) {
-        appender.append(seq -> seq.appendTo(stringBuilder), iterator);
+        appender.append(consumer, iterator);
       }
       return builder;
     }
+    Consumer<Seq> consumer =
+        seq -> {
+          try {
+            seq.appendTo(builder);
+          } catch (IOException e) {
+            throw new UncheckedIOException(e);
+          }
+        };
     for (Appender appender : appenders) {
-      appender.append(
-          seq -> {
-            try {
-              seq.appendTo(builder);
-            } catch (IOException e) {
-              throw new RuntimeException(e);
-            }
-          },
-          iterator);
+      appender.append(consumer, iterator);
     }
     return builder;
   }
