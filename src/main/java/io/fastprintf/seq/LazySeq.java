@@ -33,7 +33,10 @@ final class LazySeq implements AtomicSeq {
 
   @Override
   public AtomicSeq upperCase() {
-    return Seq.wrap(toString()).upperCase();
+    StringBuilder sb = buildEagerly(action, length);
+    char[] chars = new char[sb.length()];
+    sb.getChars(0, sb.length(), chars, 0);
+    return Seq.forArray(chars).upperCase();
   }
 
   @Override
