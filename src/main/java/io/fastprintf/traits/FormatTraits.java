@@ -5,6 +5,7 @@ import io.fastprintf.FastPrintf;
 import io.fastprintf.PrintfException;
 import io.fastprintf.number.FloatForm;
 import io.fastprintf.number.IntForm;
+import io.fastprintf.seq.Seq;
 import java.time.temporal.TemporalAccessor;
 
 /**
@@ -148,5 +149,21 @@ public interface FormatTraits {
           "This trait for a primitive value must override asObject().");
     }
     return refSlot.get();
+  }
+
+  /**
+   * Provides a {@link io.fastprintf.seq.Seq} representation of the argument.
+   *
+   * <p>This method serves as the bridge between the argument and the internal rope data structure.
+   *
+   * <p><b>Implementation Note:</b> The default implementation simply wraps the result of {@link
+   * #asString()}. This creates a temporary {@link String} object on the heap. Implementations that
+   * can generate character sequences without intermediate allocations (e.g., using a specialized
+   * {@code Seq} for numbers) should override this method to maximize performance.
+   *
+   * @return a {@code Seq} representing the argument.
+   */
+  default Seq asSeq() {
+    return Seq.wrap(asString());
   }
 }
