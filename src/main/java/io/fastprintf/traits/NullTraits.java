@@ -3,11 +3,13 @@ package io.fastprintf.traits;
 import io.fastprintf.PrintfException;
 import io.fastprintf.number.FloatForm;
 import io.fastprintf.number.IntForm;
+import io.fastprintf.seq.Seq;
 import java.time.temporal.TemporalAccessor;
 
 public final class NullTraits implements FormatTraits {
 
   private static final NullTraits INSTANCE = new NullTraits();
+  private static final Seq NULL_SEQ = Seq.wrap("null");
 
   private NullTraits() {}
 
@@ -48,5 +50,10 @@ public final class NullTraits implements FormatTraits {
   @Override
   public RefSlot ref() {
     return RefSlot.ofNull();
+  }
+
+  @Override
+  public Seq asSeq() {
+    return NULL_SEQ;
   }
 }

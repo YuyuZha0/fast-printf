@@ -2,10 +2,12 @@ package io.fastprintf.traits;
 
 import io.fastprintf.number.FloatForm;
 import io.fastprintf.number.IntForm;
+import io.fastprintf.seq.Seq;
 import io.fastprintf.util.Utils;
 import java.time.temporal.TemporalAccessor;
+import java.util.function.Consumer;
 
-public final class IntTraits implements FormatTraits {
+public final class IntTraits implements FormatTraits, Consumer<StringBuilder> {
 
   private static final int CACHE_LOW = -128;
   private static final int CACHE_HIGH = 127;
@@ -66,5 +68,15 @@ public final class IntTraits implements FormatTraits {
   @Override
   public Object asObject() {
     return ref.isPrimitive() ? value : ref.get();
+  }
+
+  @Override
+  public void accept(StringBuilder stringBuilder) {
+    stringBuilder.append(value);
+  }
+
+  @Override
+  public Seq asSeq() {
+    return Seq.lazy(this, Utils.stringSize(value));
   }
 }

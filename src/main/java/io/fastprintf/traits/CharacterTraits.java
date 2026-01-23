@@ -3,6 +3,8 @@ package io.fastprintf.traits;
 import io.fastprintf.PrintfException;
 import io.fastprintf.number.FloatForm;
 import io.fastprintf.number.IntForm;
+import io.fastprintf.seq.Seq;
+
 import java.time.temporal.TemporalAccessor;
 
 public final class CharacterTraits implements FormatTraits {
@@ -57,5 +59,10 @@ public final class CharacterTraits implements FormatTraits {
   @Override
   public Object asObject() {
     return ref.isPrimitive() ? value : ref.get();
+  }
+
+  @Override
+  public Seq asSeq() {
+    return Seq.ch(value);
   }
 }

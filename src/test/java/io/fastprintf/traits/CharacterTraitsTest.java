@@ -5,9 +5,29 @@ import static org.junit.Assert.*;
 import io.fastprintf.PrintfException;
 import io.fastprintf.number.FloatLayout;
 import io.fastprintf.number.IntForm;
+import io.fastprintf.seq.Seq;
 import org.junit.Test;
 
 public class CharacterTraitsTest {
+
+  @Test
+  public void testAsSeq() {
+    char c = 'Z';
+    CharacterTraits traits = CharacterTraits.ofPrimitive(c);
+
+    Seq seq = traits.asSeq();
+
+    // 1. Verify Length
+    assertEquals(1, seq.length());
+
+    // 2. Verify Content
+    assertEquals("Z", seq.toString());
+
+    // 3. Verify Fast Path Append
+    StringBuilder sb = new StringBuilder();
+    seq.appendTo(sb);
+    assertEquals("Z", sb.toString());
+  }
 
   @Test
   public void testOfPrimitive_createsPrimitiveTraits() {

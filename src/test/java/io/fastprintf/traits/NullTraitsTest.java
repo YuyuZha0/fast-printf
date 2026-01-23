@@ -3,9 +3,36 @@ package io.fastprintf.traits;
 import static org.junit.Assert.*;
 
 import io.fastprintf.PrintfException;
+import io.fastprintf.seq.Seq;
 import org.junit.Test;
 
 public class NullTraitsTest {
+
+  @Test
+  public void testAsSeq_Optimization() {
+    NullTraits t1 = NullTraits.getInstance();
+    NullTraits t2 = NullTraits.getInstance();
+
+    Seq seq1 = t1.asSeq();
+    Seq seq2 = t2.asSeq();
+
+    // Verify constant reuse
+    assertSame("Should return the exact same Seq instance for null", seq1, seq2);
+  }
+
+  @Test
+  public void testAsSeq_Content() {
+    Seq seq = NullTraits.getInstance().asSeq();
+    assertEquals("null", seq.toString());
+    assertEquals(4, seq.length());
+  }
+
+  @Test
+  public void testAsSeq_AppendTo() {
+    StringBuilder sb = new StringBuilder();
+    NullTraits.getInstance().asSeq().appendTo(sb);
+    assertEquals("null", sb.toString());
+  }
 
   @Test
   public void testGetInstance_isSingleton() {

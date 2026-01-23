@@ -26,11 +26,11 @@ import org.openjdk.jmh.annotations.Warmup;
  *
  *
  * <pre>
-Benchmark                                      Mode  Cnt     Score    Error  Units
-FastPrintfBenchmark.fastPrintf                 avgt    6   662.068 ± 25.852  ns/op
-FastPrintfBenchmark.fastPrintfPrimitive        avgt    6   644.819 ± 31.485  ns/op
-FastPrintfBenchmark.fastPrintfWithThreadLocal  avgt    6   650.900 ± 21.227  ns/op
-FastPrintfBenchmark.jdkPrintf                  avgt    6  1544.709 ± 18.232  ns/op
+Benchmark                                      Mode  Cnt     Score     Error  Units
+FastPrintfBenchmark.fastPrintf                 avgt    6   686.757 ±  15.139  ns/op
+FastPrintfBenchmark.fastPrintfPrimitive        avgt    6   690.957 ±  47.551  ns/op
+FastPrintfBenchmark.fastPrintfWithThreadLocal  avgt    6   682.324 ±  24.224  ns/op
+FastPrintfBenchmark.jdkPrintf                  avgt    6  1589.291 ± 175.403  ns/op
  *     </pre>
  */
 public class FastPrintfBenchmark {

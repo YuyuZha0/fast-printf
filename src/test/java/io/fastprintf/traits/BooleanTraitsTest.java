@@ -4,9 +4,51 @@ import static org.junit.Assert.*;
 
 import io.fastprintf.PrintfException;
 import io.fastprintf.number.FloatLayout;
+import io.fastprintf.seq.Seq;
 import org.junit.Test;
 
 public class BooleanTraitsTest {
+
+  @Test
+  public void testAsSeq_Optimization() {
+    // Verify that we are returning static constants (Zero Allocation)
+    BooleanTraits t1 = BooleanTraits.ofPrimitive(true);
+    BooleanTraits t2 = BooleanTraits.ofPrimitive(true);
+
+    Seq seq1 = t1.asSeq();
+    Seq seq2 = t2.asSeq();
+
+    // Must be the exact same instance
+    assertSame("Should return cached Seq instance for true", seq1, seq2);
+
+    BooleanTraits f1 = BooleanTraits.ofPrimitive(false);
+    Seq seq3 = f1.asSeq();
+
+    assertSame(
+        "Should return cached Seq instance for false",
+        seq3,
+        BooleanTraits.ofPrimitive(false).asSeq());
+  }
+
+  @Test
+  public void testAsSeq_Content() {
+    Seq trueSeq = BooleanTraits.ofPrimitive(true).asSeq();
+    assertEquals("true", trueSeq.toString());
+    assertEquals(4, trueSeq.length());
+
+    Seq falseSeq = BooleanTraits.ofPrimitive(false).asSeq();
+    assertEquals("false", falseSeq.toString());
+    assertEquals(5, falseSeq.length());
+  }
+
+  @Test
+  public void testAsSeq_AppendTo() {
+    StringBuilder sb = new StringBuilder();
+    BooleanTraits.ofPrimitive(true).asSeq().appendTo(sb);
+    BooleanTraits.ofPrimitive(false).asSeq().appendTo(sb);
+
+    assertEquals("truefalse", sb.toString());
+  }
 
   @Test
   public void testOfPrimitive_returnsCachedInstances() {

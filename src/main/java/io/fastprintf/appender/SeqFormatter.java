@@ -342,13 +342,10 @@ public final class SeqFormatter {
   }
 
   static Seq s(FormatContext context, FormatTraits value) {
-    String s = value.asString();
+    Seq seq = value.asSeq();
     int precision;
-    Seq seq;
-    if (context.isPrecisionSet() && (precision = context.getPrecision()) < s.length()) {
-      seq = Seq.wrap(s, 0, precision);
-    } else {
-      seq = Seq.wrap(s);
+    if (context.isPrecisionSet() && (precision = context.getPrecision()) < seq.length()) {
+      seq = seq.subSequence(0, precision);
     }
     return spaceJustify(context, seq);
   }

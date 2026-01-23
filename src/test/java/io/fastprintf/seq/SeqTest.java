@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Test;
 
@@ -155,5 +156,76 @@ public class SeqTest {
     assertTrue(s.startsWith('t'));
     assertFalse(s.startsWith('e'));
     assertFalse(Seq.empty().startsWith('x'));
+  }
+
+  @Test
+  public void testLazyZeroLength() {
+    // Should return the EmptySeq singleton
+    AtomicSeq seq = Seq.lazy(sb -> sb.append("fail"), 0);
+    assertSame(Seq.empty(), seq);
+    assertEquals(0, seq.length());
+  }
+
+  @Test
+  public void testLazyOneLengthOptimized() {
+    // Should return a Repeated sequence (cached for 'A')
+    AtomicBoolean executed = new AtomicBoolean(false);
+
+    AtomicSeq seq =
+        Seq.lazy(
+            sb -> {
+              sb.append('A');
+              executed.set(true);
+            },
+            1);
+
+    // Verify it executed EAGERLY
+    assertTrue("Action should be executed immediately for length 1", executed.get());
+    assertEquals(1, seq.length());
+    assertEquals("A", seq.toString());
+
+    // Verify it optimized to Repeated (checking class type indirectly or directly)
+    assertTrue(seq instanceof Repeated);
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testLazyOneLengthContractViolation() {
+    // We say length is 1, but we write 2 chars.
+    // Because length=1 triggers immediate execution, this throws immediately.
+    Seq.lazy(sb -> sb.append("AB"), 1);
+  }
+
+  @Test
+  public void testLazyMultiLength() {
+    AtomicBoolean executed = new AtomicBoolean(false);
+
+    AtomicSeq seq =
+        Seq.lazy(
+            sb -> {
+              sb.append("Hello");
+              executed.set(true);
+            },
+            5);
+
+    // Should NOT execute immediately for length > 1
+    // (This assertion assumes LazySeq constructor doesn't run the action, which is true)
+    assertEquals("Action should NOT be executed yet", false, executed.get());
+
+    // Verify type
+    assertTrue(seq instanceof LazySeq);
+
+    // Execute
+    assertEquals("Hello", seq.toString());
+    assertTrue(executed.get());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testNegativeLength() {
+    Seq.lazy(sb -> sb.append(""), -1);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testNullAction() {
+    Seq.lazy(null, 5);
   }
 }
