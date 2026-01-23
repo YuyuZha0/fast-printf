@@ -5,8 +5,9 @@ import io.fastprintf.number.IntForm;
 import io.fastprintf.seq.Seq;
 import io.fastprintf.util.Utils;
 import java.time.temporal.TemporalAccessor;
+import java.util.function.Consumer;
 
-public final class LongTraits implements FormatTraits {
+public final class LongTraits implements FormatTraits, Consumer<StringBuilder> {
 
   private final long value;
   private final RefSlot ref;
@@ -56,7 +57,12 @@ public final class LongTraits implements FormatTraits {
   }
 
   @Override
+  public void accept(StringBuilder stringBuilder) {
+    stringBuilder.append(value);
+  }
+
+  @Override
   public Seq asSeq() {
-    return Seq.lazy(sb -> sb.append(value), Utils.stringSize(value));
+    return Seq.lazy(this, Utils.stringSize(value));
   }
 }

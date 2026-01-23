@@ -3,8 +3,10 @@ package io.fastprintf.traits;
 import io.fastprintf.PrintfException;
 import io.fastprintf.number.FloatForm;
 import io.fastprintf.number.IntForm;
+import io.fastprintf.seq.Seq;
+import java.util.function.Consumer;
 
-public final class CharSequenceTraits implements FormatTraits {
+public final class CharSequenceTraits implements FormatTraits, Consumer<StringBuilder> {
 
   private final CharSequence value;
 
@@ -55,5 +57,19 @@ public final class CharSequenceTraits implements FormatTraits {
   @Override
   public RefSlot ref() {
     return RefSlot.of(value);
+  }
+
+  @Override
+  public void accept(StringBuilder stringBuilder) {
+    if (value instanceof String) {
+      stringBuilder.append((String) value);
+    } else {
+      stringBuilder.append(value);
+    }
+  }
+
+  @Override
+  public Seq asSeq() {
+    return Seq.lazy(this, value.length());
   }
 }

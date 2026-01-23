@@ -3,9 +3,52 @@ package io.fastprintf.traits;
 import static org.junit.Assert.*;
 
 import io.fastprintf.PrintfException;
+import io.fastprintf.seq.Seq;
+import java.lang.reflect.Field;
 import org.junit.Test;
 
 public class CharSequenceTraitsTest {
+
+  @Test
+  public void testAsSeq_Optimization() throws Exception {
+    // To verify the optimization, we need a string with length > 1.
+    // If length is 0 or 1, Seq.lazy() optimizes to EmptySeq or Repeated,
+    // skipping the LazySeq wrapper.
+    CharSequenceTraits traits = new CharSequenceTraits("OptimizeMe");
+    Seq seq = traits.asSeq(); // Returns a LazySeq
+
+    // Verify via reflection that LazySeq is holding 'traits' as the action
+    // rather than a new lambda object.
+    Field actionField = seq.getClass().getDeclaredField("action");
+    actionField.setAccessible(true);
+    Object action = actionField.get(seq);
+
+    assertSame("Should pass itself as the Consumer to avoid allocation", traits, action);
+  }
+
+  @Test
+  public void testAsSeq_StringInput() {
+    // Tests the 'if (value instanceof String)' branch in accept()
+    verifyAsSeq("Hello World");
+  }
+
+  @Test
+  public void testAsSeq_StringBuilderInput() {
+    // Tests the 'else' branch in accept()
+    verifyAsSeq(new StringBuilder("Mutable Sequence"));
+  }
+
+  private void verifyAsSeq(CharSequence input) {
+    CharSequenceTraits traits = new CharSequenceTraits(input);
+    Seq seq = traits.asSeq();
+
+    assertEquals("Length mismatch", input.length(), seq.length());
+    assertEquals("Content mismatch", input.toString(), seq.toString());
+
+    StringBuilder sb = new StringBuilder();
+    seq.appendTo(sb);
+    assertEquals(input.toString(), sb.toString());
+  }
 
   @Test
   public void testConstructorAndRef_withString() {
