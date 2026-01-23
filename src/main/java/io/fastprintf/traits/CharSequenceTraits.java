@@ -61,15 +61,17 @@ public final class CharSequenceTraits implements FormatTraits, Consumer<StringBu
 
   @Override
   public void accept(StringBuilder stringBuilder) {
-    if (value instanceof String) {
-      stringBuilder.append((String) value);
-    } else {
-      stringBuilder.append(value);
-    }
+    stringBuilder.append(value);
   }
 
   @Override
   public Seq asSeq() {
-    return Seq.lazy(this, value.length());
+    if (value instanceof String) {
+      return Seq.wrap((String) value);
+    } else if (value instanceof Seq) {
+      return (Seq) value;
+    } else {
+      return Seq.lazy(this, value.length());
+    }
   }
 }

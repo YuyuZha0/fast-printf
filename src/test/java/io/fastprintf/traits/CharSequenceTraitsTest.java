@@ -10,44 +10,59 @@ import org.junit.Test;
 public class CharSequenceTraitsTest {
 
   @Test
-  public void testAsSeq_Optimization() throws Exception {
-    // To verify the optimization, we need a string with length > 1.
-    // If length is 0 or 1, Seq.lazy() optimizes to EmptySeq or Repeated,
-    // skipping the LazySeq wrapper.
-    CharSequenceTraits traits = new CharSequenceTraits("OptimizeMe");
-    Seq seq = traits.asSeq(); // Returns a LazySeq
+  public void testAsSeq_StringOptimization() {
+    // Case 1: String inputs should use the highly-optimized StrView via Seq.wrap
+    String input = "Hello String";
+    CharSequenceTraits traits = new CharSequenceTraits(input);
+    Seq seq = traits.asSeq();
+
+    // Verify it is NOT a LazySeq (StrView class is package-private, so check name or behavior)
+    assertNotEquals("LazySeq", seq.getClass().getSimpleName());
+    assertEquals("StrView", seq.getClass().getSimpleName());
+
+    assertEquals(input, seq.toString());
+  }
+
+  @Test
+  public void testAsSeq_SeqIdentity() {
+    // Case 2: If the input is already a Seq, return it directly to avoid wrapping
+    Seq inputSeq = Seq.wrap("Existing Seq");
+    CharSequenceTraits traits = new CharSequenceTraits(inputSeq);
+
+    assertSame("Should return the original Seq instance", inputSeq, traits.asSeq());
+  }
+
+  @Test
+  public void testAsSeq_GenericCharSequence() throws Exception {
+    // Case 3: StringBuilder (or other CharSequence) should use LazySeq optimization
+    StringBuilder input = new StringBuilder("Mutable Content");
+    CharSequenceTraits traits = new CharSequenceTraits(input);
+    Seq seq = traits.asSeq();
+
+    // Verify it IS a LazySeq
+    assertEquals("LazySeq", seq.getClass().getSimpleName());
 
     // Verify via reflection that LazySeq is holding 'traits' as the action
-    // rather than a new lambda object.
+    // (The 'this' optimization)
     Field actionField = seq.getClass().getDeclaredField("action");
     actionField.setAccessible(true);
     Object action = actionField.get(seq);
 
-    assertSame("Should pass itself as the Consumer to avoid allocation", traits, action);
+    assertSame("Should pass itself as the Consumer", traits, action);
+
+    // Verify content
+    assertEquals("Mutable Content", seq.toString());
   }
 
   @Test
-  public void testAsSeq_StringInput() {
-    // Tests the 'if (value instanceof String)' branch in accept()
-    verifyAsSeq("Hello World");
-  }
-
-  @Test
-  public void testAsSeq_StringBuilderInput() {
-    // Tests the 'else' branch in accept()
-    verifyAsSeq(new StringBuilder("Mutable Sequence"));
-  }
-
-  private void verifyAsSeq(CharSequence input) {
-    CharSequenceTraits traits = new CharSequenceTraits(input);
-    Seq seq = traits.asSeq();
-
-    assertEquals("Length mismatch", input.length(), seq.length());
-    assertEquals("Content mismatch", input.toString(), seq.toString());
+  public void testAppendConsistency() {
+    StringBuilder sbInput = new StringBuilder("Direct Append");
+    CharSequenceTraits traits = new CharSequenceTraits(sbInput);
 
     StringBuilder sb = new StringBuilder();
-    seq.appendTo(sb);
-    assertEquals(input.toString(), sb.toString());
+    traits.accept(sb); // Call the Consumer method directly
+
+    assertEquals("Direct Append", sb.toString());
   }
 
   @Test
