@@ -3,6 +3,7 @@ package io.fastprintf.seq;
 import io.fastprintf.util.Preconditions;
 import java.io.IOException;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -177,6 +178,42 @@ public interface Seq extends CharSequence {
   static AtomicSeq forArray(char[] ch) {
     Preconditions.checkNotNull(ch, "ch");
     return CharArray.wrap(ch, 0, ch.length);
+  }
+
+  /**
+   * Creates an atomic sequence backed by a builder action.
+   *
+   * <p>This method is intended for high-performance internal formatting where the length of the
+   * output is known in advance (e.g., formatting an integer), allowing the data to be written
+   * directly to the destination buffer without intermediate allocations.
+   *
+   * <p><b>Optimizations:</b>
+   *
+   * <ul>
+   *   <li>If {@code length} is 0, returns {@link #empty()}.
+   *   <li>If {@code length} is 1, the action is executed <b>immediately</b> to extract the
+   *       character, and a cached single-character sequence is returned.
+   *   <li>Otherwise, a lazy wrapper is returned, and the action is executed only when appended.
+   * </ul>
+   *
+   * @param action the action to populate a {@link StringBuilder}.
+   * @param length the exact length of the content produced by the action.
+   * @return a new {@code AtomicSeq}.
+   * @throws IllegalArgumentException if {@code length} is negative.
+   * @throws IllegalStateException if {@code length} is 1 but the action does not produce exactly 1
+   *     character.
+   */
+  static AtomicSeq lazy(Consumer<? super StringBuilder> action, int length) {
+    Preconditions.checkNotNull(action, "action");
+    Preconditions.checkArgument(length >= 0, "length < 0");
+    if (length == 0) {
+      return empty();
+    } else if (length == 1) {
+      // Eagerly build to leverage the cached Repeated instances for single chars.
+      // This trades immediate execution for long-term memory savings and zero-object-overhead.
+      return ch(LazySeq.buildEagerly(action, length).charAt(0));
+    }
+    return new LazySeq(action, length);
   }
 
   /**

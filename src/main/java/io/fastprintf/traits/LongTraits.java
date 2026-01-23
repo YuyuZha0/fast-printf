@@ -2,6 +2,7 @@ package io.fastprintf.traits;
 
 import io.fastprintf.number.FloatForm;
 import io.fastprintf.number.IntForm;
+import io.fastprintf.seq.Seq;
 import io.fastprintf.util.Utils;
 import java.time.temporal.TemporalAccessor;
 
@@ -52,5 +53,10 @@ public final class LongTraits implements FormatTraits {
   @Override
   public Object asObject() {
     return ref.isPrimitive() ? value : ref.get();
+  }
+
+  @Override
+  public Seq asSeq() {
+    return Seq.lazy(sb -> sb.append(value), Utils.stringSize(value));
   }
 }

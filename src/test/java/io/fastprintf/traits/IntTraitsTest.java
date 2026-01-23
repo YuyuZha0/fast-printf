@@ -2,6 +2,7 @@ package io.fastprintf.traits;
 
 import static org.junit.Assert.*;
 
+import io.fastprintf.seq.Seq;
 import java.time.Instant;
 import java.time.temporal.TemporalAccessor;
 import org.junit.Test;
@@ -133,5 +134,44 @@ public class IntTraitsTest {
     IntTraits boxedTraits = new IntTraits(originalBoxedInt, RefSlot.of(originalBoxedInt));
     Object obj2 = boxedTraits.asObject();
     assertSame("asObject() must return the identical boxed instance", originalBoxedInt, obj2);
+  }
+
+  @Test
+  public void testAsSeq_StandardValues() {
+    verifyAsSeq(0);
+    verifyAsSeq(1);
+    verifyAsSeq(9);
+    verifyAsSeq(10);
+    verifyAsSeq(99);
+    verifyAsSeq(100);
+    verifyAsSeq(123456789);
+    verifyAsSeq(-1);
+    verifyAsSeq(-9);
+    verifyAsSeq(-10);
+    verifyAsSeq(-12345);
+  }
+
+  @Test
+  public void testAsSeq_EdgeCases() {
+    // Critical: Integer.MIN_VALUE (-2147483648) has specific length logic
+    verifyAsSeq(Integer.MIN_VALUE);
+    verifyAsSeq(Integer.MAX_VALUE);
+  }
+
+  private void verifyAsSeq(int value) {
+    IntTraits traits = IntTraits.ofPrimitive(value);
+    Seq seq = traits.asSeq();
+    String expected = Integer.toString(value);
+
+    // 1. Verify Length (Checks if Utils.stringSize matches StringBuilder logic)
+    assertEquals("Length mismatch for " + value, expected.length(), seq.length());
+
+    // 2. Verify Content (Triggers LazySeq execution and validation)
+    assertEquals("Content mismatch for " + value, expected, seq.toString());
+
+    // 3. Verify Fast Path Append
+    StringBuilder sb = new StringBuilder();
+    seq.appendTo(sb);
+    assertEquals(expected, sb.toString());
   }
 }

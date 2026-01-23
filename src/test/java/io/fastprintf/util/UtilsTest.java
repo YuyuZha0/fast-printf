@@ -221,4 +221,104 @@ public class UtilsTest {
   public void testPrivateConstructor_forCodeCoverage() throws Exception {
     TestHelper.testPrivateConstructor_forCodeCoverage(Utils.class);
   }
+
+  // --- stringSize(int) Tests ---
+
+  @Test
+  public void testStringSizeInt_Zero() {
+    assertEquals(1, Utils.stringSize(0));
+  }
+
+  @Test
+  public void testStringSizeInt_Positives() {
+    assertEquals(1, Utils.stringSize(1));
+    assertEquals(1, Utils.stringSize(9));
+    assertEquals(2, Utils.stringSize(10));
+    assertEquals(2, Utils.stringSize(99));
+    assertEquals(3, Utils.stringSize(100));
+    assertEquals(9, Utils.stringSize(999999999));
+    assertEquals(10, Utils.stringSize(1000000000));
+    assertEquals(10, Utils.stringSize(Integer.MAX_VALUE));
+  }
+
+  @Test
+  public void testStringSizeInt_Negatives() {
+    assertEquals(2, Utils.stringSize(-1));
+    assertEquals(2, Utils.stringSize(-9));
+    assertEquals(3, Utils.stringSize(-10));
+    assertEquals(3, Utils.stringSize(-99));
+    assertEquals(4, Utils.stringSize(-100));
+    assertEquals(11, Utils.stringSize(Integer.MIN_VALUE)); // -2147483648 (11 chars)
+  }
+
+  @Test
+  public void testStringSizeInt_ExhaustivePowers() {
+    // Test boundaries around powers of 10
+    int powerOf10 = 1;
+    for (int i = 0; i < 9; i++) {
+      // Check n
+      assertEquals(String.valueOf(powerOf10).length(), Utils.stringSize(powerOf10));
+
+      // Check n - 1 (boundary below)
+      int below = powerOf10 - 1;
+      assertEquals(String.valueOf(below).length(), Utils.stringSize(below));
+
+      // Check negative counterpart -n
+      assertEquals(String.valueOf(-powerOf10).length(), Utils.stringSize(-powerOf10));
+
+      // Check negative boundary -n + 1 (e.g., -9 vs -10)
+      int negAbove = -powerOf10 + 1;
+      assertEquals(String.valueOf(negAbove).length(), Utils.stringSize(negAbove));
+
+      if (i < 9) {
+        powerOf10 *= 10;
+      }
+    }
+  }
+
+  // --- stringSize(long) Tests ---
+
+  @Test
+  public void testStringSizeLong_Zero() {
+    assertEquals(1, Utils.stringSize(0L));
+  }
+
+  @Test
+  public void testStringSizeLong_Positives() {
+    assertEquals(1, Utils.stringSize(1L));
+    assertEquals(1, Utils.stringSize(9L));
+    assertEquals(2, Utils.stringSize(10L));
+    assertEquals(18, Utils.stringSize(999999999999999999L));
+    assertEquals(19, Utils.stringSize(1000000000000000000L));
+    assertEquals(19, Utils.stringSize(Long.MAX_VALUE));
+  }
+
+  @Test
+  public void testStringSizeLong_Negatives() {
+    assertEquals(2, Utils.stringSize(-1L));
+    assertEquals(2, Utils.stringSize(-9L));
+    assertEquals(3, Utils.stringSize(-10L));
+    assertEquals(20, Utils.stringSize(Long.MIN_VALUE)); // -9223372036854775808 (20 chars)
+  }
+
+  @Test
+  public void testStringSizeLong_ExhaustivePowers() {
+    long powerOf10 = 1L;
+    // Go up to 10^18
+    for (int i = 0; i < 18; i++) {
+      // Check n
+      assertEquals(String.valueOf(powerOf10).length(), Utils.stringSize(powerOf10));
+
+      // Check n - 1
+      assertEquals(String.valueOf(powerOf10 - 1).length(), Utils.stringSize(powerOf10 - 1));
+
+      // Check -n
+      assertEquals(String.valueOf(-powerOf10).length(), Utils.stringSize(-powerOf10));
+
+      // Check -n + 1
+      assertEquals(String.valueOf(-powerOf10 + 1).length(), Utils.stringSize(-powerOf10 + 1));
+
+      powerOf10 *= 10L;
+    }
+  }
 }

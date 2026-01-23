@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import io.fastprintf.number.FloatLayout;
 import io.fastprintf.number.IntForm;
+import io.fastprintf.seq.Seq;
 import java.time.Instant;
 import java.time.temporal.TemporalAccessor;
 import org.junit.Test;
@@ -116,5 +117,39 @@ public class LongTraitsTest {
     assertEquals(String.valueOf(Long.MAX_VALUE), traits.asString());
     assertEquals((int) Long.MAX_VALUE, traits.asInt()); // (int)MAX_VALUE is -1
     assertEquals(-1, traits.asInt());
+  }
+
+  @Test
+  public void testAsSeq_StandardValues() {
+    // Tests the integration of Utils.stringSize(long) and StringBuilder.append(long)
+    verifyAsSeq(0L);
+    verifyAsSeq(1L);
+    verifyAsSeq(-1L);
+    verifyAsSeq(1234567890L);
+    verifyAsSeq(-9876543210L);
+  }
+
+  @Test
+  public void testAsSeq_EdgeCases() {
+    // Critical: Long.MIN_VALUE has specific length logic in Utils
+    verifyAsSeq(Long.MIN_VALUE);
+    verifyAsSeq(Long.MAX_VALUE);
+  }
+
+  private void verifyAsSeq(long value) {
+    LongTraits traits = LongTraits.ofPrimitive(value);
+    Seq seq = traits.asSeq();
+    String expected = Long.toString(value);
+
+    // 1. Verify Length (Crucial for LazySeq pre-sizing)
+    assertEquals("Length mismatch for " + value, expected.length(), seq.length());
+
+    // 2. Verify Content (Triggers LazySeq execution)
+    assertEquals("Content mismatch for " + value, expected, seq.toString());
+
+    // 3. Verify Append (Fast path)
+    StringBuilder sb = new StringBuilder();
+    seq.appendTo(sb);
+    assertEquals(expected, sb.toString());
   }
 }
