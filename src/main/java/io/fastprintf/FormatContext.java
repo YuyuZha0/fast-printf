@@ -32,11 +32,11 @@ public final class FormatContext implements Serializable {
     if (value < 0 && value != UNSET && value != PRECEDING) {
       // This should ideally not be reached if callers are correct,
       // but serves as a strong internal safeguard.
-      throw new PrintfException("%s cannot be negative, but was: %d", name, value);
+      throw new PrintfException("%s cannot be negative, but was: %s", name, value);
     }
     if (value > MAX_WIDTH_OR_PRECISION) {
       throw new PrintfException(
-          "%s %d exceeds the maximum allowed value of %d", name, value, MAX_WIDTH_OR_PRECISION);
+          "%s %s exceeds the maximum allowed value of %s", name, value, MAX_WIDTH_OR_PRECISION);
     }
   }
 
