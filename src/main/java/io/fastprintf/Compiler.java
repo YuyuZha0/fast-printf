@@ -21,31 +21,27 @@ final class Compiler {
   }
 
   void compile() {
-    parseNext();
+    while (!endOfSource()) {
+      char c = source.charAt(lookahead);
+      if (c == '%') {
+        lookahead++;
+        parseFormatSpec();
+      } else {
+        parseFixedString();
+      }
+    }
   }
 
   private boolean endOfSource() {
     return lookahead >= source.length();
   }
 
-  private void parseNext() {
-    if (endOfSource()) return;
-    char c = source.charAt(lookahead);
-    if (c == '%') {
-      lookahead++;
-      forPattern();
-    } else {
-      forFixedString();
-    }
-  }
-
-  private void forPattern() {
+  private void parseFormatSpec() {
     checkSource("Format string terminates in the middle of a format specifier");
     char c = source.charAt(lookahead);
     if (c == '%') {
       lookahead++;
       appenders.add(new FixedStringAppender("%"));
-      parseNext();
       return;
     }
     // %[flags][width][.precision]specifier[{date-time-formatter}]
@@ -59,7 +55,6 @@ final class Compiler {
     }
     FormatContext context = FormatContext.create(flags, width, precision, dateTimeFormatter);
     appenders.add(new DefaultAppender(specifier, context));
-    parseNext();
   }
 
   private EnumSet<Flag> flags() {
@@ -200,17 +195,18 @@ final class Compiler {
     return specifier;
   }
 
-  private void forFixedString() {
+  private void parseFixedString() {
     int length = source.length();
     int nextPercent = source.indexOf('%', lookahead);
     if (nextPercent == -1) {
       appenders.add(new FixedStringAppender(source.substring(lookahead, length)));
       lookahead = length;
-      return;
+    } else {
+      if (nextPercent > lookahead) {
+        appenders.add(new FixedStringAppender(source.substring(lookahead, nextPercent)));
+      }
+      lookahead = nextPercent; // Outer loop will advance past '%' and call parseFormatSpec()
     }
-    appenders.add(new FixedStringAppender(source.substring(lookahead, nextPercent)));
-    lookahead = nextPercent + 1;
-    forPattern();
   }
 
   List<Appender> getAppenders() {

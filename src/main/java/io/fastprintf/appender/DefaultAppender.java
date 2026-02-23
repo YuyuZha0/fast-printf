@@ -83,9 +83,14 @@ public final class DefaultAppender implements Appender {
         // This case is effectively dead code because the Compiler handles %%
         // by creating a FixedStringAppender, but we leave it for completeness.
         return (FormatContext context, FormatTraits traits) -> Seq.ch('%');
-      default:
+      case NOTHING_PRINTED:
+        // %n consumes its argument but produces no output.
         return (FormatContext context, FormatTraits traits) -> Seq.empty();
     }
+    // Every Specifier value is explicitly handled above.
+    // This line is unreachable but required by the Java compiler.
+    // If a new Specifier is added without a corresponding case, this will throw at runtime.
+    throw new PrintfException("Unhandled specifier: %s", specifier);
   }
 
   private int nextInt(Iterator<FormatTraits> iterator) {

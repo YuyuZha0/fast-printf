@@ -24,7 +24,30 @@ public enum Specifier {
   POINTER('p'),
   PERCENT_SIGN('%');
 
-  private static final Specifier[] VALUES = values();
+  // O(1) lookup table indexed by ASCII character value.
+  // Covers the full ASCII printable range (' ' to '~', i.e., 32..126).
+  private static final int LOOKUP_OFFSET = ' '; // 32
+  private static final Specifier[] LOOKUP;
+
+  static {
+    int size = '~' - LOOKUP_OFFSET + 1; // 95 slots
+    LOOKUP = new Specifier[size];
+    for (Specifier specifier : values()) {
+      int idx = specifier.c - LOOKUP_OFFSET;
+      if (idx < 0 || idx >= size) {
+        throw new ExceptionInInitializerError(
+            "Specifier character '"
+                + specifier.c
+                + "' (value "
+                + (int) specifier.c
+                + ") is outside the supported ASCII range [' '..'~']");
+      }
+      LOOKUP[idx] = specifier;
+    }
+    // 'i' is an alias for signed decimal integer in glibc printf.
+    LOOKUP['i' - LOOKUP_OFFSET] = SIGNED_DECIMAL_INTEGER;
+  }
+
   private final char c;
 
   Specifier(char c) {
@@ -32,13 +55,9 @@ public enum Specifier {
   }
 
   public static Specifier valueOf(char c) {
-    if (c == 'i') {
-      return SIGNED_DECIMAL_INTEGER;
-    }
-    for (Specifier specifier : VALUES) {
-      if (specifier.c == c) {
-        return specifier;
-      }
+    int idx = c - LOOKUP_OFFSET;
+    if (idx >= 0 && idx < LOOKUP.length) {
+      return LOOKUP[idx];
     }
     return null;
   }

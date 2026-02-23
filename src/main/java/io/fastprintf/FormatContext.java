@@ -66,7 +66,11 @@ public final class FormatContext implements Serializable {
     if (flags != null && !flags.isEmpty()) {
       int length = flags.length();
       for (int i = 0; i < length; i++) {
-        flagSet.add(Flag.valueOf(flags.charAt(i)));
+        Flag flag = Flag.valueOf(flags.charAt(i));
+        if (flag == null) {
+          throw new IllegalArgumentException("Unknown flag character: '" + flags.charAt(i) + "'");
+        }
+        flagSet.add(flag);
       }
     }
     return create(flagSet, w, p, null);
