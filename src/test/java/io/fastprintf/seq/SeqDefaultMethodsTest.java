@@ -79,6 +79,18 @@ public class SeqDefaultMethodsTest {
   }
 
   @Test
+  public void testDefaultAppendToInternal() {
+    // Seq's default appendToInternal simply delegates to appendTo. DefaultSeqImpl does not
+    // override either method, so this exercises the default-delegates-to-appendTo path.
+    Seq seq = new DefaultSeqImpl("payload");
+    StringBuilder sb = new StringBuilder("head-");
+
+    seq.appendToInternal(sb);
+
+    assertEquals("head-payload", sb.toString());
+  }
+
+  @Test
   public void testDefaultDup() {
     Seq seq = new DefaultSeqImpl("data");
     Seq duped = seq.dup();

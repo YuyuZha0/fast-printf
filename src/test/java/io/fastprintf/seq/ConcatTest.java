@@ -2,11 +2,13 @@ package io.fastprintf.seq;
 
 import static org.junit.Assert.*;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.junit.Test;
@@ -94,6 +96,104 @@ public class ConcatTest {
     // append/prepend should return `this`
     assertSame(text, text.append(empty));
     assertSame(text, text.prepend(empty));
+  }
+
+  // --- appendTo / appendToInternal coverage ---
+
+  @Test
+  public void testAppendTo_StringBuilder_NestedTreeProducesFullOutput() {
+    // Build a multi-level tree to exercise recursive appendToInternal.
+    Seq chain =
+        Seq.wrap("ab").append(Seq.wrap("c")).append(Seq.wrap("def")).append(Seq.wrap("ghij"));
+    assertTrue(chain instanceof Concat);
+
+    StringBuilder sb = new StringBuilder("[");
+    chain.appendTo(sb);
+    sb.append("]");
+    assertEquals("[abcdefghij]", sb.toString());
+  }
+
+  @Test
+  public void testAppendTo_Appendable_StringBuilder() throws IOException {
+    Concat seq = Concat.concat(Seq.wrap("Hello"), Seq.wrap(" World"));
+    StringBuilder sb = new StringBuilder("> ");
+    seq.appendTo((Appendable) sb);
+    assertEquals("> Hello World", sb.toString());
+  }
+
+  @Test
+  public void testAppendTo_Appendable_GenericPathProducesCorrectOutput() throws IOException {
+    // For a non-StringBuilder Appendable, Concat recurses into each child's appendTo.
+    // The two atomic StrView children each call append(CharSequence, start, end) once.
+    Concat seq = Concat.concat(Seq.wrap("foo"), Seq.wrap("bar"));
+
+    final StringBuilder backing = new StringBuilder();
+    final AtomicInteger appendCharCount = new AtomicInteger();
+    Appendable counting =
+        new Appendable() {
+          @Override
+          public Appendable append(CharSequence csq) {
+            backing.append(csq);
+            return this;
+          }
+
+          @Override
+          public Appendable append(CharSequence csq, int start, int end) {
+            backing.append(csq, start, end);
+            return this;
+          }
+
+          @Override
+          public Appendable append(char c) {
+            appendCharCount.incrementAndGet();
+            backing.append(c);
+            return this;
+          }
+        };
+
+    seq.appendTo(counting);
+
+    assertEquals("foobar", backing.toString());
+    assertEquals(
+        "atomic children should not fall back to per-char appends", 0, appendCharCount.get());
+  }
+
+  @Test
+  public void testAppendToInternal_DirectCall_RecursesIntoChildren() {
+    // Direct call must not throw and must produce the same output as appendTo.
+    Concat seq = Concat.concat(Seq.wrap("left-"), Seq.wrap("right"));
+    StringBuilder sb = new StringBuilder("|");
+    seq.appendToInternal(sb);
+    assertEquals("|left-right", sb.toString());
+  }
+
+  @Test
+  public void testAppendTo_Appendable_PropagatesIOException() {
+    Concat seq = Concat.concat(Seq.wrap("a"), Seq.wrap("b"));
+    Appendable throwing =
+        new Appendable() {
+          @Override
+          public Appendable append(CharSequence csq) throws IOException {
+            throw new IOException("boom");
+          }
+
+          @Override
+          public Appendable append(CharSequence csq, int start, int end) throws IOException {
+            throw new IOException("boom");
+          }
+
+          @Override
+          public Appendable append(char c) throws IOException {
+            throw new IOException("boom");
+          }
+        };
+
+    try {
+      seq.appendTo(throwing);
+      fail("Expected IOException to propagate from the generic Appendable branch");
+    } catch (IOException e) {
+      assertEquals("boom", e.getMessage());
+    }
   }
 
   @Test

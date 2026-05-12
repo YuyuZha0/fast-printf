@@ -155,7 +155,28 @@ final class LazySeq implements AtomicSeq {
   @Override
   public void appendTo(StringBuilder sb) {
     sb.ensureCapacity(sb.length() + length);
+    appendToInternal(sb);
+  }
+
+  /**
+   * Executes the deferred {@code action} directly against {@code sb} and verifies it wrote exactly
+   * {@link #length()} characters. The check guards against a misbehaving action whose actual
+   * output length diverges from the pre-declared length — a divergence would otherwise silently
+   * corrupt downstream output buffers that have already pre-sized themselves to the declared
+   * total. {@inheritDoc}
+   *
+   * @throws IllegalStateException if the action does not append exactly {@link #length()}
+   *     characters.
+   */
+  @Override
+  public void appendToInternal(StringBuilder sb) {
+    int beforeLength = sb.length();
     action.accept(sb);
+    int afterLength = sb.length();
+    if (afterLength - beforeLength != length) {
+      throw new IllegalStateException(
+          "Length mismatch: expected " + length + " but got " + (afterLength - beforeLength));
+    }
   }
 
   /**

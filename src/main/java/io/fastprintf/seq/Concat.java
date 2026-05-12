@@ -1,5 +1,6 @@
 package io.fastprintf.seq;
 
+import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
@@ -85,7 +86,7 @@ final class Concat implements AtomicSeqIterable {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder(length);
-    appendTo(sb);
+    appendToInternal(sb);
     return sb.toString();
   }
 
@@ -99,6 +100,28 @@ final class Concat implements AtomicSeqIterable {
   public Seq append(Seq seq) {
     if (seq.isEmpty()) return this;
     return concat(this, seq);
+  }
+
+  @Override
+  public void appendTo(Appendable appendable) throws IOException {
+    left.appendTo(appendable);
+    right.appendTo(appendable);
+  }
+
+  @Override
+  public void appendTo(StringBuilder sb) {
+    sb.ensureCapacity(sb.length() + length);
+    appendToInternal(sb);
+  }
+
+  /**
+   * Recurses into the {@code left} and {@code right} children via their {@code appendToInternal},
+   * skipping the per-level {@link StringBuilder#ensureCapacity(int)} call. {@inheritDoc}
+   */
+  @Override
+  public void appendToInternal(StringBuilder sb) {
+    left.appendToInternal(sb);
+    right.appendToInternal(sb);
   }
 
   /**
