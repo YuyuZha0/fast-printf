@@ -11,6 +11,47 @@ A high-performance, `glibc`-compliant, and low-allocation `printf`-style formatt
 utilities like `String.format()` become a bottleneck. It achieves significant speedups through a **compile-once,
 run-many** approach and a sophisticated architecture that minimizes memory allocations and garbage collection pressure.
 
+## Contents
+
+- [Quick Start](#quick-start)
+- [Key Features](#key-features)
+- [When to use fast-printf](#when-to-use-fast-printf)
+- [Performance (JDK 21)](#performance-jdk-21)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Advanced: JDK 21 Floating-Point on Java 8](#advanced-jdk-21-floating-point-on-java-8)
+- [How It Works](#how-it-works)
+- [API Reference](#api-reference)
+- [Key Differences from `String.format()`](#key-differences-from-stringformat)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Quick Start
+
+Add the dependency (Maven):
+
+```xml
+<dependency>
+    <groupId>io.github.yuyuzha0</groupId>
+    <artifactId>fast-printf</artifactId>
+    <version>1.2.12</version>
+</dependency>
+```
+
+Compile once, format many times:
+
+```java
+import io.fastprintf.FastPrintf;
+
+private static final FastPrintf F = FastPrintf.compile("User %s (id=%d) scored %.2f");
+
+String s = F.format("Alice", 42, 99.5);
+// → "User Alice (id=42) scored 99.50"
+```
+
+That's the whole API for typical use. The rest of this document covers the no-boxing `Args` builder, the format-string
+syntax, and the design trade-offs.
+
 ## Key Features
 
 * 🚀 **High Performance**: Consistently outperforms `String.format()` across all Java versions. The advantage is most
@@ -20,57 +61,53 @@ run-many** approach and a sophisticated architecture that minimizes memory alloc
   creating intermediate strings and character arrays, dramatically reducing GC pressure in hot loops.
 * ⚙️ **Glibc Compatible**: Adheres to the widely-used `glibc` `printf` conventions (from C/C++), providing familiar and
   predictable behavior rather than following the `java.util.Formatter` specification.
-* 💡 **State-of-the-Art Float Formatting**: **Backports the high-fidelity floating-point formatting engine from OpenJDK
-  21.** This brings the modern "Schubfach" algorithm to Java 8+, ensuring correctly rounded and the shortest possible
-  output for `double` and `float` values—a level of accuracy not available in older JDKs' `String.format()`.
+* 💡 **State-of-the-Art Float Formatting**: Backports the high-fidelity floating-point formatting engine from
+  **OpenJDK 21** (the "Schubfach" algorithm), so `double` and `float` output is correctly rounded and shortest-possible
+  even on Java 8.
+  See [Advanced: JDK 21 Floating-Point on Java 8](#advanced-jdk-21-floating-point-on-java-8).
 * ⛓️ **Fluent, No-Boxing API**: Provides a fluent builder (`Args.create().putInt(...)`) that accepts primitive arguments
   without any boxing overhead, maximizing performance in critical code paths.
 * 🧩 **Zero Dependencies**: A lightweight library with no external dependencies.
 * ☕ **Java 8+**: Compatible with all modern Java runtimes.
 
-## Performance (JDK 21)
+## When to use fast-printf
 
-The following benchmark was run on **JDK 21** (Corretto 21.0.9), where `String.format()` has received substantial
-optimizations. The format string `[%s] %s id=%d latency=%.3fms` represents a realistic, log-line-style use case
-covering the most common printf patterns: literal text mixed with `%s`, `%d`, and `%.Nf`. The same string is fed to
-both `FastPrintf.compile(...)` and `String.format(...)` — no per-side translation or workarounds.
-
-| Benchmark (`avgt`, ns/op)               | Score    | Notes                                                     |
-|-----------------------------------------|----------|-----------------------------------------------------------|
-| **`fastPrintf` (varargs)**              | **~227** | The core library performance with auto-boxing.            |
-| `fastPrintf` (`Args` builder, no-boxing)| ~246     | Fluent primitive builder; trades a small constant for zero boxing. |
-| `fastPrintf` (with `ThreadLocal` cache) | ~226     | Opt-in cache; helps in tight reuse loops.                 |
-| `jdkPrintf` (`String.format`)           | ~488     | The baseline for comparison on a modern JDK.              |
-
-*Lower scores are better. ~**2.15x faster** than `String.format()` on a typical log-line format. Source:
-`CommonUsageBenchmark`.*
-
-### Performance on Older JDKs
-
-The performance advantage of `fast-printf` is even more pronounced on older runtimes like **Java 8 or 11**, where
-`String.format()` is less optimized. On these versions, speedups of **up to 4x** are common for complex formats.
-
-Across all versions, the primary advantage of `fast-printf` remains its **dramatically lower memory allocation**, which
-leads to reduced GC pressure in high-throughput applications.
-
-## When to use `fast-printf`
-
-This library is ideal for performance-sensitive applications:
+Ideal for:
 
 * **High-throughput logging**: Formatting log messages in tight, performance-critical loops.
-* **Data Serialization**: Generating text-based data formats (e.g., CSV, protocol messages) at high speed.
+* **Data serialization**: Generating text-based data formats (CSV, protocol messages) at high speed.
 * **Real-time systems**: Financial applications, game engines, or monitoring agents where GC pauses must be minimized.
-* Anywhere `String.format()` has been identified as a performance bottleneck.
+* Anywhere `String.format()` has been identified as a hot path.
 
 For general-purpose string formatting where performance is not the primary concern, the standard `String.format()` is
 often sufficient.
 
+## Performance (JDK 21)
+
+Benchmarked on **JDK 21** (Corretto 21.0.9), where `String.format()` has received substantial optimizations. The
+format string `[%s] %s id=%d latency=%.3fms` represents a realistic log-line use case covering the most common printf
+patterns: literal text mixed with `%s`, `%d`, and `%.Nf`. The same string is fed to both `FastPrintf.compile(...)` and
+`String.format(...)` — no per-side translation or workarounds.
+
+| Benchmark (`avgt`, ns/op)                | Score    | Notes                                                              |
+|------------------------------------------|----------|--------------------------------------------------------------------|
+| **`fastPrintf` (varargs)**               | **~227** | The core library performance with auto-boxing.                     |
+| `fastPrintf` (`Args` builder, no-boxing) | ~246     | Fluent primitive builder; trades a small constant for zero boxing. |
+| `fastPrintf` (with `ThreadLocal` cache)  | ~226     | Opt-in cache; helps in tight reuse loops.                          |
+| `jdkPrintf` (`String.format`)            | ~488     | The baseline for comparison on a modern JDK.                       |
+
+*Lower scores are better. ~**2.15× faster** than `String.format()` on a typical log-line format.
+Source: `CommonUsageBenchmark`.*
+
+**Older JDKs.** On Java 8 / 11, where `String.format()` is less optimized, speedups of up to **4×** are common —
+particularly for complex formats. Across all versions, the primary advantage of `fast-printf` is **dramatically lower
+memory allocation**, which reduces GC pressure in high-throughput applications.
+
 ## Installation
 
-### Maven
+**Maven:**
 
 ```xml
-
 <dependency>
     <groupId>io.github.yuyuzha0</groupId>
     <artifactId>fast-printf</artifactId>
@@ -78,117 +115,90 @@ often sufficient.
 </dependency>
 ```
 
-### Gradle
+**Gradle:**
 
 ```groovy
-implementation 'io.github.yuyuzha0:fast-printf:1.2.11'
+implementation 'io.github.yuyuzha0:fast-printf:1.2.12'
 ```
 
 ## Usage
 
 The core idea is to compile a format string once into a `FastPrintf` instance and reuse it for all subsequent formatting
-operations.
+operations. Instances are immutable and thread-safe.
 
 ```java
 import io.fastprintf.Args;
 import io.fastprintf.FastPrintf;
 
-import java.time.LocalDateTime;
-
 public class Example {
     // Compile once and reuse. The FastPrintf instance is immutable and thread-safe.
-    private static final FastPrintf FORMATTER = FastPrintf.compile(
-            "ID: %#08X, Score: %05.2f, User: %.5S, Time: %t{yyyy-MM-dd HH:mm:ss}"
-    );
+    private static final FastPrintf FORMATTER =
+            FastPrintf.compile("User %s (id=%d) scored %.2f");
 
     public static void main(String[] args) {
-        LocalDateTime now = LocalDateTime.now();
+        // 1. Using varargs — simple and convenient
+        String r1 = FORMATTER.format("Alice", 42, 99.5);
+        System.out.println(r1);
+        // → User Alice (id=42) scored 99.50
 
-        // 1. Using varargs - Simple and convenient
-        String result1 = FORMATTER.format(255, Math.PI, "test-user", now);
-        System.out.println(result1);
-        // Output: ID: 0X0000FF, Score: 03.14, User: TEST-, Time: 2023-10-27 10:30:00
-
-        // 2. Using the fluent Args builder - Maximum performance, no boxing
-        Args args = Args.create()
-                .putInt(255)
-                .putDouble(Math.PI)
-                .putString("test-user")
-                .putDateTime(now);
-        String result2 = FORMATTER.format(args);
-        System.out.println(result2);
-        // Output: ID: 0X0000FF, Score: 03.14, User: TEST-, Time: 2023-10-27 10:30:00
+        // 2. Using the fluent Args builder — maximum performance, no boxing
+        Args primitiveArgs = Args.create()
+                .putString("Alice")
+                .putInt(42)
+                .putDouble(99.5);
+        String r2 = FORMATTER.format(primitiveArgs);
+        System.out.println(r2);
+        // → User Alice (id=42) scored 99.50
     }
 }
 ```
 
-### Convenience vs. Maximum Performance
+For richer formatting — uppercase strings (`%S`), zero-padding (`%05d`), hex (`%#08X`), date/time (`%t{...}`), etc. —
+see the [API Reference](#api-reference) below.
 
-`fast-printf` offers two ways to provide arguments, each with a specific purpose:
+### Convenience vs. maximum performance
 
-* **Convenience:** `FORMATTER.format(123, "test")` or `Args.of(123, "test")`.
-    * This is the easiest and most readable method.
-    * It uses varargs (`Object...`), which involves **auto-boxing** primitive types (e.g., `int` becomes `Integer`).
-      This is fine for most use cases.
+| Style                                         | Boxing?           | When to use                                                |
+|-----------------------------------------------|-------------------|------------------------------------------------------------|
+| `FORMATTER.format(123, "test")` (varargs)     | Yes (primitives)  | Most call sites; readability wins.                         |
+| `Args.of(123, "test")`                        | Yes (primitives)  | Same as varargs; useful when you build args incrementally. |
+| `Args.create().putInt(123).putString("test")` | **No**            | Hot loops where every allocation matters.                  |
 
-* **Maximum Performance:** `Args.create().putInt(123).putString("test")`.
-    * This fluent builder API is designed for performance-critical code.
-    * Methods like `putInt(int)` and `putDouble(double)` accept unboxed primitives, **avoiding all allocation and boxing
-      overhead** for those arguments. Use this style inside hot loops.
+Both styles produce identical output.
 
-## Advanced: JDK 21 Floating-Point Formatting on Java 8
+## Advanced: JDK 21 Floating-Point on Java 8
 
-One of the key features of `fast-printf` is its superior floating-point formatting, which provides correctness and
-performance guarantees unavailable in standard Java 8.
+`String.format()` on JDKs prior to 18 has known issues converting `double` / `float` to decimal: the output is not
+always the shortest, correctly-rounded representation, leading to subtle accuracy bugs in scientific and financial
+code. `fast-printf` backports the modern Schubfach-based engine from OpenJDK 21 so this correctness guarantee — and the
+performance that comes with it — is available even when your application runs on Java 8.
 
-### The Problem
+## How It Works
 
-The `String.format()` implementation in older JDKs (prior to JDK 18) had known issues with floating-point-to-decimal
-conversion. It could produce results that were not the shortest, correctly-rounded representation, leading to subtle
-accuracy bugs, especially in scientific and financial applications.
+The performance of `fast-printf` comes from four architectural pillars:
 
-### The Solution
-
-`fast-printf` directly **backports the modern floating-point formatting engine from OpenJDK 21**. This engine is based
-on the advanced "Schubfach" algorithm, which guarantees the shortest, most accurate decimal representation of a binary
-floating-point number.
-
-By including this modern implementation, `fast-printf` ensures that your floating-point numbers are formatted with
-state-of-the-art precision and correctness, even when your application is running on Java 8.
-
-## How It Works: Under the Hood
-
-The performance of `fast-printf` comes from four key architectural pillars:
-
-1. **Ahead-of-Time Compiler**: `FastPrintf.compile()` parses the format string into a series of `Appender` objects—a
-   list of optimized formatting steps. This work is done only once.
-2. **Zero-Copy String Building**: The library uses an internal, rope-like `Seq` data structure. When concatenating
-   formatted parts, it creates lightweight wrapper objects instead of copying characters. The final `String` is rendered
-   in a single, efficient pass at the very end.
-3. **Ahead-of-Time Argument Processing**: The `Args` object converts your arguments into a list of `FormatTraits`
-   —specialized, type-aware handlers. This eliminates `instanceof` checks and reflection from the critical formatting
-   loop.
-4. **Backported Formatting Logic**: As mentioned above, it incorporates the modern, high-performance `DoubleToDecimal`
-   logic from OpenJDK 21 to ensure float/double formatting is both fast and mathematically correct on all supported Java
-   versions.
+1. **Ahead-of-Time Compiler**: `FastPrintf.compile()` parses the format string once into a list of optimized `Appender`
+   objects. Parsing never re-runs.
+2. **Zero-Copy String Building**: An internal rope-like `Seq` data structure concatenates formatted parts with
+   lightweight wrappers instead of copying characters. The final `String` is rendered in a single pass.
+3. **Ahead-of-Time Argument Processing**: The `Args` object converts arguments into a list of `FormatTraits` —
+   specialized, type-aware handlers. This eliminates `instanceof` checks and reflection from the formatting loop.
+4. **Backported Float Logic**: Incorporates OpenJDK 21's `DoubleToDecimal` to ensure float/double formatting is both
+   fast and mathematically correct on all supported Java versions.
 
 ## API Reference
 
-The format string syntax is:
+Format string syntax:
 `%[flags][width][.precision]specifier[{date-time-pattern}]`
 
----
+### Custom date/time formatting
 
-### Custom Date/Time Formatting
-
-A powerful extension is the ability to provide an inline `DateTimeFormatter` pattern for the `%t` and `%T` specifiers.
+The `%t` / `%T` specifiers accept an inline `DateTimeFormatter` pattern.
 
 * **Syntax**: `%t{pattern}`
 * **Example**: `%t{yyyy-MM-dd'T'HH:mm:ss.SSSZ}`
-* **Default**: If no pattern is provided (`%t`), an appropriate ISO formatter is chosen based on the argument type (
-  e.g., `ISO_OFFSET_DATE_TIME` for a `ZonedDateTime`).
-
----
+* **Default**: If no pattern is provided (`%t`), an appropriate ISO formatter is chosen based on the argument type
+  (e.g. `ISO_OFFSET_DATE_TIME` for a `ZonedDateTime`).
 
 ### Specifiers
 
@@ -212,40 +222,41 @@ A powerful extension is the ability to provide an inline `DateTimeFormatter` pat
 |    `n`     | Nothing printed. The argument is consumed.                                              |                              |
 |    `%`     | A literal `%` character                                                                 | `%`                          |
 
----
-
 ### Flags
 
-|    Flag     | Description                                                                                                                                                                                                               |
-|:-----------:|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-|     `-`     | Left-aligns the result within the field width.                                                                                                                                                                            |
-|     `+`     | Forces the result to be prefixed with a sign (`+` or `-`), even for positive numbers. Overrides the space flag.                                                                                                           |
-| ` ` (space) | Prefixes positive numbers with a space. Ignored if the `+` flag is present.                                                                                                                                               |
-|     `#`     | Alternate form: <ul><li>For `o`, prefixes with `0`.</li><li>For `x`/`X`, prefixes with `0x`/`0X`.</li><li>For `f`, `e`, `g`, forces a decimal point.</li><li>For `g`/`G`, prevents stripping of trailing zeros.</li></ul> |
-|     `0`     | Pads the output with leading zeros (instead of spaces) to meet the specified width. Ignored if `-` is present or if precision is specified for an integer.                                                                |
+|    Flag     | Description                                                                                                                                                                              |
+|:-----------:|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|     `-`     | Left-aligns the result within the field width.                                                                                                                                           |
+|     `+`     | Forces the result to be prefixed with a sign (`+` or `-`), even for positive numbers. Overrides the space flag.                                                                          |
+| ` ` (space) | Prefixes positive numbers with a space. Ignored if the `+` flag is present.                                                                                                              |
+|     `#`     | Alternate form:<br>• `o` → prefixes with `0`<br>• `x` / `X` → prefixes with `0x` / `0X`<br>• `f`, `e`, `g` → forces a decimal point<br>• `g` / `G` → prevents stripping of trailing zeros |
+|     `0`     | Pads the output with leading zeros (instead of spaces) to meet the specified width. Ignored if `-` is present or if precision is specified for an integer.                               |
 
----
+### Width and precision
 
-### Width and Precision
-
-| Field        | Description                                                                                                                                                                                                                                                                                                 |
-|:-------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `width`      | Minimum characters to print. Padded with spaces (or zeros with `0` flag). Never truncates. `*` reads width from the next `int` argument.                                                                                                                                                                    |
-| `.precision` | <ul><li>**Integers:** Minimum number of digits (zero-padded).</li><li>**Floats (`f`, `e`):** Digits after the decimal point.</li><li>**Floats (`g`):** Max significant digits.</li><li>**String (`s`, `S`):** Max characters to print.</li><li>`.*` reads precision from the next `int` argument.</li></ul> |
+| Field        | Description                                                                                                                                                                                                                                                              |
+|:-------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `width`      | Minimum characters to print. Padded with spaces (or zeros with `0` flag). Never truncates. `*` reads width from the next `int` argument.                                                                                                                                 |
+| `.precision` | For each type:<br>• **Integers** — minimum number of digits (zero-padded)<br>• **Floats (`f`, `e`)** — digits after the decimal point<br>• **Floats (`g`)** — max significant digits<br>• **Strings (`s`, `S`)** — max characters to print<br>`.*` reads precision from the next `int` argument. |
 
 ## Key Differences from `String.format()`
 
 `fast-printf` intentionally differs from Java's `String.format` to align with `glibc` conventions and maximize
 performance:
 
-* **Glibc vs. Java `Formatter` Conventions**: Follows `glibc` `printf`. For example, `%S` converts the entire string to
+* **Glibc vs. Java `Formatter` conventions**: Follows `glibc` `printf`. For example, `%S` converts the entire string to
   uppercase, unlike Java's behavior which is tied to `Formattable`.
-* **`%p` (Pointer) Specifier**: Provides the C-style `%p` specifier to print an object's identity. This useful specifier
+* **`%p` (pointer) specifier**: Provides the C-style `%p` specifier to print an object's identity. This useful specifier
   is **not available** in Java's `String.format()`. The implementation is also type-safe and will correctly throw an
   exception if given a primitive type, preventing bugs related to auto-boxing.
-* **No Argument Indexing**: Features like `%2$s` are not supported. Arguments are always consumed sequentially for
+* **No argument indexing**: Features like `%2$s` are not supported. Arguments are always consumed sequentially for
   maximum performance.
-* **No Locale Support**: Formatting is locale-agnostic for performance (`.` is always the decimal separator).
+* **No locale support**: Formatting is locale-agnostic for performance (`.` is always the decimal separator).
+
+## Contributing
+
+Found a bug or have an idea? File it at the
+[issue tracker](https://github.com/YuyuZha0/fast-printf/issues). Pull requests welcome.
 
 ## License
 
