@@ -96,8 +96,19 @@ public interface AtomicSeqIterable extends Seq, Iterable<AtomicSeq> {
   @Override
   default void appendTo(StringBuilder sb) {
     sb.ensureCapacity(sb.length() + length());
+    appendToInternal(sb);
+  }
+
+  /**
+   * Iterates the child atomic sequences and dispatches each child's {@code appendToInternal}, so
+   * the single {@link StringBuilder#ensureCapacity(int)} performed by {@link
+   * #appendTo(StringBuilder)} (or by an enclosing composite) is not repeated per child.
+   * {@inheritDoc}
+   */
+  @Override
+  default void appendToInternal(StringBuilder sb) {
     for (AtomicSeq seq : this) {
-      seq.appendTo(sb);
+      seq.appendToInternal(sb);
     }
   }
 

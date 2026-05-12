@@ -67,6 +67,23 @@ public class AtomicSeqIterableTest {
   }
 
   @Test
+  public void test_appendToInternal_ConcatenatesAllAtoms() {
+    StringBuilder sb = new StringBuilder("prefix-");
+    iterable.appendToInternal(sb);
+    assertEquals("prefix-ABCDEFG", sb.toString());
+  }
+
+  @Test
+  public void test_appendTo_StringBuilder_DelegatesToInternal() {
+    // appendTo and appendToInternal should produce identical output on an empty buffer.
+    StringBuilder viaPublic = new StringBuilder();
+    StringBuilder viaInternal = new StringBuilder();
+    iterable.appendTo(viaPublic);
+    iterable.appendToInternal(viaInternal);
+    assertEquals(viaPublic.toString(), viaInternal.toString());
+  }
+
+  @Test
   public void test_indexOf() {
     assertEquals(0, iterable.indexOf('A')); // First part
     assertEquals(2, iterable.indexOf('C')); // Second part

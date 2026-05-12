@@ -70,7 +70,7 @@ final class SeqArray implements AtomicSeqIterable {
   public String toString() {
     StringBuilder sb = new StringBuilder(length);
     // The default appendTo implementation for AtomicSeqIterable is efficient here.
-    appendTo(sb);
+    appendToInternal(sb);
     return sb.toString();
   }
 

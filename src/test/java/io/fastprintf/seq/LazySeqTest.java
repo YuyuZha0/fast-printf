@@ -2,6 +2,8 @@ package io.fastprintf.seq;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import org.junit.Test;
@@ -59,6 +61,44 @@ public class LazySeqTest {
     seq.appendTo(sb);
 
     assertEquals("fast", sb.toString());
+  }
+
+  // --- appendToInternal contract ---
+
+  @Test
+  public void testAppendToInternal_Success() {
+    LazySeq seq = new LazySeq(sb -> sb.append("xyz"), 3);
+    StringBuilder buf = new StringBuilder("pre-");
+    seq.appendToInternal(buf);
+    assertEquals("pre-xyz", buf.toString());
+  }
+
+  @Test
+  public void testAppendToInternal_LengthMismatch_TooShort() {
+    // Declared length 5, action writes only 3.
+    LazySeq seq = new LazySeq(sb -> sb.append("abc"), 5);
+    try {
+      seq.appendToInternal(new StringBuilder());
+      fail("Expected IllegalStateException for too-short action output");
+    } catch (IllegalStateException e) {
+      assertTrue("message should mention expected length", e.getMessage().contains("expected 5"));
+      assertTrue("message should mention actual length", e.getMessage().contains("got 3"));
+    }
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testAppendToInternal_LengthMismatch_TooLong() {
+    // Declared length 2, action writes 4.
+    LazySeq seq = new LazySeq(sb -> sb.append("abcd"), 2);
+    seq.appendToInternal(new StringBuilder());
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testAppendTo_StringBuilder_AlsoValidatesLength() {
+    // The public fast path now routes through appendToInternal, so a misbehaving
+    // action must also throw here. Regression-guard for the contract.
+    LazySeq seq = new LazySeq(sb -> sb.append("x"), 3);
+    seq.appendTo(new StringBuilder());
   }
 
   @Test

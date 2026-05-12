@@ -325,6 +325,30 @@ public interface Seq extends CharSequence {
   }
 
   /**
+   * Internal SPI: appends this sequence's contents to {@code sb} <b>without</b> pre-reserving
+   * capacity. This is the recursive worker called by composite nodes such as {@link Concat} and
+   * {@link SeqArray}, allowing the outermost {@link #appendTo(StringBuilder)} call to issue a
+   * single {@link StringBuilder#ensureCapacity(int)} for the full length and skip redundant
+   * resizing at intermediate levels of the rope tree.
+   *
+   * <p>The default implementation simply delegates to {@link #appendTo(StringBuilder)}, which is
+   * correct for atomic leaves where the extra {@code ensureCapacity} call (if any) is cheap or
+   * absent. Composite implementations should override this to recurse via their children's
+   * {@code appendToInternal}, not their {@code appendTo}.
+   *
+   * <p><b>Contract:</b> implementations must append exactly {@link #length()} characters to
+   * {@code sb} and must not throw on a well-formed input.
+   *
+   * <p><b>This method is not part of the public API.</b> External callers should use
+   * {@link #appendTo(StringBuilder)}; this method may be removed or changed without notice.
+   *
+   * @param sb the {@code StringBuilder} to write to; must not be {@code null}.
+   */
+  default void appendToInternal(StringBuilder sb) {
+    appendTo(sb);
+  }
+
+  /**
    * Returns this sequence. Useful for chaining in fluent APIs.
    *
    * @return this instance.
