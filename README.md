@@ -14,8 +14,8 @@ run-many** approach and a sophisticated architecture that minimizes memory alloc
 ## Key Features
 
 * 🚀 **High Performance**: Consistently outperforms `String.format()` across all Java versions. The advantage is most
-  significant on older runtimes (up to **4x faster** on JDK 8), and remains substantial even on modern runtimes (~**3x
-  faster** on JDK 21).
+  significant on older runtimes (up to **4x faster** on JDK 8), and remains substantial even on modern runtimes (~**2x
+  faster** on JDK 21 for typical log-line formats).
 * 🗑️ **Low Allocation**: Employs a rope-like character sequence data structure for internal string building. This avoids
   creating intermediate strings and character arrays, dramatically reducing GC pressure in hot loops.
 * ⚙️ **Glibc Compatible**: Adheres to the widely-used `glibc` `printf` conventions (from C/C++), providing familiar and
@@ -30,20 +30,20 @@ run-many** approach and a sophisticated architecture that minimizes memory alloc
 
 ## Performance (JDK 21)
 
-While `fast-printf` provides a significant speedup on all platforms, it's important to understand how the landscape is
-changing. The following benchmarks were run on **JDK 21**, where `String.format()` has received substantial
-optimizations.
-
-The benchmark uses a complex format string (`%#018x|%-15.7g|%S|%c|%d|%15.5f`) to stress the formatting logic over simple
-string concatenation.
+The following benchmark was run on **JDK 21** (Corretto 21.0.9), where `String.format()` has received substantial
+optimizations. The format string `[%s] %s id=%d latency=%.3fms` represents a realistic, log-line-style use case
+covering the most common printf patterns: literal text mixed with `%s`, `%d`, and `%.Nf`. The same string is fed to
+both `FastPrintf.compile(...)` and `String.format(...)` — no per-side translation or workarounds.
 
 | Benchmark (`avgt`, ns/op)               | Score    | Notes                                                     |
 |-----------------------------------------|----------|-----------------------------------------------------------|
-| **`fastPrintf` (varargs)**              | **~394** | The core library performance with auto-boxing.            |
-| `fastPrintf` (with `ThreadLocal` cache) | ~466     | Opt-in cache; can have higher overhead for short strings. |
-| `jdkPrintf` (`String.format`)           | ~1218    | The baseline for comparison on a modern JDK.              |
+| **`fastPrintf` (varargs)**              | **~227** | The core library performance with auto-boxing.            |
+| `fastPrintf` (`Args` builder, no-boxing)| ~246     | Fluent primitive builder; trades a small constant for zero boxing. |
+| `fastPrintf` (with `ThreadLocal` cache) | ~226     | Opt-in cache; helps in tight reuse loops.                 |
+| `jdkPrintf` (`String.format`)           | ~488     | The baseline for comparison on a modern JDK.              |
 
-*Lower scores are better. Source: `ComplexFormatBenchmark`.*
+*Lower scores are better. ~**2.15x faster** than `String.format()` on a typical log-line format. Source:
+`CommonUsageBenchmark`.*
 
 ### Performance on Older JDKs
 
