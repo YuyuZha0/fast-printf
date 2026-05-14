@@ -29,6 +29,11 @@ public final class DoubleTraits implements FormatTraits {
 
   @Override
   public String asString() {
+    // Intentionally delegate to Double.toString to stay aligned with the JDK's own %s
+    // formatting: String.format("%s", d) ultimately calls Double.toString, so swapping in
+    // a different formatter (e.g. jdk.internal.math.DoubleToDecimal) would diverge from
+    // what callers expect printf("%s", d) to produce — even if the alternative looks
+    // "shorter" or "more correct" on a given JDK.
     return Double.toString(value);
   }
 
