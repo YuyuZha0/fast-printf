@@ -85,6 +85,55 @@ public class ConcatTest {
   }
 
   @Test
+  public void testAppend_OnConcat_EquivalentToConcatFactory() {
+    // Concat#append now calls growToTheRight(this, seq) directly instead of going
+    // through concat(this, seq). The observable result must remain identical.
+    Concat base = Concat.concat(Seq.wrap("ab"), Seq.wrap("cd"));
+
+    Seq viaAppend = base.append(Seq.wrap("ef"));
+    Seq viaConcat = Concat.concat(base, Seq.wrap("ef"));
+
+    assertEquals(viaConcat.toString(), viaAppend.toString());
+    assertEquals(viaConcat.length(), viaAppend.length());
+    assertEquals(viaConcat.elementCount(), viaAppend.elementCount());
+
+    List<String> viaAppendLeaves =
+        StreamSupport.stream(((AtomicSeqIterable) viaAppend).spliterator(), false)
+            .map(Object::toString)
+            .collect(Collectors.toList());
+    List<String> viaConcatLeaves =
+        StreamSupport.stream(((AtomicSeqIterable) viaConcat).spliterator(), false)
+            .map(Object::toString)
+            .collect(Collectors.toList());
+    assertEquals(viaConcatLeaves, viaAppendLeaves);
+  }
+
+  @Test
+  public void testAppend_OnConcat_WithConcatRightOperand() {
+    // The appended seq is itself a Concat — exercises growToTheRight when right is composite.
+    Concat left = Concat.concat(Seq.wrap("a"), Seq.wrap("b"));
+    Concat right = Concat.concat(Seq.wrap("c"), Seq.wrap("d"));
+
+    Seq joined = left.append(right);
+
+    assertEquals("abcd", joined.toString());
+    assertEquals(4, joined.elementCount());
+  }
+
+  @Test
+  public void testAppend_OnConcat_RepeatedAppendsPreserveOrder() {
+    // A long chain of appends keeps invoking the growToTheRight fast path; the leaves must
+    // remain in insertion order and the rendered string must be correct.
+    Seq chain = Concat.concat(Seq.wrap("a"), Seq.wrap("b"));
+    for (char c = 'c'; c <= 'h'; c++) {
+      chain = chain.append(Seq.wrap(String.valueOf(c)));
+    }
+    assertEquals("abcdefgh", chain.toString());
+    assertEquals(8, chain.length());
+    assertEquals(8, ((AtomicSeqIterable) chain).elementCount());
+  }
+
+  @Test
   public void testHandlingEmptySequences() {
     Seq text = Seq.wrap("text");
     Seq empty = Seq.empty();

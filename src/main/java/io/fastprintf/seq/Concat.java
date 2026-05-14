@@ -64,14 +64,29 @@ final class Concat implements AtomicSeqIterable {
    * @return a new {@code Concat} instance.
    */
   static Concat concat(Seq left, Seq right) {
-    // let the tree grow to the right, so the deque stack max size could be smaller
     if (left instanceof Concat) {
-      Concat leftConcat = (Concat) left;
-      // (a + b) + c => a + (b + c)
-      return concat0(leftConcat.left, concat0(leftConcat.right, right));
+      // let the tree grow to the right, so the deque stack max size could be smaller
+      return growToTheRight((Concat) left, right);
     } else {
       return concat0(left, right);
     }
+  }
+
+  /**
+   * Applies the rebalance transform {@code (a + b) + c => a + (b + c)} given a {@link Concat} left
+   * subtree.
+   *
+   * <p>Extracted so callers that already know their left side is a {@code Concat} — e.g. {@link
+   * #append(Seq)}, where {@code this} is by definition a {@code Concat} — can skip the redundant
+   * {@code instanceof} check that {@link #concat(Seq, Seq)} performs.
+   *
+   * @param left a {@code Concat} subtree; must not be {@code null}.
+   * @param right the right sequence to append; must not be {@code null}.
+   * @return a right-leaning {@code Concat} equivalent to {@code concat(left, right)}.
+   */
+  private static Concat growToTheRight(Concat left, Seq right) {
+    // (a + b) + c => a + (b + c)
+    return concat0(left.left, concat0(left.right, right));
   }
 
   private static Concat concat0(Seq left, Seq right) {
@@ -145,7 +160,7 @@ final class Concat implements AtomicSeqIterable {
   @Override
   public Seq append(Seq seq) {
     if (seq.isEmpty()) return this;
-    return concat(this, seq);
+    return growToTheRight(this, seq);
   }
 
   @Override
