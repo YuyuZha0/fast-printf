@@ -89,15 +89,31 @@ format string `[%s] %s id=%d latency=%.3fms` represents a realistic log-line use
 patterns: literal text mixed with `%s`, `%d`, and `%.Nf`. The same string is fed to both `FastPrintf.compile(...)` and
 `String.format(...)` — no per-side translation or workarounds.
 
-| Benchmark (`avgt`, ns/op)                | Score    | Notes                                                              |
-|------------------------------------------|----------|--------------------------------------------------------------------|
-| **`fastPrintf` (varargs)**               | **~227** | The core library performance with auto-boxing.                     |
-| `fastPrintf` (`Args` builder, no-boxing) | ~246     | Fluent primitive builder; trades a small constant for zero boxing. |
-| `fastPrintf` (with `ThreadLocal` cache)  | ~226     | Opt-in cache; helps in tight reuse loops.                          |
-| `jdkPrintf` (`String.format`)            | ~488     | The baseline for comparison on a modern JDK.                       |
+| Benchmark (`avgt`, ns/op)                | Score    | Allocation | Notes                                                                 |
+|------------------------------------------|----------|-----------:|-----------------------------------------------------------------------|
+| **`fastPrintf` (varargs)**               | **~230** |  696 B/op  | The core library performance with auto-boxing.                        |
+| `fastPrintf` (`Args` builder, no-boxing) | ~248     |  592 B/op  | Lower allocation rate (no primitive boxing). See note below.          |
+| `fastPrintf` (with `ThreadLocal` cache)  | ~187     |  608 B/op  | Best case (tight reuse loop). Workload-sensitive — see note below.    |
+| `jdkPrintf` (`String.format`)            | ~404     | 1280 B/op  | The baseline for comparison on a modern JDK.                          |
 
-*Lower scores are better. ~**2.15× faster** than `String.format()` on a typical log-line format.
+*Lower scores are better. ~**1.76× faster** than `String.format()` on a typical log-line format using the default
+varargs path; up to **~2.16× faster** with `enableThreadLocalCache()` when the cached buffer stays cache-hot.
 Source: `CommonUsageBenchmark`.*
+
+**About the `Args` builder (no-boxing).** The builder appears ~18 ns slower per call in the table above, yet
+allocates ~15% fewer bytes per op. That's the trade-off it makes: replace primitive boxing (`Integer.valueOf`,
+`Double.valueOf`) and the varargs `Object[]` with a direct fluent chain, paying a small amount of method-dispatch
+overhead in exchange. In this micro-benchmark TLAB allocation is essentially free, so the throughput axis dominates
+and the builder loses by ~18 ns. In a real high-throughput workload, the **allocation rate** axis matters: cutting
+~15% of bytes-per-format reduces young-gen GC frequency and improves p99 latency under load. Reach for the builder
+when allocation pressure is the bottleneck (sustained logging, hot serialization paths), not when single-call
+nanoseconds are.
+
+**About `enableThreadLocalCache()`.** The cache reuses a single `StringBuilder.value` `char[]` across calls. In tight
+reuse loops (as measured above, with pre-built args) it is a net win; in code that does meaningful allocation or
+touches unrelated memory between `format()` calls, the cached buffer is evicted from L1/L2 and the path can match or
+underperform the non-cached one. See `ComplexFormatLocalityBenchmark` for the full locality analysis. Benchmark in your
+own workload before enabling.
 
 **Older JDKs.** On Java 8 / 11, where `String.format()` is less optimized, speedups of up to **4×** are common —
 particularly for complex formats. Across all versions, the primary advantage of `fast-printf` is **dramatically lower
@@ -158,13 +174,15 @@ see the [API Reference](#api-reference) below.
 
 ### Convenience vs. maximum performance
 
-| Style                                         | Boxing?           | When to use                                                |
-|-----------------------------------------------|-------------------|------------------------------------------------------------|
-| `FORMATTER.format(123, "test")` (varargs)     | Yes (primitives)  | Most call sites; readability wins.                         |
-| `Args.of(123, "test")`                        | Yes (primitives)  | Same as varargs; useful when you build args incrementally. |
-| `Args.create().putInt(123).putString("test")` | **No**            | Hot loops where every allocation matters.                  |
+| Style                                         | Boxing?          | Optimises for         | When to use                                                                          |
+|-----------------------------------------------|------------------|-----------------------|--------------------------------------------------------------------------------------|
+| `FORMATTER.format(123, "test")` (varargs)     | Yes (primitives) | CPU throughput        | Most call sites; readability wins.                                                   |
+| `Args.of(123, "test")`                        | Yes (primitives) | CPU throughput        | Same as varargs; useful when you build args incrementally.                           |
+| `Args.create().putInt(123).putString("test")` | **No**           | Allocation rate / GC  | Hot serialization or logging paths where young-gen pressure / p99 latency dominates. |
 
-Both styles produce identical output.
+All three produce identical output. The choice is **CPU throughput vs allocation rate**, not "good vs better": the
+no-boxing builder allocates ~15% less but costs ~18 ns of method-dispatch per call (see *About the `Args` builder*
+above). Pick based on which axis your workload is actually bound on.
 
 ## Advanced: JDK 21 Floating-Point on Java 8
 
