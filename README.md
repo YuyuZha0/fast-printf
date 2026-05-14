@@ -91,13 +91,20 @@ patterns: literal text mixed with `%s`, `%d`, and `%.Nf`. The same string is fed
 
 | Benchmark (`avgt`, ns/op)                | Score    | Notes                                                              |
 |------------------------------------------|----------|--------------------------------------------------------------------|
-| **`fastPrintf` (varargs)**               | **~227** | The core library performance with auto-boxing.                     |
-| `fastPrintf` (`Args` builder, no-boxing) | ~246     | Fluent primitive builder; trades a small constant for zero boxing. |
-| `fastPrintf` (with `ThreadLocal` cache)  | ~226     | Opt-in cache; helps in tight reuse loops.                          |
-| `jdkPrintf` (`String.format`)            | ~488     | The baseline for comparison on a modern JDK.                       |
+| **`fastPrintf` (varargs)**               | **~230** | The core library performance with auto-boxing.                     |
+| `fastPrintf` (`Args` builder, no-boxing) | ~248     | Fluent primitive builder; trades a small constant for zero boxing. |
+| `fastPrintf` (with `ThreadLocal` cache)  | ~187     | Best case (tight reuse loop). Workload-sensitive — see note below. |
+| `jdkPrintf` (`String.format`)            | ~404     | The baseline for comparison on a modern JDK.                       |
 
-*Lower scores are better. ~**2.15× faster** than `String.format()` on a typical log-line format.
+*Lower scores are better. ~**1.76× faster** than `String.format()` on a typical log-line format using the default
+varargs path; up to **~2.16× faster** with `enableThreadLocalCache()` when the cached buffer stays cache-hot.
 Source: `CommonUsageBenchmark`.*
+
+**About `enableThreadLocalCache()`.** The cache reuses a single `StringBuilder.value` `char[]` across calls. In tight
+reuse loops (as measured above, with pre-built args) it is a net win; in code that does meaningful allocation or
+touches unrelated memory between `format()` calls, the cached buffer is evicted from L1/L2 and the path can match or
+underperform the non-cached one. See `ComplexFormatLocalityBenchmark` for the full locality analysis. Benchmark in your
+own workload before enabling.
 
 **Older JDKs.** On Java 8 / 11, where `String.format()` is less optimized, speedups of up to **4×** are common —
 particularly for complex formats. Across all versions, the primary advantage of `fast-printf` is **dramatically lower
