@@ -85,6 +85,55 @@ public class ConcatTest {
   }
 
   @Test
+  public void testAppend_OnConcat_EquivalentToConcatFactory() {
+    // Concat#append now calls growToTheRight(this, seq) directly instead of going
+    // through concat(this, seq). The observable result must remain identical.
+    Concat base = Concat.concat(Seq.wrap("ab"), Seq.wrap("cd"));
+
+    Seq viaAppend = base.append(Seq.wrap("ef"));
+    Seq viaConcat = Concat.concat(base, Seq.wrap("ef"));
+
+    assertEquals(viaConcat.toString(), viaAppend.toString());
+    assertEquals(viaConcat.length(), viaAppend.length());
+    assertEquals(viaConcat.elementCount(), viaAppend.elementCount());
+
+    List<String> viaAppendLeaves =
+        StreamSupport.stream(((AtomicSeqIterable) viaAppend).spliterator(), false)
+            .map(Object::toString)
+            .collect(Collectors.toList());
+    List<String> viaConcatLeaves =
+        StreamSupport.stream(((AtomicSeqIterable) viaConcat).spliterator(), false)
+            .map(Object::toString)
+            .collect(Collectors.toList());
+    assertEquals(viaConcatLeaves, viaAppendLeaves);
+  }
+
+  @Test
+  public void testAppend_OnConcat_WithConcatRightOperand() {
+    // The appended seq is itself a Concat — exercises growToTheRight when right is composite.
+    Concat left = Concat.concat(Seq.wrap("a"), Seq.wrap("b"));
+    Concat right = Concat.concat(Seq.wrap("c"), Seq.wrap("d"));
+
+    Seq joined = left.append(right);
+
+    assertEquals("abcd", joined.toString());
+    assertEquals(4, joined.elementCount());
+  }
+
+  @Test
+  public void testAppend_OnConcat_RepeatedAppendsPreserveOrder() {
+    // A long chain of appends keeps invoking the growToTheRight fast path; the leaves must
+    // remain in insertion order and the rendered string must be correct.
+    Seq chain = Concat.concat(Seq.wrap("a"), Seq.wrap("b"));
+    for (char c = 'c'; c <= 'h'; c++) {
+      chain = chain.append(Seq.wrap(String.valueOf(c)));
+    }
+    assertEquals("abcdefgh", chain.toString());
+    assertEquals(8, chain.length());
+    assertEquals(8, ((AtomicSeqIterable) chain).elementCount());
+  }
+
+  @Test
   public void testHandlingEmptySequences() {
     Seq text = Seq.wrap("text");
     Seq empty = Seq.empty();
@@ -212,6 +261,138 @@ public class ConcatTest {
     Seq seq = Concat.concat(Seq.wrap("Hello"), Seq.wrap(" World 123"));
     Seq upper = seq.upperCase();
     assertEquals("HELLO WORLD 123", upper.toString());
+  }
+
+  @Test
+  public void testUpperCase_ReturnsSeqArrayNotConcat() {
+    // The new override always flattens into a SeqArray (avoiding a Concat result),
+    // since it builds a pre-sized AtomicSeq[] of all leaves.
+    Concat seq = Concat.concat(Seq.wrap("ab"), Seq.wrap("cd"));
+    Seq upper = seq.upperCase();
+
+    assertFalse("upperCase() result should not be a Concat", upper instanceof Concat);
+    assertEquals("ABCD", upper.toString());
+    assertEquals(seq.length(), upper.length());
+    assertEquals(seq.elementCount(), upper.elementCount());
+  }
+
+  @Test
+  public void testUpperCase_RightLeaningChain() {
+    // Chained appends produce a right-leaning Concat tree (after rebalancing).
+    // Exercises the AtomicSeq + Concat branches of addUpperCase across multiple levels.
+    Seq chain =
+        Seq.wrap("Ab").append(Seq.wrap("Cd")).append(Seq.wrap("Ef")).append(Seq.wrap("Gh"));
+    assertTrue(chain instanceof Concat);
+
+    Seq upper = chain.upperCase();
+    assertEquals("ABCDEFGH", upper.toString());
+    assertEquals(chain.length(), upper.length());
+    assertEquals(chain.elementCount(), upper.elementCount());
+  }
+
+  @Test
+  public void testUpperCase_DeepChainPreservesLeafOrder() {
+    // Build a long chain to make sure the recursive descent visits leaves left-to-right.
+    Seq chain = Seq.wrap("a");
+    for (char c = 'b'; c <= 'h'; c++) {
+      chain = chain.append(Seq.wrap(String.valueOf(c)));
+    }
+    Seq upper = chain.upperCase();
+    assertEquals("ABCDEFGH", upper.toString());
+  }
+
+  @Test
+  public void testUpperCase_NestedConcatWithSeqArrayChild() {
+    // A non-Concat AtomicSeqIterable child (SeqArray) exercises the third branch of
+    // addUpperCase, which falls back to iterating the child's atomic leaves.
+    SeqArray inner = new SeqArray(new AtomicSeq[] {Seq.wrap("cd"), Seq.wrap("ef")}, 4);
+    Seq seq = Concat.concat(Seq.wrap("ab"), inner);
+    assertEquals(3, seq.elementCount());
+
+    Seq upper = seq.upperCase();
+    assertEquals("ABCDEF", upper.toString());
+    assertEquals(seq.length(), upper.length());
+    assertEquals(seq.elementCount(), upper.elementCount());
+  }
+
+  @Test
+  public void testUpperCase_MixedAtomicSubtypes() {
+    // Cover every concrete AtomicSeq subtype as a Concat leaf, so each upperCase()
+    // dispatch path runs through addUpperCase.
+    Seq strView = Seq.wrap("foo");
+    Seq repeated = Seq.repeated('x', 3);
+    Seq charArr = Seq.forArray("bar".toCharArray());
+    Seq lazy = Seq.lazy(sb -> sb.append("baz"), 3);
+    Seq seq = Concat.concat(Concat.concat(strView, repeated), Concat.concat(charArr, lazy));
+
+    Seq upper = seq.upperCase();
+    assertEquals("FOOXXXBARBAZ", upper.toString());
+    assertEquals(seq.length(), upper.length());
+  }
+
+  @Test
+  public void testUpperCase_DoesNotMutateOriginal() {
+    Seq seq = Concat.concat(Seq.wrap("hello"), Seq.wrap(" world"));
+    String before = seq.toString();
+    Seq upper = seq.upperCase();
+    assertEquals("HELLO WORLD", upper.toString());
+    assertEquals("Original sequence must remain unchanged", before, seq.toString());
+  }
+
+  @Test
+  public void testUpperCase_Idempotent() {
+    // Applying upperCase() twice must still produce the uppercase string.
+    Seq seq = Concat.concat(Seq.wrap("MixedCase"), Seq.wrap("Again"));
+    Seq once = seq.upperCase();
+    Seq twice = once.upperCase();
+    assertEquals("MIXEDCASEAGAIN", twice.toString());
+  }
+
+  @Test
+  public void testUpperCase_UnknownSeqType_Throws() {
+    // Defensive fallback: an unrecognised Seq subtype embedded in a Concat triggers
+    // the IllegalStateException in addUpperCase.
+    Seq unknown =
+        new Seq() {
+          @Override
+          public int length() {
+            return 0;
+          }
+
+          @Override
+          public char charAt(int index) {
+            throw new IndexOutOfBoundsException();
+          }
+
+          @Override
+          public Seq subSequence(int start, int end) {
+            throw new UnsupportedOperationException();
+          }
+
+          @Override
+          public Seq upperCase() {
+            return this;
+          }
+
+          @Override
+          public int elementCount() {
+            return 0;
+          }
+
+          @Override
+          public boolean isAtomic() {
+            return false;
+          }
+        };
+    Concat seq = Concat.concat(unknown, Seq.wrap("a"));
+    try {
+      seq.upperCase();
+      fail("Expected IllegalStateException for an unknown Seq subtype");
+    } catch (IllegalStateException e) {
+      assertTrue(
+          "Message should mention the unknown type",
+          e.getMessage() != null && e.getMessage().contains("Unknown Seq type"));
+    }
   }
 
   @Test

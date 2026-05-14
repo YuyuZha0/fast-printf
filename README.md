@@ -34,7 +34,7 @@ Add the dependency (Maven):
 <dependency>
     <groupId>io.github.yuyuzha0</groupId>
     <artifactId>fast-printf</artifactId>
-    <version>1.2.12</version>
+    <version>1.2.13</version>
 </dependency>
 ```
 
@@ -111,14 +111,14 @@ memory allocation**, which reduces GC pressure in high-throughput applications.
 <dependency>
     <groupId>io.github.yuyuzha0</groupId>
     <artifactId>fast-printf</artifactId>
-    <version>1.2.12</version>
+    <version>1.2.13</version>
 </dependency>
 ```
 
 **Gradle:**
 
 ```groovy
-implementation 'io.github.yuyuzha0:fast-printf:1.2.12'
+implementation 'io.github.yuyuzha0:fast-printf:1.2.13'
 ```
 
 ## Usage

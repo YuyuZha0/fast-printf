@@ -64,18 +64,79 @@ final class Concat implements AtomicSeqIterable {
    * @return a new {@code Concat} instance.
    */
   static Concat concat(Seq left, Seq right) {
-    // let the tree grow to the right, so the deque stack max size could be smaller
     if (left instanceof Concat) {
-      Concat leftConcat = (Concat) left;
-      return concat0(leftConcat.left, concat0(leftConcat.right, right));
+      // let the tree grow to the right, so the deque stack max size could be smaller
+      return growToTheRight((Concat) left, right);
     } else {
       return concat0(left, right);
     }
   }
 
+  /**
+   * Applies the rebalance transform {@code (a + b) + c => a + (b + c)} given a {@link Concat} left
+   * subtree.
+   *
+   * <p>Extracted so callers that already know their left side is a {@code Concat} — e.g. {@link
+   * #append(Seq)}, where {@code this} is by definition a {@code Concat} — can skip the redundant
+   * {@code instanceof} check that {@link #concat(Seq, Seq)} performs.
+   *
+   * @param left a {@code Concat} subtree; must not be {@code null}.
+   * @param right the right sequence to append; must not be {@code null}.
+   * @return a right-leaning {@code Concat} equivalent to {@code concat(left, right)}.
+   */
+  private static Concat growToTheRight(Concat left, Seq right) {
+    // (a + b) + c => a + (b + c)
+    return concat0(left.left, concat0(left.right, right));
+  }
+
   private static Concat concat0(Seq left, Seq right) {
     return new Concat(
         left, right, left.length() + right.length(), left.elementCount() + right.elementCount());
+  }
+
+  /**
+   * Recursively walks the rope tree rooted at {@code seq} and writes the {@link
+   * AtomicSeq#upperCase()} of each leaf into {@code array}, starting at {@code index}.
+   *
+   * <p>This is the worker for {@link #upperCase()}. It avoids allocating an {@link Iterator} (and
+   * the intermediate {@link java.util.ArrayList} used by {@link AtomicSeqIterable#upperCase()}) by
+   * recursing into the tree directly and writing into a pre-sized array. Because {@link
+   * #concat(Seq, Seq)} keeps the tree right-leaning, recursion depth is bounded by the depth of the
+   * rope.
+   *
+   * <p>The dispatch is in priority order:
+   *
+   * <ol>
+   *   <li>{@link AtomicSeq} — write a single uppercase leaf.
+   *   <li>{@link Concat} — recurse into the {@code left} then {@code right} children directly,
+   *       skipping the {@code Iterable} machinery.
+   *   <li>Any other {@link AtomicSeqIterable} (e.g. {@link SeqArray}) — fall back to its iterator.
+   * </ol>
+   *
+   * @param array the destination array; must have at least {@code seq.elementCount()} free slots
+   *     from {@code index}.
+   * @param index the next free slot in {@code array}.
+   * @param seq the subtree to traverse.
+   * @return the next free slot after writing all leaves of {@code seq}.
+   * @throws IllegalStateException defensively, if {@code seq} is neither an {@link AtomicSeq} nor
+   *     an {@link AtomicSeqIterable}.
+   */
+  private static int addUpperCase(AtomicSeq[] array, int index, Seq seq) {
+    if (seq instanceof AtomicSeq) {
+      array[index] = ((AtomicSeq) seq).upperCase();
+      return index + 1;
+    } else if (seq instanceof Concat) {
+      Concat concat = (Concat) seq;
+      index = addUpperCase(array, index, concat.left);
+      return addUpperCase(array, index, concat.right);
+    } else if (seq instanceof AtomicSeqIterable) {
+      for (AtomicSeq atomicSeq : (AtomicSeqIterable) seq) {
+        array[index++] = atomicSeq.upperCase();
+      }
+      return index;
+    } else {
+      throw new IllegalStateException("Unknown Seq type: " + seq.getClass());
+    }
   }
 
   @Override
@@ -99,7 +160,7 @@ final class Concat implements AtomicSeqIterable {
   @Override
   public Seq append(Seq seq) {
     if (seq.isEmpty()) return this;
-    return concat(this, seq);
+    return growToTheRight(this, seq);
   }
 
   @Override
@@ -132,7 +193,9 @@ final class Concat implements AtomicSeqIterable {
    */
   @Override
   public Iterator<AtomicSeq> iterator() {
-    return new ConcatIterator(this, Math.max(5, elementCount >> 2));
+    // Initial deque size: at least 5 (the ArrayDeque default), at most elementCount —
+    // clamping above elementCount avoids over-allocating for very short ropes.
+    return new ConcatIterator(this, Math.min(Math.max(5, elementCount >> 2), elementCount));
   }
 
   /**
@@ -146,6 +209,23 @@ final class Concat implements AtomicSeqIterable {
   public Seq unfold(Deque<Seq> stack) {
     stack.push(right);
     return left;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>Overrides the default {@link AtomicSeqIterable#upperCase()} with a direct, recursive variant
+   * ({@link #addUpperCase}) that writes leaves into a pre-sized {@link AtomicSeq} array. Compared
+   * to the default path this avoids allocating a {@link ConcatIterator} (and its backing {@link
+   * java.util.ArrayDeque}) plus the intermediate {@link java.util.ArrayList}/{@code toArray()}
+   * copy, which matters on this hot path for formats that uppercase composite ropes (e.g. {@code
+   * %X}, {@code %E}).
+   */
+  @Override
+  public Seq upperCase() {
+    AtomicSeq[] buffer = new AtomicSeq[elementCount];
+    addUpperCase(buffer, 0, this);
+    return new SeqArray(buffer, length);
   }
 
   @Override
