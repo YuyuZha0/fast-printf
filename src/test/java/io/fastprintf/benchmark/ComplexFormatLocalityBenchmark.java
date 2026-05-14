@@ -54,7 +54,7 @@ import org.openjdk.jmh.annotations.Warmup;
  * allocation churn should keep the cached {@code char[]} cache-hot, and the TL gap should
  * disappear.
  *
- * <h2>Result (1 fork × 5 iter × 1 s, JDK 17, M-series CPU)</h2>
+ * <h2>Result (1 fork × 5 iter × 1 s, JDK 21, M-series CPU)</h2>
  *
  * <pre>
  * Benchmark                                                       Mode  Cnt    Score    Error   Units
