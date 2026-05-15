@@ -55,9 +55,9 @@ syntax, and the design trade-offs.
 ## Key Features
 
 * 🚀 **High Performance**: Consistently outperforms `String.format()` across all Java versions. Measured on a typical
-  log-line format: **~6.8× faster** on JDK 8, **~5× faster** on JDK 11, **~1.8–2.2× faster** on JDK 21 (whose
-  rewritten `Formatter` closed most of the gap). See [Performance](#performance-jdk-21) for the full cross-JDK
-  regression.
+  log-line format: **~6.8× faster** on JDK 8, **~5× faster** on JDK 11, **~4.5× faster** on JDK 17, and
+  **~1.8–2.2× faster** on JDK 21 (whose rewritten `Formatter` closed most of the gap). See
+  [Performance](#performance-jdk-21) for the full cross-JDK regression.
 * 🗑️ **Low Allocation**: Employs a rope-like character sequence data structure for internal string building. This avoids
   creating intermediate strings and character arrays, dramatically reducing GC pressure in hot loops.
 * ⚙️ **Glibc Compatible**: Adheres to the widely-used `glibc` `printf` conventions (from C/C++), providing familiar and
@@ -118,28 +118,30 @@ own workload before enabling.
 
 ### Cross-JDK regression
 
-Same `CommonUsageBenchmark`, run on Corretto 8.0.472 / 11.0.29 / 21.0.9 (same machine, same JMH config):
+Same `CommonUsageBenchmark`, run on Corretto 8.0.472 / 11.0.29 / 17.0.17 / 21.0.9 (same machine, same JMH config):
 
-| Path                                         | JDK 8       | JDK 11     | JDK 21    |
-|----------------------------------------------|------------:|-----------:|----------:|
-| `fastPrintf` (varargs)                       | ~214 ns     | ~216 ns    | ~221 ns   |
-| `fastPrintf` (`Args` builder, no-boxing)     | ~326 ns     | ~251 ns    | ~247 ns   |
-| `fastPrintf` (with `ThreadLocal` cache)      | ~244 ns     | ~199 ns    | ~186 ns   |
-| `String.format`                              | **~1450 ns**| **~1069 ns** | **~404 ns** |
-| **Speedup (varargs vs `String.format`)**     | **~6.77×**  | **~4.95×** | **~1.83×**|
-| **Speedup (TL cache vs `String.format`)**    | **~5.94×**  | **~5.38×** | **~2.17×**|
+| Path                                         | JDK 8         | JDK 11         | JDK 17        | JDK 21      |
+|----------------------------------------------|--------------:|---------------:|--------------:|------------:|
+| `fastPrintf` (varargs)                       | ~214 ns       | ~216 ns        | ~200 ns       | ~221 ns     |
+| `fastPrintf` (`Args` builder, no-boxing)     | ~326 ns       | ~251 ns        | ~247 ns       | ~247 ns     |
+| `fastPrintf` (with `ThreadLocal` cache)      | ~244 ns       | ~199 ns        | ~197 ns       | ~186 ns     |
+| `String.format`                              | **~1450 ns**  | **~1069 ns**   | **~886 ns**   | **~404 ns** |
+| **Speedup (varargs vs `String.format`)**     | **~6.77×**    | **~4.95×**     | **~4.43×**    | **~1.83×**  |
+| **Speedup (TL cache vs `String.format`)**    | **~5.94×**    | **~5.38×**     | **~4.50×**    | **~2.17×**  |
 
 Two stories the regression makes obvious:
 
-1. **`fast-printf` itself is JDK-version-invariant on the varargs path** (214 → 216 → 221 ns). The library doesn't
-   piggy-back on JDK improvements — it owns its performance.
-2. **`String.format` got 3.6× faster between JDK 8 and JDK 21.** That is the entire reason `fast-printf`'s relative
-   advantage shrinks on modern JDKs. Fast-printf didn't slow down; the JDK closed the gap.
+1. **`fast-printf` itself is essentially JDK-version-invariant on the varargs path** (214 → 216 → 200 → 221 ns).
+   The library doesn't piggy-back on JDK improvements — it owns its performance.
+2. **`String.format` got 3.6× faster between JDK 8 and JDK 21.** Most of that win is concentrated in the JDK 21
+   `Formatter` rewrite (allocation also drops from 2776 B/op on JDK 17 to 1280 B/op on JDK 21). That is the entire
+   reason `fast-printf`'s relative advantage shrinks on modern JDKs — fast-printf didn't slow down, the JDK closed
+   the gap.
 
-The `Args` no-boxing builder is the one fast-printf path that meaningfully improves with JDK version (326 → 247 ns) —
-JDK 11+'s better small-method inlining helps its chained calls a lot.
+The `Args` no-boxing builder is the one fast-printf path that meaningfully improves between JDK 8 and JDK 11
+(326 → 251 ns) — JDK 11+'s better small-method inlining helps its chained calls. After that it plateaus.
 
-**Practical takeaway.** fast-printf is most compelling on older JDKs (8 / 11), where it is **5–7× faster** than
+**Practical takeaway.** fast-printf is most compelling on JDK 8 / 11 / 17, where it is **4–7× faster** than
 `String.format` on a typical log-line. On JDK 21 the speedup is more modest (~2×), and the **~50% allocation
 reduction** becomes the main reason to reach for it — particularly in services where young-gen GC frequency and p99
 latency matter.
