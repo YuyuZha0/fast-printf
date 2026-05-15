@@ -28,17 +28,25 @@ import org.openjdk.jmh.annotations.Warmup;
  * {@code enableThreadLocalCache()} path's reused {@code StringBuilder.value} buffer and distort
  * the comparison.
  *
- * <p>JDK 21 (Corretto 21.0.9), JMH 1.37, @Fork(2):
+ * <p>Cross-JDK results (Corretto 8.0.472, 11.0.29, 21.0.9 on the same M-series box), JMH 1.37,
+ * {@code @Fork(2)}:
  *
  * <pre>
- * Benchmark                                   Mode  Cnt    Score    Error  Units
- * CommonUsageBenchmark.fastPrintfArgs         avgt    6  247.849 ± 18.696  ns/op
- * CommonUsageBenchmark.fastPrintfThreadLocal  avgt    6  187.436 ±  9.990  ns/op
- * CommonUsageBenchmark.fastPrintfVarargs      avgt    6  229.585 ± 96.210  ns/op
- * CommonUsageBenchmark.jdkPrintf              avgt    6  404.211 ± 21.528  ns/op
+ * Path                                     JDK 8 (ns)    JDK 11 (ns)   JDK 21 (ns)
+ * --------------------------------------------------------------------------------
+ * fastPrintf (varargs)                     214.33 ±21.4  215.65 ±28.1  221.21 ±77.4
+ * fastPrintf (Args builder, no-boxing)     326.35 ±14.5  250.92 ± 9.2  246.75 ±25.8
+ * fastPrintf (with enableThreadLocalCache) 243.97 ±15.5  198.80 ±14.5  186.11 ± 3.0
+ * String.format (jdkPrintf)               1450.11 ±25.4 1069.47 ±24.4  404.46 ±18.1
+ *
+ * Speedup vs String.format:
+ *   varargs                                  6.77×         4.95×         1.83×
+ *   enableThreadLocalCache                   5.94×         5.38×         2.17×
  * </pre>
  *
- * <p>Allocation profile ({@code -prof gc}, {@code gc.alloc.rate.norm} = B/op):
+ * <p>Allocation profile (JDK 21, {@code -prof gc}, {@code gc.alloc.rate.norm} = B/op; JMH's
+ * GC profiler does not produce reliable B/op numbers on Hotspot 8, so allocation data is
+ * reported for JDK 21 only):
  *
  * <pre>
  * fastPrintfArgs         592 B/op   (no boxing of primitives)
@@ -46,6 +54,27 @@ import org.openjdk.jmh.annotations.Warmup;
  * fastPrintfVarargs      696 B/op   (boxed varargs + fresh StringBuilder)
  * jdkPrintf             1280 B/op   (~2.1× the allocation of fastPrintf varargs)
  * </pre>
+ *
+ * <h2>What the cross-JDK regression tells us</h2>
+ *
+ * <ul>
+ *   <li><b>fast-printf is JDK-version-invariant on the varargs path</b> (214 → 216 → 221 ns).
+ *       The library manages its own performance; it does not depend on Hotspot improvements
+ *       that landed in JDK 17+.
+ *   <li><b>The {@code Args} no-boxing builder gets meaningfully faster on JDK 11+</b>
+ *       (326 → 251 ns). The chained small-method calls benefit from JIT inlining improvements
+ *       in newer Hotspots; on JDK 8 it is the slowest fast-printf path, on JDK 11+ it costs
+ *       only ~30 ns extra vs varargs.
+ *   <li><b>{@code enableThreadLocalCache()} improves monotonically</b> (244 → 199 → 186 ns).
+ *   <li><b>{@code String.format} is the big mover.</b> JDK 21's rewritten Formatter is 3.6×
+ *       faster than JDK 8's. That is why fast-printf's relative advantage shrinks from ~6.8×
+ *       on JDK 8 to ~1.8× on JDK 21 — not because fast-printf got slower (it didn't), but
+ *       because the JDK got dramatically better.
+ * </ul>
+ *
+ * <p>Practical takeaway: fast-printf is most valuable on older JDKs (8 / 11). On JDK 21
+ * the speedup is more modest, and the allocation reduction (~50% less garbage than
+ * {@code String.format}) becomes the main reason to use it.
  *
  * <p><b>Caveat on the {@code fastPrintfThreadLocal} number.</b> The pooled-args setup keeps the
  * reused {@code StringBuilder.value} cache-hot between invocations, which is the best case for
