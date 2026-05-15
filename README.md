@@ -5,24 +5,23 @@
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.yuyuzha0/fast-printf.svg?style=flat-square)](https://search.maven.org/artifact/io.github.yuyuzha0/fast-printf)
 [![License](https://img.shields.io/badge/License-GPL--2.0--with--classpath--exception-blue.svg?style=flat-square)](https://openjdk.java.net/legal/gplv2+ce.html)
 
-A high-performance, `glibc`-compliant, and low-allocation `printf`-style formatter for Java 8+.
+A fast, allocation-light, `glibc`-style `printf` for Java 8+.
 
-`fast-printf` is a specialized formatting library designed for performance-critical applications where standard
-utilities like `String.format()` become a bottleneck. It achieves significant speedups through a **compile-once,
-run-many** approach and a sophisticated architecture that minimizes memory allocations and garbage collection pressure.
+**Compile once, format many times.** fast-printf trades a one-time parsing cost for a tight, type-specialised
+formatting loop that's **1.8–6.8× faster than `String.format()`** (depending on JDK) and allocates **~50% less
+garbage** per call. Designed for hot paths — high-throughput logging, text-protocol serialization, real-time systems —
+where `String.format()` shows up in a profile or GC trace.
 
 ## Contents
 
 - [Quick Start](#quick-start)
-- [Key Features](#key-features)
-- [When to use fast-printf](#when-to-use-fast-printf)
-- [Performance (JDK 21)](#performance-jdk-21)
+- [Why fast-printf?](#why-fast-printf)
+- [Performance](#performance)
 - [Installation](#installation)
 - [Usage](#usage)
-- [Advanced: JDK 21 Floating-Point on Java 8](#advanced-jdk-21-floating-point-on-java-8)
+- [Format String Reference](#format-string-reference)
 - [How It Works](#how-it-works)
-- [API Reference](#api-reference)
-- [Key Differences from `String.format()`](#key-differences-from-stringformat)
+- [Differences from `String.format()`](#differences-from-stringformat)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -52,72 +51,84 @@ String s = F.format("Alice", 42, 99.5);
 That's the whole API for typical use. The rest of this document covers the no-boxing `Args` builder, the format-string
 syntax, and the design trade-offs.
 
-## Key Features
+## Why fast-printf?
 
-* 🚀 **High Performance**: Consistently outperforms `String.format()` across all Java versions. The advantage is most
-  significant on older runtimes (up to **4x faster** on JDK 8), and remains substantial even on modern runtimes (~**2x
-  faster** on JDK 21 for typical log-line formats).
-* 🗑️ **Low Allocation**: Employs a rope-like character sequence data structure for internal string building. This avoids
-  creating intermediate strings and character arrays, dramatically reducing GC pressure in hot loops.
-* ⚙️ **Glibc Compatible**: Adheres to the widely-used `glibc` `printf` conventions (from C/C++), providing familiar and
-  predictable behavior rather than following the `java.util.Formatter` specification.
-* 💡 **State-of-the-Art Float Formatting**: Backports the high-fidelity floating-point formatting engine from
-  **OpenJDK 21** (the "Schubfach" algorithm), so `double` and `float` output is correctly rounded and shortest-possible
-  even on Java 8.
-  See [Advanced: JDK 21 Floating-Point on Java 8](#advanced-jdk-21-floating-point-on-java-8).
-* ⛓️ **Fluent, No-Boxing API**: Provides a fluent builder (`Args.create().putInt(...)`) that accepts primitive arguments
-  without any boxing overhead, maximizing performance in critical code paths.
-* 🧩 **Zero Dependencies**: A lightweight library with no external dependencies.
-* ☕ **Java 8+**: Compatible with all modern Java runtimes.
+* 🚀 **Faster than `String.format()`** on every JDK we measured — **~6.8×** on JDK 8, **~5×** on JDK 11, **~4.5×** on
+  JDK 17, **~1.8–2.2×** on JDK 21 (whose rewritten `Formatter` closed most of the gap). See
+  [Performance](#performance) for the full chart and table.
+* 🗑️ **~50% less allocation** than `String.format` on a typical log-line — a rope-like internal data structure avoids
+  intermediate strings and `char[]` copies, cutting young-gen GC pressure in hot loops.
+* ⚙️ **Glibc-compatible syntax.** Follows the familiar C / C++ `printf` rules rather than `java.util.Formatter`'s
+  Java-specific quirks (`%S` upper-cases the string, `%p` prints object identity, etc.).
+* 💡 **Modern float formatting on every JDK.** Backports the Schubfach engine from OpenJDK 21, so `double` / `float`
+  output is shortest-correctly-rounded even on Java 8.
+* ⛓️ **No-boxing fluent API** for primitive-heavy call sites: `Args.create().putInt(...).putDouble(...)` skips the
+  `Integer.valueOf` / `Double.valueOf` allocations that varargs forces.
+* 🧩 **Zero runtime dependencies.** Compatible with Java 8 and newer.
 
-## When to use fast-printf
+**Reach for it when** you have a hot `String.format` call site — high-throughput logging, text-protocol serialization
+(CSV / log lines / metrics), or any latency-sensitive code where formatting shows up in a profile or GC trace.
+For everyday formatting where the bytes-per-second don't matter, the standard `String.format()` is fine.
 
-Ideal for:
+## Performance
 
-* **High-throughput logging**: Formatting log messages in tight, performance-critical loops.
-* **Data serialization**: Generating text-based data formats (CSV, protocol messages) at high speed.
-* **Real-time systems**: Financial applications, game engines, or monitoring agents where GC pauses must be minimized.
-* Anywhere `String.format()` has been identified as a hot path.
+Benchmarked with `CommonUsageBenchmark` (JMH 1.37, `@Fork(2)`, Corretto on a single M-series box). The format string
+`[%s] %s id=%d latency=%.3fms` is a realistic log-line case mixing literal text with `%s`, `%d`, and `%.Nf`; the same
+string is fed to both `FastPrintf.compile(...)` and `String.format(...)` — no per-side translation or workarounds.
 
-For general-purpose string formatting where performance is not the primary concern, the standard `String.format()` is
-often sufficient.
+<p align="center">
+  <img src="docs/perf-cross-jdk.svg" alt="CommonUsageBenchmark cross-JDK results: fastPrintf varargs and ThreadLocal cache stay roughly flat (~200 ns) across JDK 8/11/17/21, while String.format drops from ~1450 ns on JDK 8 to ~404 ns on JDK 21." width="760">
+</p>
 
-## Performance (JDK 21)
+### Cross-JDK numbers
 
-Benchmarked on **JDK 21** (Corretto 21.0.9), where `String.format()` has received substantial optimizations. The
-format string `[%s] %s id=%d latency=%.3fms` represents a realistic log-line use case covering the most common printf
-patterns: literal text mixed with `%s`, `%d`, and `%.Nf`. The same string is fed to both `FastPrintf.compile(...)` and
-`String.format(...)` — no per-side translation or workarounds.
+| Path                                         | JDK 8         | JDK 11         | JDK 17        | JDK 21      |
+|----------------------------------------------|--------------:|---------------:|--------------:|------------:|
+| `fastPrintf` (varargs)                       | ~214 ns       | ~216 ns        | ~200 ns       | ~221 ns     |
+| `fastPrintf` (`Args` builder, no-boxing)     | ~326 ns       | ~251 ns        | ~247 ns       | ~247 ns     |
+| `fastPrintf` (with `ThreadLocal` cache)      | ~244 ns       | ~199 ns        | ~197 ns       | ~186 ns     |
+| `String.format`                              | **~1450 ns**  | **~1069 ns**   | **~886 ns**   | **~404 ns** |
+| **Speedup — varargs vs `String.format`**     | **~6.77×**    | **~4.95×**     | **~4.43×**    | **~1.83×**  |
+| **Speedup — TL cache vs `String.format`**    | **~5.94×**    | **~5.38×**     | **~4.50×**    | **~2.17×**  |
 
-| Benchmark (`avgt`, ns/op)                | Score    | Allocation | Notes                                                                 |
-|------------------------------------------|----------|-----------:|-----------------------------------------------------------------------|
-| **`fastPrintf` (varargs)**               | **~230** |  696 B/op  | The core library performance with auto-boxing.                        |
-| `fastPrintf` (`Args` builder, no-boxing) | ~248     |  592 B/op  | Lower allocation rate (no primitive boxing). See note below.          |
-| `fastPrintf` (with `ThreadLocal` cache)  | ~187     |  608 B/op  | Best case (tight reuse loop). Workload-sensitive — see note below.    |
-| `jdkPrintf` (`String.format`)            | ~404     | 1280 B/op  | The baseline for comparison on a modern JDK.                          |
+Two things the regression makes obvious:
 
-*Lower scores are better. ~**1.76× faster** than `String.format()` on a typical log-line format using the default
-varargs path; up to **~2.16× faster** with `enableThreadLocalCache()` when the cached buffer stays cache-hot.
-Source: `CommonUsageBenchmark`.*
+1. **fast-printf is essentially JDK-version-invariant on the varargs path** (214 → 216 → 200 → 221 ns). The library
+   owns its performance — it doesn't piggy-back on Hotspot improvements.
+2. **`String.format` got 3.6× faster between JDK 8 and JDK 21.** Most of that win is concentrated in the JDK 21
+   `Formatter` rewrite (allocation also drops from 2776 B/op on JDK 17 to 1280 B/op on JDK 21). That alone explains
+   why fast-printf's relative advantage shrinks on modern JDKs — fast-printf didn't slow down, the JDK closed the gap.
 
-**About the `Args` builder (no-boxing).** The builder appears ~18 ns slower per call in the table above, yet
-allocates ~15% fewer bytes per op. That's the trade-off it makes: replace primitive boxing (`Integer.valueOf`,
-`Double.valueOf`) and the varargs `Object[]` with a direct fluent chain, paying a small amount of method-dispatch
-overhead in exchange. In this micro-benchmark TLAB allocation is essentially free, so the throughput axis dominates
-and the builder loses by ~18 ns. In a real high-throughput workload, the **allocation rate** axis matters: cutting
-~15% of bytes-per-format reduces young-gen GC frequency and improves p99 latency under load. Reach for the builder
-when allocation pressure is the bottleneck (sustained logging, hot serialization paths), not when single-call
-nanoseconds are.
+The `Args` no-boxing builder is the one fast-printf path that meaningfully improves between JDK 8 and JDK 11
+(326 → 251 ns) — JDK 11+'s better small-method inlining helps its chained calls. After that it plateaus.
 
-**About `enableThreadLocalCache()`.** The cache reuses a single `StringBuilder.value` `char[]` across calls. In tight
-reuse loops (as measured above, with pre-built args) it is a net win; in code that does meaningful allocation or
-touches unrelated memory between `format()` calls, the cached buffer is evicted from L1/L2 and the path can match or
-underperform the non-cached one. See `ComplexFormatLocalityBenchmark` for the full locality analysis. Benchmark in your
-own workload before enabling.
+### Allocation profile (JDK 21)
 
-**Older JDKs.** On Java 8 / 11, where `String.format()` is less optimized, speedups of up to **4×** are common —
-particularly for complex formats. Across all versions, the primary advantage of `fast-printf` is **dramatically lower
-memory allocation**, which reduces GC pressure in high-throughput applications.
+Time isn't the whole story. Allocation bytes-per-op, measured with `-prof gc`:
+
+| Path                                         | Time     | Allocation |
+|----------------------------------------------|---------:|-----------:|
+| **`fastPrintf` (varargs)**                   | **~221 ns** |  696 B/op |
+| `fastPrintf` (`Args` builder, no-boxing)     |     ~247 ns |  592 B/op |
+| `fastPrintf` (with `ThreadLocal` cache)      |     ~186 ns |  608 B/op |
+| `String.format`                              |     ~404 ns | 1280 B/op |
+
+fast-printf allocates roughly **half** the bytes `String.format` does on this workload — and on JDK 21, where the
+nanoseconds gap is narrowest, the GC-pressure gap is what carries the win in production code.
+
+### Design notes on the optional paths
+
+**The `Args` builder (no-boxing).** ~18 ns slower per call than varargs in the table above, yet ~15 % fewer bytes
+per op. That's the trade: replace primitive boxing (`Integer.valueOf`, `Double.valueOf`) and the varargs `Object[]`
+with a direct fluent chain at the cost of a few extra method-dispatch hops. In JMH hot loops TLAB allocation is
+nearly free, so varargs looks faster; in sustained-throughput production code the lower allocation rate reduces
+young-gen GC frequency and improves p99 latency. **Pick it when allocation rate is your bottleneck**, not when
+single-call nanoseconds are.
+
+**`enableThreadLocalCache()`.** Reuses one `StringBuilder.value` `char[]` across calls. In a tight reuse loop (as
+measured above) it's a net win; in code that does meaningful allocation or touches unrelated memory between
+`format()` calls, that cached buffer gets cache-evicted and the path can match or *underperform* the non-cached one.
+See `ComplexFormatLocalityBenchmark` for the locality breakdown. **Benchmark in your own workload before enabling.**
 
 ## Installation
 
@@ -170,7 +181,7 @@ public class Example {
 ```
 
 For richer formatting — uppercase strings (`%S`), zero-padding (`%05d`), hex (`%#08X`), date/time (`%t{...}`), etc. —
-see the [API Reference](#api-reference) below.
+see the [Format String Reference](#format-string-reference) below.
 
 ### Convenience vs. maximum performance
 
@@ -181,30 +192,11 @@ see the [API Reference](#api-reference) below.
 | `Args.create().putInt(123).putString("test")` | **No**           | Allocation rate / GC  | Hot serialization or logging paths where young-gen pressure / p99 latency dominates. |
 
 All three produce identical output. The choice is **CPU throughput vs allocation rate**, not "good vs better": the
-no-boxing builder allocates ~15% less but costs ~18 ns of method-dispatch per call (see *About the `Args` builder*
-above). Pick based on which axis your workload is actually bound on.
+no-boxing builder allocates ~15% less but costs ~18 ns of method-dispatch per call (see
+[Design notes on the optional paths](#design-notes-on-the-optional-paths)). Pick based on which axis your workload is
+actually bound on.
 
-## Advanced: JDK 21 Floating-Point on Java 8
-
-`String.format()` on JDKs prior to 18 has known issues converting `double` / `float` to decimal: the output is not
-always the shortest, correctly-rounded representation, leading to subtle accuracy bugs in scientific and financial
-code. `fast-printf` backports the modern Schubfach-based engine from OpenJDK 21 so this correctness guarantee — and the
-performance that comes with it — is available even when your application runs on Java 8.
-
-## How It Works
-
-The performance of `fast-printf` comes from four architectural pillars:
-
-1. **Ahead-of-Time Compiler**: `FastPrintf.compile()` parses the format string once into a list of optimized `Appender`
-   objects. Parsing never re-runs.
-2. **Zero-Copy String Building**: An internal rope-like `Seq` data structure concatenates formatted parts with
-   lightweight wrappers instead of copying characters. The final `String` is rendered in a single pass.
-3. **Ahead-of-Time Argument Processing**: The `Args` object converts arguments into a list of `FormatTraits` —
-   specialized, type-aware handlers. This eliminates `instanceof` checks and reflection from the formatting loop.
-4. **Backported Float Logic**: Incorporates OpenJDK 21's `DoubleToDecimal` to ensure float/double formatting is both
-   fast and mathematically correct on all supported Java versions.
-
-## API Reference
+## Format String Reference
 
 Format string syntax:
 `%[flags][width][.precision]specifier[{date-time-pattern}]`
@@ -257,19 +249,37 @@ The `%t` / `%T` specifiers accept an inline `DateTimeFormatter` pattern.
 | `width`      | Minimum characters to print. Padded with spaces (or zeros with `0` flag). Never truncates. `*` reads width from the next `int` argument.                                                                                                                                 |
 | `.precision` | For each type:<br>• **Integers** — minimum number of digits (zero-padded)<br>• **Floats (`f`, `e`)** — digits after the decimal point<br>• **Floats (`g`)** — max significant digits<br>• **Strings (`s`, `S`)** — max characters to print<br>`.*` reads precision from the next `int` argument. |
 
-## Key Differences from `String.format()`
+## How It Works
 
-`fast-printf` intentionally differs from Java's `String.format` to align with `glibc` conventions and maximize
-performance:
+The performance of `fast-printf` comes from four architectural pillars:
 
-* **Glibc vs. Java `Formatter` conventions**: Follows `glibc` `printf`. For example, `%S` converts the entire string to
-  uppercase, unlike Java's behavior which is tied to `Formattable`.
-* **`%p` (pointer) specifier**: Provides the C-style `%p` specifier to print an object's identity. This useful specifier
-  is **not available** in Java's `String.format()`. The implementation is also type-safe and will correctly throw an
-  exception if given a primitive type, preventing bugs related to auto-boxing.
-* **No argument indexing**: Features like `%2$s` are not supported. Arguments are always consumed sequentially for
-  maximum performance.
-* **No locale support**: Formatting is locale-agnostic for performance (`.` is always the decimal separator).
+1. **Ahead-of-time compiler.** `FastPrintf.compile()` parses the format string once into a list of optimised
+   `Appender` objects. Parsing never re-runs.
+2. **Zero-copy string building.** An internal rope-like `Seq` data structure concatenates formatted parts with
+   lightweight wrappers instead of copying characters. The final `String` is rendered in a single pass.
+3. **Ahead-of-time argument processing.** The `Args` object converts arguments into a list of `FormatTraits` —
+   specialised, type-aware handlers. This eliminates `instanceof` checks and reflection from the formatting loop.
+4. **Backported float engine.** Incorporates OpenJDK 21's `DoubleToDecimal` (the "Schubfach" algorithm) so `double` /
+   `float` output is correctly rounded and shortest-possible on every supported JDK.
+
+### Modern float formatting on every JDK
+
+`String.format()` on JDKs prior to 18 has known issues converting `double` / `float` to decimal: the output is not
+always the shortest, correctly-rounded representation, which can introduce subtle accuracy bugs in scientific or
+financial code. fast-printf backports the modern Schubfach-based engine from OpenJDK 21, so that correctness
+guarantee — and the performance that comes with it — is available even on Java 8.
+
+## Differences from `String.format()`
+
+fast-printf intentionally differs from Java's `String.format` to align with `glibc` conventions and to keep the
+formatting loop tight:
+
+* **Glibc vs Java `Formatter` conventions.** Follows `glibc` `printf`. For example, `%S` upper-cases the string —
+  unlike Java's behaviour, which is tied to `Formattable`.
+* **`%p` (pointer) specifier.** Provides the C-style `%p` specifier to print an object's identity. Not available in
+  `String.format()`. The implementation is type-safe and throws on a primitive argument, preventing auto-boxing bugs.
+* **No argument indexing.** `%2$s` and friends are not supported; arguments are consumed sequentially for performance.
+* **No locale support.** Formatting is locale-agnostic for performance (`.` is always the decimal separator).
 
 ## Contributing
 

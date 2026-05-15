@@ -28,24 +28,56 @@ import org.openjdk.jmh.annotations.Warmup;
  * {@code enableThreadLocalCache()} path's reused {@code StringBuilder.value} buffer and distort
  * the comparison.
  *
- * <p>JDK 21 (Corretto 21.0.9), JMH 1.37, @Fork(2):
+ * <p>Cross-JDK results (Corretto 8.0.472, 11.0.29, 17.0.17, 21.0.9 on the same M-series box),
+ * JMH 1.37, {@code @Fork(2)}:
  *
  * <pre>
- * Benchmark                                   Mode  Cnt    Score    Error  Units
- * CommonUsageBenchmark.fastPrintfArgs         avgt    6  247.849 ± 18.696  ns/op
- * CommonUsageBenchmark.fastPrintfThreadLocal  avgt    6  187.436 ±  9.990  ns/op
- * CommonUsageBenchmark.fastPrintfVarargs      avgt    6  229.585 ± 96.210  ns/op
- * CommonUsageBenchmark.jdkPrintf              avgt    6  404.211 ± 21.528  ns/op
+ * Path                                     JDK 8 (ns)    JDK 11 (ns)   JDK 17 (ns)   JDK 21 (ns)
+ * --------------------------------------------------------------------------------------------
+ * fastPrintf (varargs)                     214.33 ±21.4  215.65 ±28.1  199.73 ±11.6  221.21 ±77.4
+ * fastPrintf (Args builder, no-boxing)     326.35 ±14.5  250.92 ± 9.2  247.23 ± 4.9  246.75 ±25.8
+ * fastPrintf (with enableThreadLocalCache) 243.97 ±15.5  198.80 ±14.5  196.83 ±37.4  186.11 ± 3.0
+ * String.format (jdkPrintf)               1450.11 ±25.4 1069.47 ±24.4  885.77 ±65.6  404.46 ±18.1
+ *
+ * Speedup vs String.format:
+ *   varargs                                  6.77×         4.95×         4.43×         1.83×
+ *   enableThreadLocalCache                   5.94×         5.38×         4.50×         2.17×
  * </pre>
  *
- * <p>Allocation profile ({@code -prof gc}, {@code gc.alloc.rate.norm} = B/op):
+ * <p>Allocation profile ({@code -prof gc}, {@code gc.alloc.rate.norm} = B/op; JMH's GC
+ * profiler does not produce reliable B/op numbers on Hotspot 8, so allocation data is
+ * reported for JDK 11+):
  *
  * <pre>
- * fastPrintfArgs         592 B/op   (no boxing of primitives)
- * fastPrintfThreadLocal  608 B/op   (boxed varargs, reuses cached StringBuilder)
- * fastPrintfVarargs      696 B/op   (boxed varargs + fresh StringBuilder)
- * jdkPrintf             1280 B/op   (~2.1× the allocation of fastPrintf varargs)
+ * Path                   JDK 11  JDK 17  JDK 21
+ * fastPrintfArgs           604     592     592   B/op   (no boxing of primitives)
+ * fastPrintfThreadLocal    608     608     608   B/op   (boxed varargs, reuses cached SB)
+ * fastPrintfVarargs        708     696     696   B/op   (boxed varargs + fresh SB)
+ * jdkPrintf               1528    2776    1280   B/op   (JDK 17 Formatter is the heaviest)
  * </pre>
+ *
+ * <h2>What the cross-JDK regression tells us</h2>
+ *
+ * <ul>
+ *   <li><b>fast-printf is essentially JDK-version-invariant on the varargs path</b>
+ *       (214 → 216 → 200 → 221 ns). The library manages its own performance; it does not
+ *       piggy-back on Hotspot improvements.
+ *   <li><b>The {@code Args} no-boxing builder gets meaningfully faster on JDK 11+</b>
+ *       (326 → 251 → 247 → 247 ns). The chained small-method calls benefit from JIT inlining
+ *       improvements between JDK 8 and JDK 11; after that it plateaus.
+ *   <li><b>{@code enableThreadLocalCache()} improves with each major JDK</b>
+ *       (244 → 199 → 197 → 186 ns).
+ *   <li><b>{@code String.format} is the big mover.</b> 1450 → 1069 → 886 → 404 ns from JDK 8
+ *       to JDK 21 — a 3.6× speed-up. Most of the JDK 21 win is the rewritten Formatter
+ *       (which also dropped allocation from 2776 → 1280 B/op vs JDK 17). That is why
+ *       fast-printf's relative advantage shrinks from ~6.8× on JDK 8 to ~1.8× on JDK 21 —
+ *       not because fast-printf got slower (it didn't), but because the JDK got dramatically
+ *       better.
+ * </ul>
+ *
+ * <p>Practical takeaway: fast-printf is most valuable on older JDKs (8 / 11). On JDK 21
+ * the speedup is more modest, and the allocation reduction (~50% less garbage than
+ * {@code String.format}) becomes the main reason to use it.
  *
  * <p><b>Caveat on the {@code fastPrintfThreadLocal} number.</b> The pooled-args setup keeps the
  * reused {@code StringBuilder.value} cache-hot between invocations, which is the best case for
