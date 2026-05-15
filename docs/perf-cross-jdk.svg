@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 470"
+     font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+     role="img" aria-labelledby="chart-title chart-desc">
+  <title id="chart-title">CommonUsageBenchmark — cross-JDK results, ns/op (lower is better)</title>
+  <desc id="chart-desc">Grouped bar chart comparing fastPrintf varargs, fastPrintf with ThreadLocal cache, and String.format across JDK 8, 11, 17, and 21. String.format times decrease sharply with newer JDKs while fastPrintf times stay roughly flat.</desc>
+
+  <rect width="760" height="470" fill="#fafafa"/>
+
+  <text x="380" y="28" text-anchor="middle" font-size="16" font-weight="600" fill="#111">
+    CommonUsageBenchmark — ns/op (lower is better)
+  </text>
+
+  <!-- Legend -->
+  <g transform="translate(150, 48)" font-size="12" fill="#333">
+    <rect width="12" height="12" fill="#2563eb"/>
+    <text x="18" y="10">fastPrintf (varargs)</text>
+    <rect x="170" width="12" height="12" fill="#16a34a"/>
+    <text x="188" y="10">fastPrintf (ThreadLocal cache)</text>
+    <rect x="380" width="12" height="12" fill="#dc2626"/>
+    <text x="398" y="10">String.format</text>
+  </g>
+
+  <!-- Y-axis gridlines -->
+  <g stroke="#e5e5e5" stroke-width="1">
+    <line x1="100" y1="80"  x2="700" y2="80"/>
+    <line x1="100" y1="133" x2="700" y2="133"/>
+    <line x1="100" y1="187" x2="700" y2="187"/>
+    <line x1="100" y1="240" x2="700" y2="240"/>
+    <line x1="100" y1="293" x2="700" y2="293"/>
+    <line x1="100" y1="347" x2="700" y2="347"/>
+  </g>
+  <line x1="100" y1="400" x2="700" y2="400" stroke="#666" stroke-width="1"/>
+
+  <!-- Y-axis labels -->
+  <g text-anchor="end" font-size="11" fill="#666">
+    <text x="92" y="84">1500</text>
+    <text x="92" y="137">1250</text>
+    <text x="92" y="191">1000</text>
+    <text x="92" y="244">750</text>
+    <text x="92" y="297">500</text>
+    <text x="92" y="351">250</text>
+    <text x="92" y="404">0</text>
+  </g>
+  <text x="36" y="240" text-anchor="middle" font-size="11" fill="#666"
+        transform="rotate(-90, 36, 240)">ns/op</text>
+
+  <!-- X-axis group labels -->
+  <g text-anchor="middle" font-size="13" fill="#222" font-weight="500">
+    <text x="175" y="422">JDK 8</text>
+    <text x="325" y="422">JDK 11</text>
+    <text x="475" y="422">JDK 17</text>
+    <text x="625" y="422">JDK 21</text>
+  </g>
+
+  <!-- JDK 8 group (centre 175) -->
+  <rect x="125" y="355" width="30" height="45"  fill="#2563eb"/>
+  <rect x="160" y="348" width="30" height="52"  fill="#16a34a"/>
+  <rect x="195" y="91"  width="30" height="309" fill="#dc2626"/>
+
+  <!-- JDK 11 group (centre 325) -->
+  <rect x="275" y="354" width="30" height="46"  fill="#2563eb"/>
+  <rect x="310" y="358" width="30" height="42"  fill="#16a34a"/>
+  <rect x="345" y="172" width="30" height="228" fill="#dc2626"/>
+
+  <!-- JDK 17 group (centre 475) -->
+  <rect x="425" y="357" width="30" height="43"  fill="#2563eb"/>
+  <rect x="460" y="358" width="30" height="42"  fill="#16a34a"/>
+  <rect x="495" y="211" width="30" height="189" fill="#dc2626"/>
+
+  <!-- JDK 21 group (centre 625) -->
+  <rect x="575" y="353" width="30" height="47"  fill="#2563eb"/>
+  <rect x="610" y="360" width="30" height="40"  fill="#16a34a"/>
+  <rect x="645" y="314" width="30" height="86"  fill="#dc2626"/>
+
+  <!-- Value labels on top of each bar -->
+  <g text-anchor="middle" font-size="10" fill="#333">
+    <!-- JDK 8 -->
+    <text x="140" y="350">214</text>
+    <text x="175" y="343">244</text>
+    <text x="210" y="86">1450</text>
+    <!-- JDK 11 -->
+    <text x="290" y="349">216</text>
+    <text x="325" y="353">199</text>
+    <text x="360" y="167">1069</text>
+    <!-- JDK 17 -->
+    <text x="440" y="352">200</text>
+    <text x="475" y="353">197</text>
+    <text x="510" y="206">886</text>
+    <!-- JDK 21 -->
+    <text x="590" y="348">221</text>
+    <text x="625" y="355">186</text>
+    <text x="660" y="309">404</text>
+  </g>
+
+  <!-- Footer note -->
+  <text x="380" y="455" text-anchor="middle" font-size="10" fill="#888">
+    Corretto, same M-series machine · JMH 1.37 · @Fork(2) · pooled args
+  </text>
+</svg>
