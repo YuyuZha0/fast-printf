@@ -24,7 +24,7 @@ public final class CharSequenceTraits implements FormatTraits, Consumer<StringBu
     try {
       return Integer.parseInt(value.toString());
     } catch (NumberFormatException e) {
-      throw new PrintfException("Cannot convert \"" + value + "\" to int", e);
+      throw new PrintfException(e, "Cannot convert \"%s\" to int", value);
     }
   }
 
@@ -41,7 +41,7 @@ public final class CharSequenceTraits implements FormatTraits, Consumer<StringBu
     try {
       return IntForm.valueOf(Long.parseLong(value.toString()));
     } catch (NumberFormatException e) {
-      throw new PrintfException("Cannot convert \"" + value + "\" to int", e);
+      throw new PrintfException(e, "Cannot convert \"%s\" to int", value);
     }
   }
 
@@ -50,7 +50,7 @@ public final class CharSequenceTraits implements FormatTraits, Consumer<StringBu
     try {
       return FloatForm.valueOf(Double.parseDouble(value.toString()));
     } catch (NumberFormatException e) {
-      throw new PrintfException("Cannot convert \"" + value + "\" to float", e);
+      throw new PrintfException(e, "Cannot convert \"%s\" to float", value);
     }
   }
 
