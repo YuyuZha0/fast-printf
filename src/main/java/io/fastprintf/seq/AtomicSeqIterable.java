@@ -34,6 +34,7 @@ public interface AtomicSeqIterable extends Seq, Iterable<AtomicSeq> {
     Preconditions.checkPositionIndexes(start, end, length);
     if (start == end) return Seq.empty();
     if (start == 0 && end == length) return this;
+    int sliceLength = end - start;
     List<AtomicSeq> buffer = new ArrayList<>();
     for (AtomicSeq seq : this) {
       int seqLength = seq.length();
@@ -53,7 +54,7 @@ public interface AtomicSeqIterable extends Seq, Iterable<AtomicSeq> {
     if (buffer.size() == 1) {
       return buffer.get(0);
     }
-    return new SeqArray(buffer.toArray(new AtomicSeq[0]), end - start);
+    return new SeqArray(buffer.toArray(new AtomicSeq[0]), sliceLength);
   }
 
   /**

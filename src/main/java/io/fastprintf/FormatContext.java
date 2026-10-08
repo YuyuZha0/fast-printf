@@ -79,7 +79,36 @@ public final class FormatContext implements Serializable {
   public FormatContext setWidth(int newWidth) {
     // Validate the new width before creating the new instance.
     checkWidth(newWidth);
-    return new FormatContext(EnumSet.copyOf(flags), newWidth, precision, dateTimeFormatter);
+    return new FormatContext(flags, newWidth, precision, dateTimeFormatter);
+  }
+
+  /**
+   * Resolves dynamic fields in one immutable context, preserving this context's flags and date
+   * format. Negative dynamic width means left alignment; negative dynamic precision means
+   * unspecified.
+   *
+   * @param resolvedWidth the width argument, or the existing width for a static field
+   * @param resolvedPrecision the precision argument, or the existing precision for a static field
+   * @return a context containing the resolved fields
+   * @throws PrintfException if either field exceeds the supported range
+   */
+  public FormatContext resolve(int resolvedWidth, int resolvedPrecision) {
+    EnumSet<Flag> resolvedFlags = flags;
+    if (isPrecedingWidth() && resolvedWidth < 0) {
+      if (resolvedWidth == Integer.MIN_VALUE) {
+        throw new PrintfException(
+            "Width magnitude exceeds the maximum allowed value of %s", MAX_WIDTH_OR_PRECISION);
+      }
+      resolvedWidth = -resolvedWidth;
+      resolvedFlags = EnumSet.copyOf(flags);
+      resolvedFlags.add(Flag.LEFT_JUSTIFY);
+    }
+    if (isPrecedingPrecision() && resolvedPrecision < 0) {
+      resolvedPrecision = UNSET;
+    }
+    checkWidth(resolvedWidth);
+    checkPrecision(resolvedPrecision);
+    return new FormatContext(resolvedFlags, resolvedWidth, resolvedPrecision, dateTimeFormatter);
   }
 
   public boolean isWidthSet() {
@@ -93,7 +122,7 @@ public final class FormatContext implements Serializable {
   public FormatContext setPrecision(int newPrecision) {
     // Validate the new precision before creating the new instance.
     checkPrecision(newPrecision);
-    return new FormatContext(EnumSet.copyOf(flags), width, newPrecision, dateTimeFormatter);
+    return new FormatContext(flags, width, newPrecision, dateTimeFormatter);
   }
 
   public boolean isPrecisionSet() {

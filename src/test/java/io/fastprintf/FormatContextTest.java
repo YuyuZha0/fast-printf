@@ -8,6 +8,83 @@ import org.junit.Test;
 
 public class FormatContextTest {
 
+  @Test
+  public void resolveDynamicFieldsPreservesOriginalContext() {
+    DateTimeFormatter dateFormat = DateTimeFormatter.ISO_DATE;
+    FormatContext original =
+        FormatContext.create(
+            EnumSet.of(Flag.PLUS), FormatContext.PRECEDING, FormatContext.PRECEDING, dateFormat);
+    FormatContext positive = original.resolve(12, 3);
+    assertEquals(12, positive.getWidth());
+    assertEquals(3, positive.getPrecision());
+    assertTrue(positive.hasFlag(Flag.PLUS));
+    assertFalse(positive.hasFlag(Flag.LEFT_JUSTIFY));
+    assertSame(dateFormat, positive.getDateTimeFormatter());
+
+    FormatContext negative = original.resolve(-12, -2);
+    assertEquals(12, negative.getWidth());
+    assertEquals(FormatContext.UNSET, negative.getPrecision());
+    assertTrue(negative.hasFlag(Flag.LEFT_JUSTIFY));
+    assertTrue(negative.hasFlag(Flag.PLUS));
+    assertSame(dateFormat, negative.getDateTimeFormatter());
+    assertEquals(FormatContext.PRECEDING, original.getWidth());
+    assertEquals(FormatContext.PRECEDING, original.getPrecision());
+    assertFalse(original.hasFlag(Flag.LEFT_JUSTIFY));
+    assertFalse(positive.hasFlag(Flag.LEFT_JUSTIFY));
+    negative.getFlags().clear();
+    assertTrue(negative.hasFlag(Flag.PLUS));
+  }
+
+  @Test
+  public void resolveHandlesZeroLimitsAndNegativePrecision() {
+    FormatContext dynamic =
+        FormatContext.create("", FormatContext.PRECEDING, FormatContext.PRECEDING);
+    FormatContext zero = dynamic.resolve(0, 0);
+    assertEquals(0, zero.getWidth());
+    assertEquals(0, zero.getPrecision());
+    assertFalse(zero.hasFlag(Flag.LEFT_JUSTIFY));
+    assertEquals(65536, dynamic.resolve(65536, 65536).getWidth());
+    assertEquals(65536, dynamic.resolve(-65536, 65536).getPrecision());
+    assertTrue(dynamic.resolve(-65536, 0).hasFlag(Flag.LEFT_JUSTIFY));
+    for (int precision : new int[] {-1, -10, Integer.MIN_VALUE}) {
+      assertEquals(FormatContext.UNSET, dynamic.resolve(1, precision).getPrecision());
+    }
+  }
+
+  @Test
+  public void resolveRejectsOutOfRangeDynamicFields() {
+    FormatContext dynamic =
+        FormatContext.create("", FormatContext.PRECEDING, FormatContext.PRECEDING);
+    for (int width : new int[] {Integer.MIN_VALUE, -65537, 65537, Integer.MAX_VALUE}) {
+      assertThrows(PrintfException.class, () -> dynamic.resolve(width, 0));
+    }
+    assertThrows(PrintfException.class, () -> dynamic.resolve(1, 65537));
+    assertThrows(PrintfException.class, () -> dynamic.resolve(1, Integer.MAX_VALUE));
+  }
+
+  @Test
+  public void resolvePreservesStaticFieldsAndIndependentFlags() {
+    FormatContext dynamicWidth = FormatContext.create("0", FormatContext.PRECEDING, 4);
+    FormatContext width = dynamicWidth.resolve(-12, dynamicWidth.getPrecision());
+    assertEquals(4, width.getPrecision());
+    assertTrue(width.hasFlag(Flag.ZERO_PAD));
+    assertTrue(width.hasFlag(Flag.LEFT_JUSTIFY));
+    assertFalse(dynamicWidth.hasFlag(Flag.LEFT_JUSTIFY));
+
+    FormatContext dynamicPrecision = FormatContext.create("-", 12, FormatContext.PRECEDING);
+    FormatContext precision = dynamicPrecision.resolve(dynamicPrecision.getWidth(), 3);
+    assertEquals(12, precision.getWidth());
+    assertEquals(3, precision.getPrecision());
+    assertTrue(precision.hasFlag(Flag.LEFT_JUSTIFY));
+
+    FormatContext unset = FormatContext.create("");
+    FormatContext copy = unset.resolve(unset.getWidth(), unset.getPrecision());
+    assertFalse(copy.isWidthSet());
+    assertFalse(copy.isPrecisionSet());
+    copy.addFlag(Flag.PLUS);
+    assertFalse(unset.hasFlag(Flag.PLUS));
+  }
+
   private static final int MAX_ALLOWED = 65536;
 
   // --- Creation and Validation Tests ---

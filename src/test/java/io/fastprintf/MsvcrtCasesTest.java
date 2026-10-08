@@ -1,11 +1,10 @@
 package io.fastprintf;
 
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 import java.io.StringWriter;
 import java.io.Writer;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
 // https://github.com/BartMassey/printf-tests/blob/master/sources/tests-msvcrt-printf.c
 public class MsvcrtCasesTest {
@@ -29,7 +28,8 @@ public class MsvcrtCasesTest {
     assertFormatResult("%+#23.15e", " +7.894561230000000e+08", pnumber);
     assertFormatResult("%-#23.15e", "7.894561230000000e+08  ", pnumber);
     assertFormatResult("%#23.15e", "  7.894561230000000e+08", pnumber);
-    assertFormatResult("%#1.1g", "8e+08", pnumber);
+    // Alternate form retains the decimal point, including precision one.
+    assertFormatResult("%#1.1g", "8.e+08", pnumber);
     assertFormatResult("% d", " 1", 1);
     assertFormatResult("%+d", "+1", 1);
     assertFormatResult("% +d", "+1", 1);

@@ -25,145 +25,132 @@ public final class SeqFormatter {
     throw new IllegalStateException();
   }
 
-  private static int width(FormatContext context) {
-    return context.isWidthSet() ? context.getWidth() : 0;
+  private static int precision(FormatContext context, int defaultValue) {
+    return context.isPrecisionSet() ? context.getPrecision() : defaultValue;
   }
 
-  private static Seq spaceJustify(FormatContext context, Seq v0) {
-    int width = width(context);
-    int len = v0.length();
-    if (width > len) {
-      Seq pad = Seq.repeated(' ', width - len);
-      if (context.hasFlag(Flag.LEFT_JUSTIFY)) {
-        v0 = v0.append(pad);
-      } else {
-        v0 = v0.prepend(pad);
-      }
+  private static Seq spaceJustify(FormatContext context, Seq value) {
+    int padding = context.getWidth() - value.length();
+    if (padding <= 0) {
+      return value;
     }
-    return v0;
+    Seq spaces = Seq.repeated(' ', padding);
+    return context.hasFlag(Flag.LEFT_JUSTIFY) ? value.append(spaces) : value.prepend(spaces);
   }
 
-  private static Seq sign(FormatContext context, Seq v0, boolean negative) {
-    if (negative) {
-      v0 = v0.prepend(Seq.ch('-'));
-    } else if (context.hasFlag(Flag.PLUS)) {
-      v0 = v0.prepend(Seq.ch('+'));
-    } else if (context.hasFlag(Flag.LEADING_SPACE)) {
-      v0 = v0.prepend(Seq.ch(' '));
-    }
-    return v0;
+  private static char sign(FormatContext context, boolean negative) {
+    if (negative) return '-';
+    if (context.hasFlag(Flag.PLUS)) return '+';
+    if (context.hasFlag(Flag.LEADING_SPACE)) return ' ';
+    return 0;
   }
 
-  private static Seq signAndJustify(FormatContext context, Seq v0, boolean negative) {
-    if (!context.hasFlag(Flag.ZERO_PAD) || context.hasFlag(Flag.LEFT_JUSTIFY)) {
-      return spaceJustify(context, sign(context, v0, negative));
+  private static Seq signed(Seq value, char sign) {
+    return sign == 0 ? value : value.prepend(Seq.ch(sign));
+  }
+
+  /** Orders every numeric field as spaces, sign/base prefix, zeros, digits, trailing spaces. */
+  private static Seq number(
+      FormatContext context,
+      Seq digits,
+      char sign,
+      String prefix,
+      int minimumDigits,
+      boolean allowZeroPadding) {
+    int zeros = minimumDigits - digits.length();
+    if (allowZeroPadding && context.hasFlag(Flag.ZERO_PAD) && !context.hasFlag(Flag.LEFT_JUSTIFY)) {
+      zeros =
+          Math.max(
+              zeros, context.getWidth() - prefix.length() - (sign == 0 ? 0 : 1) - digits.length());
     }
-    int width = width(context);
-    if (negative || context.hasFlag(Flag.PLUS) || context.hasFlag(Flag.LEADING_SPACE)) {
-      --width;
+    if (zeros > 0) {
+      digits = digits.prepend(Seq.repeated('0', zeros));
     }
-    int len = v0.length();
-    if (width > len) {
-      Seq pad = Seq.repeated('0', width - len);
-      v0 = v0.prepend(pad);
+    if (!prefix.isEmpty()) {
+      digits = digits.prepend(Seq.wrap(prefix));
     }
-    return sign(context, v0, negative);
+    return spaceJustify(context, signed(digits, sign));
+  }
+
+  private static Seq signAndJustify(FormatContext context, Seq digits, boolean negative) {
+    return number(context, digits, sign(context, negative), "", 0, true);
   }
 
   static Seq d(FormatContext context, IntForm value) {
     int signum = value.signum();
-    if (signum == 0 && context.getPrecision() == 0) {
-      Seq v0 = context.hasFlag(Flag.PLUS) ? Seq.ch('+') : Seq.empty();
-      return spaceJustify(context, v0);
-    }
-    Seq v0 = Seq.wrap(value.toDecimalString());
-    int precision = 1;
-    if (context.isPrecisionSet()) {
-      precision = context.getPrecision();
-    } else if (context.hasFlag(Flag.ZERO_PAD)
-        && context.isWidthSet()
-        && !context.hasFlag(Flag.LEFT_JUSTIFY)) {
-      precision = context.getWidth();
-      if (signum < 0 || context.hasFlag(Flag.PLUS) || context.hasFlag(Flag.LEADING_SPACE)) {
-        --precision;
-      }
-    }
-    if (precision > v0.length()) {
-      Seq pad = Seq.repeated('0', precision - v0.length());
-      v0 = v0.prepend(pad);
-    }
-    v0 = sign(context, v0, signum < 0);
-    return spaceJustify(context, v0);
+    Seq digits =
+        signum == 0 && context.getPrecision() == 0
+            ? Seq.empty()
+            : Seq.wrap(value.toDecimalString());
+    return number(
+        context,
+        digits,
+        sign(context, signum < 0),
+        "",
+        precision(context, 1),
+        !context.isPrecisionSet());
   }
 
   static Seq o(FormatContext context, IntForm value) {
-    return formatUnsignedInteger(context, value, IntForm::toOctalString, "0");
+    Seq digits = integerDigits(context, value, IntForm::toOctalString);
+    int minimumDigits = precision(context, 1);
+    // Octal '#' is a precision requirement, not a separate prefix. Even %#.0o prints zero.
+    if (context.hasFlag(Flag.ALTERNATE) && (digits.isEmpty() || digits.charAt(0) != '0')) {
+      minimumDigits = Math.max(minimumDigits, digits.length() + 1);
+    }
+    return number(context, digits, (char) 0, "", minimumDigits, !context.isPrecisionSet());
   }
 
   static Seq x(FormatContext context, IntForm value) {
-    return formatUnsignedInteger(context, value, IntForm::toHexString, "0x");
+    return x(context, value, false);
+  }
+
+  static Seq x(FormatContext context, IntForm value, boolean uppercase) {
+    Seq digits = integerDigits(context, value, IntForm::toHexString);
+    if (uppercase) digits = digits.upperCase();
+    String prefix =
+        context.hasFlag(Flag.ALTERNATE) && value.signum() != 0 ? (uppercase ? "0X" : "0x") : "";
+    return number(
+        context, digits, (char) 0, prefix, precision(context, 1), !context.isPrecisionSet());
   }
 
   static Seq u(FormatContext context, IntForm value) {
-    return formatUnsignedInteger(context, value, IntForm::toUnsignedDecimalString, "");
+    return number(
+        context,
+        integerDigits(context, value, IntForm::toUnsignedDecimalString),
+        (char) 0,
+        "",
+        precision(context, 1),
+        !context.isPrecisionSet());
   }
 
-  private static Seq formatUnsignedInteger(
-      FormatContext context, IntForm value, Function<IntForm, String> toString, String prefix) {
-    int signum = value.signum();
-    if (signum == 0 && context.getPrecision() == 0) {
-      return spaceJustify(context, Seq.empty());
-    }
-    Seq v0 = Seq.wrap(toString.apply(value));
-    int precision = 1;
-    if (context.isPrecisionSet()) {
-      precision = context.getPrecision();
-      if (context.hasFlag(Flag.ALTERNATE) && "0".equals(prefix)) {
-        --precision;
-      }
-    } else if (context.hasFlag(Flag.ZERO_PAD)
-        && context.isWidthSet()
-        && !context.hasFlag(Flag.LEFT_JUSTIFY)) {
-      precision = context.getWidth();
-      if (context.hasFlag(Flag.ALTERNATE)) {
-        precision -= prefix.length();
-      }
-    }
-    if (precision > v0.length()) {
-      Seq pad = Seq.repeated('0', precision - v0.length());
-      v0 = v0.prepend(pad);
-    }
-    if (signum != 0 && context.hasFlag(Flag.ALTERNATE)) {
-      v0 = v0.prepend(Seq.wrap(prefix));
-    }
-    return spaceJustify(context, v0);
+  private static Seq integerDigits(
+      FormatContext context, IntForm value, Function<IntForm, String> convert) {
+    return value.signum() == 0 && context.getPrecision() == 0
+        ? Seq.empty()
+        : Seq.wrap(convert.apply(value));
   }
 
-  private static Seq nanOrInfinity(FormatContext context, FloatForm value) {
-    Seq v0;
-    if (value.isNaN()) {
-      v0 = Seq.wrap("NaN");
-    } else {
-      boolean neg = value.signum() < 0;
-      if (neg) {
-        v0 = Seq.wrap("-Infinity");
-      } else if (context.hasFlag(Flag.PLUS)) {
-        v0 = Seq.wrap("+Infinity");
-      } else {
-        v0 = Seq.wrap("Infinity");
-      }
+  private static Seq nanOrInfinity(FormatContext context, FloatForm value, boolean uppercase) {
+    Seq text =
+        Seq.wrap(
+            value.isNaN() ? (uppercase ? "NAN" : "NaN") : (uppercase ? "INFINITY" : "Infinity"));
+    if (!value.isNaN()) {
+      text = signed(text, sign(context, value.isNegative()));
     }
-    return spaceJustify(context, v0);
+    // Non-finite values use spaces even when zero padding was requested.
+    return spaceJustify(context, text);
   }
 
   static Seq f(FormatContext context, FloatForm value) {
+    return f(context, value, false);
+  }
+
+  static Seq f(FormatContext context, FloatForm value, boolean uppercase) {
     if (value.isNaN() || value.isInfinite()) {
-      return nanOrInfinity(context, value);
+      return nanOrInfinity(context, value, uppercase);
     }
-    int precision = 6;
-    if (context.isPrecisionSet()) {
-      precision = context.getPrecision();
-    }
+    int precision = precision(context, 6);
     FloatLayout layout = value.decimalLayout(precision);
     Seq mantissa =
         formatFractionalPart(layout.getMantissa(), precision, context.hasFlag(Flag.ALTERNATE));
@@ -192,16 +179,17 @@ public final class SeqFormatter {
   }
 
   static Seq e(FormatContext context, FloatForm value) {
+    return e(context, value, false);
+  }
+
+  static Seq e(FormatContext context, FloatForm value, boolean uppercase) {
     if (value.isNaN() || value.isInfinite()) {
-      return nanOrInfinity(context, value);
+      return nanOrInfinity(context, value, uppercase);
     }
-    int precision = 6;
-    if (context.isPrecisionSet()) {
-      precision = context.getPrecision();
-    }
+    int precision = precision(context, 6);
     FloatLayout layout = value.scientificLayout(precision);
     Seq v0 = formatFractionalPart(layout.getMantissa(), precision, context.hasFlag(Flag.ALTERNATE));
-    v0 = v0.append(Seq.ch('e'));
+    v0 = v0.append(Seq.ch(uppercase ? 'E' : 'e'));
     v0 = v0.append(layout.getExponent());
     return signAndJustify(context, v0, value.isNegative());
   }
@@ -229,23 +217,21 @@ public final class SeqFormatter {
 
   /** Helper for %#g that pads with trailing zeros to meet the specified precision. */
   private static Seq padToPrecision(Seq mantissa, int precision) {
-    // Count existing significant digits
-    int sigDigits = 0;
-    boolean nonZeroSeen = false;
-    for (int i = 0; i < mantissa.length(); i++) {
-      char c = mantissa.charAt(i);
-      if (c >= '1' && c <= '9') nonZeroSeen = true;
-      if (nonZeroSeen && c != '.') sigDigits++;
+    int length = mantissa.length();
+    int dot = mantissa.indexOf('.');
+    int firstSignificant = 0;
+    // Only leading zeros need inspection. Avoid a charAt traversal for every digit of a rope.
+    while (firstSignificant < length) {
+      char digit = mantissa.charAt(firstSignificant);
+      if (digit != '0' && digit != '.') break;
+      firstSignificant++;
     }
-    // Handle "0" or "0.0" which have one significant digit
-    if (!nonZeroSeen && mantissa.indexOf('0') != -1) {
-      sigDigits = 1;
-    }
-
-    int zerosToPad = precision - sigDigits;
-
-    // Ensure decimal point exists
-    if (mantissa.indexOf('.') == -1) {
+    int significantDigits =
+        firstSignificant == length
+            ? 1
+            : length - firstSignificant - (dot >= firstSignificant ? 1 : 0);
+    int zerosToPad = precision - significantDigits;
+    if (dot == Seq.INDEX_NOT_FOUND) {
       mantissa = mantissa.append(Seq.ch('.'));
     }
 
@@ -255,86 +241,45 @@ public final class SeqFormatter {
     return mantissa;
   }
 
-  /** Formats the mantissa for %g when it chooses decimal representation. */
-  private static Seq formatGDecimal(FormatContext context, FloatLayout layout, int precision) {
-    if (context.hasFlag(Flag.ALTERNATE)) {
-      return padToPrecision(layout.getMantissa(), precision);
-    } else {
-      return stripTrailingZeros(layout.getMantissa());
-    }
-  }
-
-  /** Formats the mantissa and exponent for %g when it chooses scientific representation. */
-  private static Seq formatGScientific(FormatContext context, FloatLayout layout) {
-    Seq mantissa = layout.getMantissa();
-    if (!context.hasFlag(Flag.ALTERNATE)) {
-      mantissa = stripTrailingZeros(mantissa);
-    }
-    return mantissa.append(Seq.ch('e')).append(layout.getExponent());
-  }
-
   static Seq g(FormatContext context, FloatForm value) {
+    return g(context, value, false);
+  }
+
+  static Seq g(FormatContext context, FloatForm value, boolean uppercase) {
     if (value.isNaN() || value.isInfinite()) {
-      return nanOrInfinity(context, value);
+      return nanOrInfinity(context, value, uppercase);
     }
-
-    int precision = 6;
-    if (context.isPrecisionSet()) {
-      precision = context.getPrecision();
-      if (precision == 0) {
-        precision = 1;
-      }
-    }
-
+    int precision = Math.max(1, precision(context, 6));
     FloatLayout layout = value.generalLayout(precision);
-    Seq v0;
-
-    if (layout.getExponent() == null) {
-      // Use decimal ('f'-style) representation
-      v0 = formatGDecimal(context, layout, precision);
-    } else {
-      // Use scientific ('e'-style) representation
-      v0 = formatGScientific(context, layout);
+    Seq mantissa =
+        context.hasFlag(Flag.ALTERNATE)
+            ? padToPrecision(layout.getMantissa(), precision)
+            : stripTrailingZeros(layout.getMantissa());
+    if (layout.getExponent() != null) {
+      mantissa = mantissa.append(Seq.ch(uppercase ? 'E' : 'e')).append(layout.getExponent());
     }
-
-    return signAndJustify(context, v0, value.isNegative());
+    return signAndJustify(context, mantissa, value.isNegative());
   }
 
   static Seq a(FormatContext context, FloatForm value) {
+    return a(context, value, false);
+  }
+
+  static Seq a(FormatContext context, FloatForm value, boolean uppercase) {
     if (value.isNaN() || value.isInfinite()) {
-      return nanOrInfinity(context, value);
+      return nanOrInfinity(context, value, uppercase);
     }
-    int precision =
-        13; // Use 13 to let double to fallback to simpleHexLayout for full precision, and safe for
-    // BigDecimal
+    // Keep the established Java-compatible convention: %.0a uses one fractional digit.
+    int precision = Math.max(1, precision(context, 13));
+    FloatLayout layout = value.hexLayout(precision);
+    Seq mantissa = layout.getMantissa();
+    if (uppercase) mantissa = mantissa.upperCase();
     if (context.isPrecisionSet()) {
-      precision = context.getPrecision();
-      if (precision == 0) { // Special case: follow the exact behavior of Java's Formatter
-        precision = 1;
-      }
+      mantissa = formatFractionalPart(mantissa, precision, context.hasFlag(Flag.ALTERNATE));
     }
-    FloatLayout layout = value.hexLayout(precision); // Use 0 to get full precision
-    Seq v0 = layout.getMantissa();
-    if (context.isPrecisionSet()) {
-      v0 = formatFractionalPart(v0, precision, context.hasFlag(Flag.ALTERNATE));
-    }
-    v0 = v0.append(Seq.ch('p')).append(layout.getExponent());
-    int signum = value.signum();
-    if (context.hasFlag(Flag.ZERO_PAD) && !context.hasFlag(Flag.LEFT_JUSTIFY)) {
-      int width = context.getWidth() - 2;
-      if (signum < 0 || context.hasFlag(Flag.PLUS) || context.hasFlag(Flag.LEADING_SPACE)) {
-        --width;
-      }
-      int len = v0.length();
-      if (width > len) {
-        v0 = Seq.repeated('0', width - len).append(v0);
-      }
-      v0 = v0.prepend(Seq.wrap("0x"));
-      return sign(context, v0, signum < 0);
-    }
-    v0 = v0.prepend(Seq.wrap("0x"));
-    v0 = sign(context, v0, signum < 0);
-    return spaceJustify(context, v0);
+    Seq digits = mantissa.append(Seq.ch(uppercase ? 'P' : 'p')).append(layout.getExponent());
+    return number(
+        context, digits, sign(context, value.isNegative()), uppercase ? "0X" : "0x", 0, true);
   }
 
   static Seq c(FormatContext context, FormatTraits value) {
@@ -357,18 +302,14 @@ public final class SeqFormatter {
     }
     Object value = slot.get();
 
-    // 2. Handle the null case explicitly
     if (value == null) {
-      // The formatter decides on the representation for null, e.g., glibc's "(nil)"
       return spaceJustify(context, Seq.wrap("null"));
     }
 
-    // 3. Perform all formatting logic here
     Seq seq = Seq.wrap(Integer.toHexString(System.identityHashCode(value)));
     seq = seq.prepend(Seq.ch('@'));
     seq = seq.prepend(Seq.wrap(value.getClass().getName()));
 
-    // 4. Apply justification
     return spaceJustify(context, seq);
   }
 

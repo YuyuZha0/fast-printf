@@ -8,7 +8,7 @@
     <description>Fast printf for Java</description>
     <groupId>io.github.yuyuzha0</groupId>
     <artifactId>fast-printf</artifactId>
-    <version>1.2.13</version>
+    <version>1.2.14</version>
 
     <properties>
         <!-- Global compiler settings for safety -->
@@ -178,6 +178,64 @@
                 </plugins>
             </build>
         </profile>
+        <!-- JDK 21 is the canonical coverage runtime; older JDKs exercise different fallbacks. -->
+        <profile>
+            <id>coverage-check</id>
+            <activation><jdk>[21,22)</jdk></activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>jacoco-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>coverage-check</id>
+                                <goals><goal>check</goal></goals>
+                                <configuration>
+                                    <rules>
+                                        <rule>
+                                            <element>BUNDLE</element>
+                                            <limits>
+                                                <limit>
+                                                    <counter>LINE</counter>
+                                                    <value>COVEREDRATIO</value>
+                                                    <minimum>0.9817</minimum>
+                                                </limit>
+                                                <limit>
+                                                    <counter>BRANCH</counter>
+                                                    <value>COVEREDRATIO</value>
+                                                    <minimum>0.9458</minimum>
+                                                </limit>
+                                                <limit>
+                                                    <counter>INSTRUCTION</counter>
+                                                    <value>COVEREDRATIO</value>
+                                                    <minimum>0.9834</minimum>
+                                                </limit>
+                                            </limits>
+                                        </rule>
+                                    </rules>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <configuration>
+                            <autoPublish>true</autoPublish>
+                            <waitUntil>published</waitUntil>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
     <build>
@@ -208,7 +266,7 @@
                         </goals>
                         <configuration>
                             <keyname>${gpg.keyname}</keyname>
-                            <passphraseServerId>${gpg.keyname}</passphraseServerId>
+                            <passphraseServerId>gpg.passphrase</passphraseServerId>
                             <gpgArguments>
                                 <arg>--pinentry-mode</arg>
                                 <arg>loopback</arg>

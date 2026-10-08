@@ -31,6 +31,9 @@ public final class BigDecimalWrapper implements FloatForm {
   }
 
   private static FloatLayout scientificLayout0(BigDecimal value) {
+    if (value.signum() == 0) {
+      return new FloatLayout(Seq.ch('0'), Seq.wrap("+00"));
+    }
     BigInteger unscaledValue = value.unscaledValue();
     int scale = value.scale();
     String unscaledString = unscaledValue.toString();
@@ -112,28 +115,15 @@ public final class BigDecimalWrapper implements FloatForm {
 
   @Override
   public FloatLayout generalLayout(int precision) {
-    BigDecimal tenToTheNegFour = BigDecimal.valueOf(1, 4);
-    BigDecimal tenToThePrec = BigDecimal.valueOf(1, -precision);
-    if ((value.equals(BigDecimal.ZERO))
-        || ((value.compareTo(tenToTheNegFour) >= 0) && (value.compareTo(tenToThePrec) < 0))) {
-
-      int e = -value.scale() + (value.unscaledValue().toString().length() - 1);
-
-      // xxx.yyy
-      //   g precision (# sig digits) = #x + #y
-      //   f precision = #y
-      //   exponent = #x - 1
-      // => f precision = g precision - exponent - 1
-      // 0.000zzz
-      //   g precision (# sig digits) = #z
-      //   f precision = #0 (after '.') + #z
-      //   exponent = - #0 (after '.') - 1
-      // => f precision = g precision - exponent - 1
-      precision = precision - e - 1;
-      return decimalLayout(precision);
-    } else {
-      return scientificLayout(precision - 1);
+    if (signum == 0) {
+      return new FloatLayout(Seq.ch('0'), null);
     }
+    // %g selects its notation using the exponent AFTER rounding to significant digits.
+    BigDecimal rounded = value.round(new MathContext(precision, RoundingMode.HALF_UP));
+    long exponent = (long) rounded.precision() - rounded.scale() - 1;
+    return exponent >= -4 && exponent < precision
+        ? decimalLayout0(rounded)
+        : scientificLayout0(rounded);
   }
 
   @Override

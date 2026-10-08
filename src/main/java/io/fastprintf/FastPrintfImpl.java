@@ -9,7 +9,6 @@ import java.io.UncheckedIOException;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.function.Consumer;
-import java.util.function.IntFunction;
 
 /** GRAMMAR: %[flags][width][.precision]specifier */
 final class FastPrintfImpl implements FastPrintf {
@@ -18,50 +17,29 @@ final class FastPrintfImpl implements FastPrintf {
 
   private final Appender[] appenders;
   private final int stringBuilderInitialCapacity;
-  private final ThreadLocal<StringBuilder> threadLocalBuilder;
-  private final IntFunction<StringBuilder> stringBuilderFactory;
+  private final ThreadLocal<CachedBuilder> threadLocalBuilder;
 
   private FastPrintfImpl(
       Appender[] appenders, int stringBuilderInitialCapacity, boolean enableThreadLocalCache) {
     this.appenders = appenders;
     this.stringBuilderInitialCapacity = stringBuilderInitialCapacity;
-    if (enableThreadLocalCache) {
-      // Initialize with a default-sized builder to avoid startup costs for every thread.
-      // The user's initial capacity will be applied on the first format call.
-      this.threadLocalBuilder = ThreadLocal.withInitial(StringBuilder::new);
+    this.threadLocalBuilder =
+        enableThreadLocalCache ? ThreadLocal.withInitial(CachedBuilder::new) : null;
+  }
 
-      this.stringBuilderFactory =
-          requiredCapacity -> {
-            StringBuilder builder = threadLocalBuilder.get();
-            int currentCapacity = builder.capacity();
+  private static final class CachedBuilder {
+    private StringBuilder builder = new StringBuilder();
+    private boolean inUse;
 
-            // This is the core logic:
-            // We only reset the builder if it has grown unnecessarily large.
-            // "Unnecessarily large" means:
-            // 1. Its current capacity exceeds our maximum retention limit.
-            // AND
-            // 2. The capacity required for THIS specific call is within that limit.
-            // This prevents churn when the user intentionally sets a large initial capacity.
-            if (currentCapacity > STRING_BUILDER_MAX_RETAINED_CAPACITY
-                && requiredCapacity <= STRING_BUILDER_MAX_RETAINED_CAPACITY) {
-
-              // The buffer is too big and we don't need it this time.
-              // Create a new, reasonably-sized builder and replace the old one.
-              builder = new StringBuilder(requiredCapacity);
-              threadLocalBuilder.set(builder);
-
-            } else {
-              // In all other cases, we reuse the existing builder:
-              // - If it's within the size limit.
-              // - If it's large, but the user is asking for a large buffer anyway (avoids churn).
-              builder.setLength(0);
-              builder.ensureCapacity(requiredCapacity);
-            }
-            return builder;
-          };
-    } else {
-      this.threadLocalBuilder = null;
-      this.stringBuilderFactory = StringBuilder::new;
+    private StringBuilder acquire(int requiredCapacity) {
+      if (builder.capacity() > STRING_BUILDER_MAX_RETAINED_CAPACITY
+          && requiredCapacity <= STRING_BUILDER_MAX_RETAINED_CAPACITY) {
+        builder = new StringBuilder(requiredCapacity);
+      } else {
+        builder.setLength(0);
+        builder.ensureCapacity(requiredCapacity);
+      }
+      return builder;
     }
   }
 
@@ -79,15 +57,26 @@ final class FastPrintfImpl implements FastPrintf {
   @Override
   public String format(Args args) {
     Preconditions.checkNotNull(args, "args");
-    Iterator<FormatTraits> iterator = args.iterator();
-    StringBuilder builder = stringBuilderFactory.apply(stringBuilderInitialCapacity);
-    // OPTIMIZATION: Create the consumer ONCE.
-    // This reduces allocation from O(N) to O(1) where N is the number of appenders.
-    Consumer<Seq> consumer = seq -> seq.appendTo(builder);
-    for (Appender appender : appenders) {
-      appender.append(consumer, iterator);
+    CachedBuilder cached = threadLocalBuilder == null ? null : threadLocalBuilder.get();
+    // Object.toString() and custom traits can call the same formatter recursively.
+    boolean reuse = cached != null && !cached.inUse;
+    StringBuilder builder =
+        reuse
+            ? cached.acquire(stringBuilderInitialCapacity)
+            : new StringBuilder(stringBuilderInitialCapacity);
+    if (reuse) cached.inUse = true;
+    try {
+      // Keep this loop local: forwarding to the Appendable overload added 24 B/op in the
+      // JDK 21 integer benchmark.
+      Iterator<FormatTraits> iterator = args.iterator();
+      Consumer<Seq> consumer = seq -> seq.appendTo(builder);
+      for (Appender appender : appenders) {
+        appender.append(consumer, iterator);
+      }
+      return builder.toString();
+    } finally {
+      if (reuse) cached.inUse = false;
     }
-    return builder.toString();
   }
 
   @Override
