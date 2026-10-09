@@ -14,7 +14,9 @@ import java.math.BigDecimal;
  *
  * <p>Each layout method returns a {@link FloatLayout} object, which contains the decomposed
  * mantissa and exponent parts ready for rendering. This abstraction is key to the library's
- * performance for specifiers like {@code %f}, {@code %e}, {@code %g}, and {@code %a}.
+ * performance for specifiers like {@code %f}, {@code %e}, {@code %g}, and {@code %a}. Layout
+ * methods require finite values; callers must handle NaN, infinity and signs separately. This
+ * internal precondition is not checked by the layout methods.
  *
  * @see NumberForm
  * @see FloatLayout

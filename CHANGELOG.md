@@ -21,6 +21,8 @@
 - Reject `Integer.MIN_VALUE` dynamic width instead of overflowing when taking its magnitude.
 - Honor the space sign flag for positive infinity.
 - Protect cached builders from recursive formatting and release them after exceptions.
+- Document the finite-value precondition for internal numeric layouts and verify special-value
+  handling at the formatting entry point. Strengthen floating-point tests with exact comparisons.
 
 The existing `NaN`/`Infinity` spelling, ASCII uppercase behavior, and Java-compatible `%.0a`
 precision convention remain unchanged. Corrected edge-case output can differ from 1.2.13.
