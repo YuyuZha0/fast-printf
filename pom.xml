@@ -237,7 +237,7 @@
                         <artifactId>central-publishing-maven-plugin</artifactId>
                         <configuration>
                             <autoPublish>true</autoPublish>
-                            <waitUntil>published</waitUntil>
+                            <waitUntil>uploaded</waitUntil>
                         </configuration>
                     </plugin>
                 </plugins>
