@@ -3,9 +3,12 @@ package io.fastprintf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 
+import java.io.IOException;
 import java.io.StringWriter;
+import java.io.UncheckedIOException;
 import org.junit.Test;
 
 public class FastPrintfImplTest {
@@ -47,6 +50,35 @@ public class FastPrintfImplTest {
     writer.write("Existing ");
     formatter.format(writer, Args.of("data"));
     assertEquals("Existing -> data", writer.toString());
+  }
+
+  @Test
+  public void format_toFailingAppendable_shouldPreserveIOExceptionCause() {
+    IOException cause = new IOException("Destination is closed");
+    Appendable destination =
+        new Appendable() {
+          @Override
+          public Appendable append(CharSequence value) throws IOException {
+            throw cause;
+          }
+
+          @Override
+          public Appendable append(CharSequence value, int start, int end) throws IOException {
+            throw cause;
+          }
+
+          @Override
+          public Appendable append(char value) throws IOException {
+            throw cause;
+          }
+        };
+    FastPrintf formatter = FastPrintf.compile("%s");
+
+    UncheckedIOException exception =
+        assertThrows(
+            UncheckedIOException.class, () -> formatter.format(destination, Args.of("data")));
+
+    assertSame(cause, exception.getCause());
   }
 
   @Test(expected = PrintfException.class)

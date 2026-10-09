@@ -27,22 +27,6 @@ final class FastPrintfImpl implements FastPrintf {
         enableThreadLocalCache ? ThreadLocal.withInitial(CachedBuilder::new) : null;
   }
 
-  private static final class CachedBuilder {
-    private StringBuilder builder = new StringBuilder();
-    private boolean inUse;
-
-    private StringBuilder acquire(int requiredCapacity) {
-      if (builder.capacity() > STRING_BUILDER_MAX_RETAINED_CAPACITY
-          && requiredCapacity <= STRING_BUILDER_MAX_RETAINED_CAPACITY) {
-        builder = new StringBuilder(requiredCapacity);
-      } else {
-        builder.setLength(0);
-        builder.ensureCapacity(requiredCapacity);
-      }
-      return builder;
-    }
-  }
-
   static FastPrintfImpl compile(String format) {
     Compiler compiler = new Compiler(format);
     compiler.compile();
@@ -86,21 +70,13 @@ final class FastPrintfImpl implements FastPrintf {
     Iterator<FormatTraits> iterator = args.iterator();
 
     if (builder instanceof StringBuilder) {
-      StringBuilder stringBuilder = (StringBuilder) builder;
-      Consumer<Seq> consumer = seq -> seq.appendTo(stringBuilder);
+      Consumer<Seq> consumer = new BuilderConsumer((StringBuilder) builder);
       for (Appender appender : appenders) {
         appender.append(consumer, iterator);
       }
       return builder;
     }
-    Consumer<Seq> consumer =
-        seq -> {
-          try {
-            seq.appendTo(builder);
-          } catch (IOException e) {
-            throw new UncheckedIOException(e);
-          }
-        };
+    Consumer<Seq> consumer = new AppendableConsumer(builder);
     for (Appender appender : appenders) {
       appender.append(consumer, iterator);
     }
@@ -124,5 +100,53 @@ final class FastPrintfImpl implements FastPrintf {
     }
     return new FastPrintfImpl(
         Arrays.copyOf(appenders, appenders.length), capacity, threadLocalBuilder != null);
+  }
+
+  private static final class CachedBuilder {
+    private StringBuilder builder = new StringBuilder();
+    private boolean inUse;
+
+    private StringBuilder acquire(int requiredCapacity) {
+      if (builder.capacity() > STRING_BUILDER_MAX_RETAINED_CAPACITY
+          && requiredCapacity <= STRING_BUILDER_MAX_RETAINED_CAPACITY) {
+        builder = new StringBuilder(requiredCapacity);
+      } else {
+        builder.setLength(0);
+        builder.ensureCapacity(requiredCapacity);
+      }
+      return builder;
+    }
+  }
+
+  private static final class BuilderConsumer implements Consumer<Seq> {
+
+    private final StringBuilder builder;
+
+    BuilderConsumer(StringBuilder builder) {
+      this.builder = builder;
+    }
+
+    @Override
+    public void accept(Seq seq) {
+      seq.appendTo(builder);
+    }
+  }
+
+  private static final class AppendableConsumer implements Consumer<Seq> {
+
+    private final Appendable appendable;
+
+    AppendableConsumer(Appendable appendable) {
+      this.appendable = appendable;
+    }
+
+    @Override
+    public void accept(Seq seq) {
+      try {
+        seq.appendTo(appendable);
+      } catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+    }
   }
 }
