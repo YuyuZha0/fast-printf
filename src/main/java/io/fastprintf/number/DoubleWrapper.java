@@ -84,8 +84,9 @@ public final class DoubleWrapper implements FloatForm {
   public FloatLayout hexLayout(int prec) {
     // From java.util.Formatter#hexDouble L3440
     double d = value;
-    // Let Double.toHexString handle simple cases
-    if (!Double.isFinite(d) || d == 0.0 || prec == 0 || prec >= 13) {
+    // The caller handles non-finite values before requesting a layout.
+    // Let Double.toHexString handle simple finite cases.
+    if (d == 0.0 || prec == 0 || prec >= 13) {
       return simpleHexLayout(d);
     }
 

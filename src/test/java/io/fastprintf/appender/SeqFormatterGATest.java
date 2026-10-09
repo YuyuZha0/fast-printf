@@ -68,7 +68,8 @@ public class SeqFormatterGATest {
     assertEquals("1.200", formatG("#", -1, 4, 1.2));
     assertEquals("1.", formatG("#", -1, 1, 1.0));
     assertEquals("1.00000", formatG("#", -1, 6, 1.0));
-    assertEquals("1.235e+04", formatG("#", -1, 4, 12345.0)); // In sci notation, '#' doesn't pad
+    assertEquals(
+        "1.235e+04", formatG("#", -1, 4, 12345.0)); // Already has the requested significant digits
   }
 
   @Test

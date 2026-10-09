@@ -16,7 +16,7 @@ public class PrintfExceptionTest {
   @Test
   public void testConstructorWithMessageAndCause() {
     Throwable cause = new IllegalArgumentException("underlying cause");
-    PrintfException ex = new PrintfException("A formatting error occurred", cause);
+    PrintfException ex = new PrintfException(cause, "A formatting error occurred");
     assertEquals("A formatting error occurred", ex.getMessage());
     assertSame(cause, ex.getCause());
   }

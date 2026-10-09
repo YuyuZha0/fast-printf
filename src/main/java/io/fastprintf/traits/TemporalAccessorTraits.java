@@ -35,7 +35,7 @@ public final class TemporalAccessorTraits implements FormatTraits {
     } catch (DateTimeException e) {
       // This will be caught if the TemporalAccessor cannot be converted to an Instant
       // (e.g., LocalDate, LocalDateTime), which is the desired failure behavior.
-      throw new PrintfException("Can't get epoch seconds from: %s", value, e);
+      throw new PrintfException(e, "Can't get epoch seconds from: %s", value);
     }
   }
 
@@ -49,7 +49,7 @@ public final class TemporalAccessorTraits implements FormatTraits {
       // The most robust way to get epoch milliseconds is also via Instant.
       return Instant.from(value).toEpochMilli();
     } catch (DateTimeException e) {
-      throw new PrintfException("Can't get epoch milliseconds from: %s", value, e);
+      throw new PrintfException(e, "Can't get epoch milliseconds from: %s", value);
     }
   }
 
@@ -59,7 +59,7 @@ public final class TemporalAccessorTraits implements FormatTraits {
     try {
       return Instant.from(value).getEpochSecond();
     } catch (DateTimeException e) {
-      throw new PrintfException("Can't get epoch seconds from: %s", value, e);
+      throw new PrintfException(e, "Can't get epoch seconds from: %s", value);
     }
   }
 

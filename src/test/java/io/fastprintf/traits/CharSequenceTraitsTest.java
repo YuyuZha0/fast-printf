@@ -116,6 +116,19 @@ public class CharSequenceTraitsTest {
   }
 
   @Test
+  public void testAsInt_Failure_PreservesCause() {
+    try {
+      new CharSequenceTraits("abc").asInt();
+      fail("Expected PrintfException");
+    } catch (PrintfException ex) {
+      assertTrue(
+          "Cause should be the original NumberFormatException, but was: " + ex.getCause(),
+          ex.getCause() instanceof NumberFormatException);
+      assertEquals("Cannot convert \"abc\" to int", ex.getMessage());
+    }
+  }
+
+  @Test
   public void testAsChar_Success() {
     CharSequenceTraits traits = new CharSequenceTraits("Hello");
     assertEquals('H', traits.asChar());
@@ -141,6 +154,19 @@ public class CharSequenceTraitsTest {
   }
 
   @Test
+  public void testAsIntForm_Failure_PreservesCause() {
+    try {
+      new CharSequenceTraits("not a long").asIntForm();
+      fail("Expected PrintfException");
+    } catch (PrintfException ex) {
+      assertTrue(
+          "Cause should be the original NumberFormatException, but was: " + ex.getCause(),
+          ex.getCause() instanceof NumberFormatException);
+      assertEquals("Cannot convert \"not a long\" to int", ex.getMessage());
+    }
+  }
+
+  @Test
   public void testAsFloatForm_Success() {
     CharSequenceTraits traits = new CharSequenceTraits("123.456");
     assertEquals("123.456", traits.asFloatForm().toString());
@@ -152,6 +178,19 @@ public class CharSequenceTraitsTest {
   @Test(expected = PrintfException.class)
   public void testAsFloatForm_Failure() {
     new CharSequenceTraits("not a double").asFloatForm();
+  }
+
+  @Test
+  public void testAsFloatForm_Failure_PreservesCause() {
+    try {
+      new CharSequenceTraits("not a double").asFloatForm();
+      fail("Expected PrintfException");
+    } catch (PrintfException ex) {
+      assertTrue(
+          "Cause should be the original NumberFormatException, but was: " + ex.getCause(),
+          ex.getCause() instanceof NumberFormatException);
+      assertEquals("Cannot convert \"not a double\" to float", ex.getMessage());
+    }
   }
 
   @Test

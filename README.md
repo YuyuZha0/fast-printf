@@ -8,8 +8,8 @@
 A fast, allocation-light, `glibc`-style `printf` for Java 8+.
 
 **Compile once, format many times.** fast-printf trades a one-time parsing cost for a tight, type-specialised
-formatting loop that's **1.8–6.8× faster than `String.format()`** (depending on JDK) and allocates **~50% less
-garbage** per call. Designed for hot paths — high-throughput logging, text-protocol serialization, real-time systems —
+formatting loop. The 1.2.13 mixed-log benchmark measured **1.8–6.8× faster than `String.format()`**
+(depending on JDK) and **~50% less allocation** per call. See [Performance](#performance) for workload and version details. Designed for hot paths — high-throughput logging, text-protocol serialization, real-time systems —
 where `String.format()` shows up in a profile or GC trace.
 
 ## Contents
@@ -33,7 +33,7 @@ Add the dependency (Maven):
 <dependency>
     <groupId>io.github.yuyuzha0</groupId>
     <artifactId>fast-printf</artifactId>
-    <version>1.2.13</version>
+    <version>1.2.14</version>
 </dependency>
 ```
 
@@ -72,6 +72,15 @@ For everyday formatting where the bytes-per-second don't matter, the standard `S
 
 ## Performance
 
+Version 1.2.14 consolidates numeric layout, resolves dynamic fields once, and avoids uppercasing
+complete numeric ropes. Changes are evaluated with isolated JMH workloads and the mixed-log benchmark.
+Correctness fixes are listed in [the changelog](CHANGELOG.md).
+
+### Historical 1.2.13 comparison with String.format
+
+The following cross-JDK tables describe **1.2.13**, not the current release. They are retained as
+historical measurements and should not be compared directly with results from a different run.
+
 Benchmarked with `CommonUsageBenchmark` (JMH 1.37, `@Fork(2)`, Corretto on a single M-series box). The format string
 `[%s] %s id=%d latency=%.3fms` is a realistic log-line case mixing literal text with `%s`, `%d`, and `%.Nf`; the same
 string is fed to both `FastPrintf.compile(...)` and `String.format(...)` — no per-side translation or workarounds.
@@ -91,16 +100,8 @@ string is fed to both `FastPrintf.compile(...)` and `String.format(...)` — no 
 | **Speedup — varargs vs `String.format`**     | **~6.77×**    | **~4.95×**     | **~4.43×**    | **~1.83×**  |
 | **Speedup — TL cache vs `String.format`**    | **~5.94×**    | **~5.38×**     | **~4.50×**    | **~2.17×**  |
 
-Two things the regression makes obvious:
-
-1. **fast-printf is essentially JDK-version-invariant on the varargs path** (214 → 216 → 200 → 221 ns). The library
-   owns its performance — it doesn't piggy-back on Hotspot improvements.
-2. **`String.format` got 3.6× faster between JDK 8 and JDK 21.** Most of that win is concentrated in the JDK 21
-   `Formatter` rewrite (allocation also drops from 2776 B/op on JDK 17 to 1280 B/op on JDK 21). That alone explains
-   why fast-printf's relative advantage shrinks on modern JDKs — fast-printf didn't slow down, the JDK closed the gap.
-
-The `Args` no-boxing builder is the one fast-printf path that meaningfully improves between JDK 8 and JDK 11
-(326 → 251 ns) — JDK 11+'s better small-method inlining helps its chained calls. After that it plateaus.
+These results describe this workload and JVM configuration. They do not establish the cause of
+cross-JDK differences or predict every application's behavior.
 
 ### Allocation profile (JDK 21)
 
@@ -118,17 +119,14 @@ nanoseconds gap is narrowest, the GC-pressure gap is what carries the win in pro
 
 ### Design notes on the optional paths
 
-**The `Args` builder (no-boxing).** ~18 ns slower per call than varargs in the table above, yet ~15 % fewer bytes
-per op. That's the trade: replace primitive boxing (`Integer.valueOf`, `Double.valueOf`) and the varargs `Object[]`
-with a direct fluent chain at the cost of a few extra method-dispatch hops. In JMH hot loops TLAB allocation is
-nearly free, so varargs looks faster; in sustained-throughput production code the lower allocation rate reduces
-young-gen GC frequency and improves p99 latency. **Pick it when allocation rate is your bottleneck**, not when
-single-call nanoseconds are.
+**The `Args` builder (no-boxing).** Avoids primitive boxing, but still constructs argument traits.
+Its allocation and latency trade-offs depend on the workload and JVM; lower B/op alone does not
+establish better p99 latency.
 
-**`enableThreadLocalCache()`.** Reuses one `StringBuilder.value` `char[]` across calls. In a tight reuse loop (as
-measured above) it's a net win; in code that does meaningful allocation or touches unrelated memory between
-`format()` calls, that cached buffer gets cache-evicted and the path can match or *underperform* the non-cached one.
-See `ComplexFormatLocalityBenchmark` for the locality breakdown. **Benchmark in your own workload before enabling.**
+**`enableThreadLocalCache()`.** Reuses the builder's backing buffer across calls. It supports
+recursive calls from object formatting and releases its in-use state even if formatting fails.
+Reuse can help in tight loops, but performance depends on memory locality. See
+`ComplexFormatLocalityBenchmark` and benchmark your own workload before enabling it.
 
 ## Installation
 
@@ -138,14 +136,14 @@ See `ComplexFormatLocalityBenchmark` for the locality breakdown. **Benchmark in 
 <dependency>
     <groupId>io.github.yuyuzha0</groupId>
     <artifactId>fast-printf</artifactId>
-    <version>1.2.13</version>
+    <version>1.2.14</version>
 </dependency>
 ```
 
 **Gradle:**
 
 ```groovy
-implementation 'io.github.yuyuzha0:fast-printf:1.2.13'
+implementation 'io.github.yuyuzha0:fast-printf:1.2.14'
 ```
 
 ## Usage
@@ -168,7 +166,7 @@ public class Example {
         System.out.println(r1);
         // → User Alice (id=42) scored 99.50
 
-        // 2. Using the fluent Args builder — maximum performance, no boxing
+        // 2. Using the fluent Args builder — no primitive boxing
         Args primitiveArgs = Args.create()
                 .putString("Alice")
                 .putInt(42)
@@ -195,6 +193,105 @@ All three produce identical output. The choice is **CPU throughput vs allocation
 no-boxing builder allocates ~15% less but costs ~18 ns of method-dispatch per call (see
 [Design notes on the optional paths](#design-notes-on-the-optional-paths)). Pick based on which axis your workload is
 actually bound on.
+
+### Jackson integration (optional)
+
+Applications using Jackson 2 can pass `JsonNode` arguments directly. Declare
+`com.fasterxml.jackson.core:jackson-databind` in your application, using your Jackson BOM or dependency
+management for its version. The integration is built and tested with Jackson 2.20.1; Jackson 3 uses
+different packages and is not detected by this adapter.
+
+```java
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.fastprintf.FastPrintf;
+
+ObjectMapper mapper = new ObjectMapper();
+JsonNode order = mapper.readTree("{\"name\":\"Alice\",\"amount\":12.3}");
+FastPrintf format = FastPrintf.compile("%s: %.2f"); // Cache and reuse.
+String result = format.format(order.get("name"), order.get("amount"));
+// Alice: 12.30
+```
+
+Availability is checked once per library class loader when the generic-object path is first used.
+When Jackson is available, `JsonNode` arguments use `io.fastprintf.jackson.JsonNodeTraits`; otherwise ordinary objects
+continue to use `ObjectTraits`. Primitive and existing built-in argument paths do not probe Jackson.
+The optional Maven dependency is not inherited by applications, and core formatting works without
+Jackson. On the module path, `requires static com.fasterxml.jackson.databind` makes Jackson optional
+at runtime; an application using the integration should declare `requires com.fasterxml.jackson.databind`.
+
+| JSON node | Formatting behavior |
+| --- | --- |
+| Text | `%s` uses unquoted text; `%c` uses its first character |
+| Number | Numeric specifiers use its value; BigInteger/BigDecimal nodes retain their precision |
+| Boolean | `%s` produces `true` or `false`; numeric conversion is rejected |
+| Null | Uses the existing `NullTraits`, just like Java `null`; `%s`/`%p` produce `null`, numeric conversion is rejected |
+| Object / array | `%s` produces JSON text; numeric conversion is rejected |
+| Missing node | Rejected, so a missing field is not silently treated as zero or null |
+
+Numeric strings are not coerced to numbers. Floating-to-integer conversions truncate; dynamic width
+and precision use Jackson's `intValue()` conversion. `%p` retains a non-null node's original identity.
+Java `null` still uses the usual null-argument handling. If using `get()`, validate required fields
+yourself; use `path()` to obtain a missing node for absent fields. Nodes are not copied, so do not
+mutate a tree concurrently with formatting. For exact parsed decimals, configure Jackson to create
+BigDecimal nodes; the adapter cannot recover precision already lost while parsing into double nodes.
+
+`JsonNode` also implements `Iterable`: `Args.of(node)` selects the existing iterable overload and
+expands its children. To pass one node, use `Args.create().put(node)`, `Args.of((Object) node)`, or
+pass it directly to `formatter.format(node)` as in the example above.
+
+#### Formatting a JSON property with an annotation
+
+Use an application-side serializer with Jackson's `@JsonSerialize`. This example caches a compiled
+format and emits a **JSON string**, leaving quoting and escaping to Jackson:
+
+```java
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import io.fastprintf.FastPrintf;
+import java.io.IOException;
+import java.math.BigDecimal;
+
+public class JacksonExample {
+    public static class Price {
+        @JsonSerialize(using = AmountSerializer.class)
+        public BigDecimal amount = new BigDecimal("12.3");
+    }
+
+    public static class AmountSerializer extends JsonSerializer<BigDecimal> {
+        private static final FastPrintf FORMAT = FastPrintf.compile("%.2f");
+
+        @Override
+        public void serialize(BigDecimal value, JsonGenerator out, SerializerProvider provider)
+                throws IOException {
+            out.writeString(FORMAT.format(value));
+        }
+    }
+
+    public static void main(String[] args) throws IOException {
+        System.out.println(new ObjectMapper().writeValueAsString(new Price()));
+        // {"amount":"12.30"}
+    }
+}
+```
+
+Jackson handles null properties normally. Do not use `writeRawValue` for printf output: padding,
+prefixes and arbitrary text need not be valid JSON numbers. This example only customizes
+serialization; it does not change `@JsonFormat` or provide reverse parsing. If an application needs
+an annotation carrying a pattern, implement Jackson's
+[`ContextualSerializer`](https://github.com/FasterXML/jackson-databind/blob/2.20/src/main/java/com/fasterxml/jackson/databind/ser/ContextualSerializer.java)
+and compile the pattern when creating the per-property serializer, rather than on every write.
+
+#### What does `FormatTraits` mean?
+
+A `FormatTraits` instance is a value-bearing **formatting argument adapter**. Its methods expose the
+representations supported by that value: integer, floating point, text, character, date/time and
+object identity. Here “traits” means those formatting capabilities; it is not a Java language
+feature or a mixin. `Args` selects the adapter before rendering. The existing name is retained for
+API compatibility; `ArgumentAdapter` would also describe its role.
 
 ## Format String Reference
 
@@ -282,6 +379,24 @@ formatting loop tight:
 * **No locale support.** Formatting is locale-agnostic for performance (`.` is always the decimal separator).
 
 ## Contributing
+
+Use **JDK 21** for the default development build; CI also verifies JDK 8, 11, and 17.
+
+```sh
+mvn -B verify -Dgpg.skip=true
+```
+
+Use the manual `Performance benchmarks` workflow to collect JMH timing and allocation results
+on JDK 8 and 21. It uploads the raw JSON as workflow artifacts.
+
+The JDK 21 build enforces JaCoCo line, branch, and instruction coverage floors based on the
+pre-1.2.14 baseline. Codecov requires 95% project and patch coverage. Add regression
+tests for correctness fixes and compare JMH latency **and** allocation before retaining performance
+changes. Prefer shared rules and clear code; special-case fast paths need substantial measured gains.
+
+After merging, run `bash create_tag.sh v1.2.14` from a clean, synchronized `main`, then publish a
+GitHub Release for that tag. The release workflow validates the Maven version, verifies and signs
+the artifacts, and publishes to Maven Central. Pushing the tag alone does not publish artifacts.
 
 Found a bug or have an idea? File it at the
 [issue tracker](https://github.com/YuyuZha0/fast-printf/issues). Pull requests welcome.

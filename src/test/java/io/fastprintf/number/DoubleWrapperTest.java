@@ -2,13 +2,14 @@ package io.fastprintf.number;
 
 import static org.junit.Assert.*;
 
+import io.fastprintf.FastPrintf;
+import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.Locale;
 import java.util.function.BiFunction;
 import org.junit.Test;
 
 public class DoubleWrapperTest {
-
-  private static final double EPSILON = 1e-9;
 
   private void assertLayout(
       double value,
@@ -19,31 +20,21 @@ public class DoubleWrapperTest {
     DoubleWrapper wrapper = new DoubleWrapper(value);
     FloatLayout layout = layoutMethod.apply(wrapper, precision);
 
-    if (Double.isNaN(value)) {
-      assertEquals("NaN", layout.getMantissa().toString());
-      assertNull(layout.getExponent());
-      return;
-    }
-    if (Double.isInfinite(value)) {
-      assertEquals("Infinity", layout.getMantissa().toString());
-      assertNull(layout.getExponent());
-      return;
-    }
-
     String actualString = layout.toString();
     String format =
         "%." + (specifier.equals("g") ? precision : (precision < 0 ? 6 : precision)) + specifier;
     String expectedString = String.format(Locale.US, format, Math.abs(value));
 
-    double actualValue = Double.parseDouble(actualString);
-    double expectedValue = Double.parseDouble(expectedString);
+    // Layouts omit padding zeros. Compare exact decimal values without rounding back to double.
+    BigDecimal actualValue = new BigDecimal(actualString);
+    BigDecimal expectedValue = new BigDecimal(expectedString);
 
     String message =
         String.format(
             "Pattern: %s, Value: %s -> Expected: %s, Actual: %s",
             format, value, expectedString, actualString);
 
-    assertEquals(message, expectedValue, actualValue, EPSILON);
+    assertEquals(message, 0, expectedValue.compareTo(actualValue));
     assertEquals("Signum mismatch", Double.compare(value, 0.0), wrapper.signum());
   }
 
@@ -72,6 +63,9 @@ public class DoubleWrapperTest {
 
     assertTrue(new DoubleWrapper(Double.NaN).isNaN());
     assertFalse(new DoubleWrapper(1.0).isNaN());
+    assertFalse(new DoubleWrapper(Double.NaN).isNegative());
+    assertFalse(new DoubleWrapper(Double.POSITIVE_INFINITY).isNegative());
+    assertTrue(new DoubleWrapper(Double.NEGATIVE_INFINITY).isNegative());
 
     assertTrue(new DoubleWrapper(Double.POSITIVE_INFINITY).isInfinite());
     assertTrue(new DoubleWrapper(Double.NEGATIVE_INFINITY).isInfinite());
@@ -125,10 +119,6 @@ public class DoubleWrapperTest {
     assertHexLayout(-0.0, 8, "-0x0.0p+0");
   }
 
-  /**
-   * This test method validates the specific rounding and subnormal number handling of the hexLayout
-   * method. The implementation's behavior is considered correct for the purposes of this test.
-   */
   @Test
   public void testHexLayout_RoundingBehavior() {
     // 1. Overflow rounding:
@@ -137,9 +127,7 @@ public class DoubleWrapperTest {
     assertHexLayout(Double.MAX_VALUE, 8, "0x1.0p+1024");
 
     // 2. Rounding of a finite number:
-    // This tests the implementation's specific rounding for 123.5 with 1 hex digit precision.
-    // The implementation rounds the value to 123.75, which is represented by the hex string
-    // 0x1.ef8p+6.
+    // 123.5 rounds to 124 with one hexadecimal fractional digit.
     assertHexLayout(123.5, 1, "0x1.fp+6");
 
     // 3. Subnormal number handling:
@@ -150,22 +138,46 @@ public class DoubleWrapperTest {
   }
 
   @Test
-  public void testSpecialValuesLayouts() {
-    FloatLayout nanLayout = new DoubleWrapper(Double.NaN).decimalLayout(2);
-    assertEquals("0", nanLayout.getMantissa().toString());
-    assertNull(nanLayout.getExponent());
-    assertFalse(new DoubleWrapper(Double.NaN).isNegative());
+  public void testSubnormalLayoutsExactly() {
+    DoubleWrapper smallest = new DoubleWrapper(Double.MIN_VALUE);
+    assertEquals("4.9e-324", smallest.scientificLayout(1).toString());
+    assertEquals("4.9e-324", smallest.generalLayout(2).toString());
+    assertEquals(
+        "0." + String.join("", Collections.nCopies(323, "0")) + "49",
+        smallest.decimalLayout(325).toString());
+    assertEquals("0", smallest.decimalLayout(323).toString());
+    assertEquals(
+        "2.2250738585072014e-308",
+        new DoubleWrapper(Double.MIN_NORMAL).scientificLayout(16).toString());
+    assertEquals(
+        "2.2250738585072010e-308",
+        new DoubleWrapper(Math.nextDown(Double.MIN_NORMAL)).scientificLayout(16).toString());
+  }
 
-    DoubleWrapper posInfWrapper = new DoubleWrapper(Double.POSITIVE_INFINITY);
-    FloatLayout posInfLayout = posInfWrapper.decimalLayout(2);
-    assertEquals("0", posInfLayout.getMantissa().toString());
-    assertNull(posInfLayout.getExponent());
-    assertFalse(posInfWrapper.isNegative());
+  @Test
+  public void testRoundingBoundariesExactly() {
+    assertEquals("1.00e+03", FastPrintf.compile("%.2e").format(999.999));
+    assertEquals("1e+03", FastPrintf.compile("%.3g").format(999.999));
+    assertEquals("0.0001", FastPrintf.compile("%.3g").format(0.000099999));
+    assertHexLayout(1.03125, 1, "0x1.0p+0"); // Halfway: round to even lower digit.
+    assertHexLayout(1.09375, 1, "0x1.2p+0"); // Halfway: round to even upper digit.
+    assertHexLayout(-Double.MIN_VALUE, 1, "-0x1.0p-1074");
+    assertHexLayout(-Double.MAX_VALUE, 1, "-0x1.0p+1024");
+  }
 
-    DoubleWrapper negInfWrapper = new DoubleWrapper(Double.NEGATIVE_INFINITY);
-    FloatLayout negInfLayout = negInfWrapper.decimalLayout(2);
-    assertEquals("0", negInfLayout.getMantissa().toString());
-    assertNull(negInfLayout.getExponent());
-    assertTrue(negInfWrapper.isNegative());
+  @Test
+  public void testFormatterHandlesSpecialValuesBeforeRequestingLayouts() {
+    for (char specifier : new char[] {'f', 'e', 'g', 'a', 'F', 'E', 'G', 'A'}) {
+      boolean uppercase = Character.isUpperCase(specifier);
+      FastPrintf formatter = FastPrintf.compile("%.3" + specifier);
+      String infinity = uppercase ? "INFINITY" : "Infinity";
+      assertEquals(uppercase ? "NAN" : "NaN", formatter.format(Double.NaN));
+      assertEquals(infinity, formatter.format(Double.POSITIVE_INFINITY));
+      assertEquals("-" + infinity, formatter.format(Double.NEGATIVE_INFINITY));
+    }
+    assertEquals("-0.000", FastPrintf.compile("%.3f").format(-0.0));
+    assertEquals("-0.000e+00", FastPrintf.compile("%.3e").format(-0.0));
+    assertEquals("-0", FastPrintf.compile("%.3g").format(-0.0));
+    assertEquals("-0x0.000p+0", FastPrintf.compile("%.3a").format(-0.0));
   }
 }

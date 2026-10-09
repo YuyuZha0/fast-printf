@@ -2,9 +2,11 @@ package io.fastprintf.traits;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import io.fastprintf.PrintfException;
+import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -128,6 +130,54 @@ public class TemporalAccessorTraitsTest {
       fail("LocalDate to IntForm should have thrown PrintfException");
     } catch (PrintfException expected) {
       // Success
+    }
+  }
+
+  @Test
+  public void asFloatForm_failure_preservesDateTimeExceptionAsCause() {
+    LocalDate localDate = LocalDate.of(2023, 11, 15);
+    TemporalAccessorTraits traits = new TemporalAccessorTraits(localDate);
+
+    try {
+      traits.asFloatForm();
+      fail("Expected PrintfException");
+    } catch (PrintfException ex) {
+      assertTrue(
+          "Cause should be the original DateTimeException, but was: " + ex.getCause(),
+          ex.getCause() instanceof DateTimeException);
+      assertEquals("Can't get epoch seconds from: " + localDate, ex.getMessage());
+    }
+  }
+
+  @Test
+  public void asIntForm_failure_preservesDateTimeExceptionAsCause() {
+    LocalDate localDate = LocalDate.of(2023, 11, 15);
+    TemporalAccessorTraits traits = new TemporalAccessorTraits(localDate);
+
+    try {
+      traits.asIntForm();
+      fail("Expected PrintfException");
+    } catch (PrintfException ex) {
+      assertTrue(
+          "Cause should be the original DateTimeException, but was: " + ex.getCause(),
+          ex.getCause() instanceof DateTimeException);
+      assertEquals("Can't get epoch milliseconds from: " + localDate, ex.getMessage());
+    }
+  }
+
+  @Test
+  public void asInt_failure_preservesDateTimeExceptionAsCause() {
+    LocalDate localDate = LocalDate.of(2023, 11, 15);
+    TemporalAccessorTraits traits = new TemporalAccessorTraits(localDate);
+
+    try {
+      traits.asInt();
+      fail("Expected PrintfException");
+    } catch (PrintfException ex) {
+      assertTrue(
+          "Cause should be the original DateTimeException, but was: " + ex.getCause(),
+          ex.getCause() instanceof DateTimeException);
+      assertEquals("Can't get epoch seconds from: " + localDate, ex.getMessage());
     }
   }
 }

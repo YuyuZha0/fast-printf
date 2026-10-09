@@ -1,6 +1,5 @@
 package io.fastprintf.appender;
 
-import io.fastprintf.Flag;
 import io.fastprintf.FormatContext;
 import io.fastprintf.PrintfException;
 import io.fastprintf.Specifier;
@@ -23,6 +22,12 @@ public final class DefaultAppender implements Appender {
     this.formatter = formatterForSpecifier(specifier);
   }
 
+  // Select a small strategy once at compile time. Mixed formats can leave apply() virtual,
+  // but replacing it with a switch or static override classes did not consistently improve
+  // DispatchBenchmark. Per-specifier appenders also move polymorphism into the outer loop.
+  // Static formatter overrides changed JDK 21 means by only 0-2%; per-specifier appenders
+  // improved the two-conversion case but regressed the four/eight-conversion cases.
+  // Keep this mapping until mixed-workload measurements justify the extra implementations.
   private static BiFunction<FormatContext, FormatTraits, Seq> formatterForSpecifier(
       Specifier specifier) {
     switch (specifier) {
@@ -37,7 +42,7 @@ public final class DefaultAppender implements Appender {
             SeqFormatter.x(context, traits.asIntForm());
       case UNSIGNED_HEXADECIMAL_INTEGER_UPPERCASE:
         return (FormatContext context, FormatTraits traits) ->
-            SeqFormatter.x(context, traits.asIntForm()).upperCase();
+            SeqFormatter.x(context, traits.asIntForm(), true);
       case UNSIGNED_OCTAL_INTEGER:
         return (FormatContext context, FormatTraits traits) ->
             SeqFormatter.o(context, traits.asIntForm());
@@ -46,25 +51,25 @@ public final class DefaultAppender implements Appender {
             SeqFormatter.f(context, traits.asFloatForm());
       case DECIMAL_FLOATING_POINT_UPPERCASE:
         return (FormatContext context, FormatTraits traits) ->
-            SeqFormatter.f(context, traits.asFloatForm()).upperCase();
+            SeqFormatter.f(context, traits.asFloatForm(), true);
       case SCIENTIFIC_NOTATION:
         return (FormatContext context, FormatTraits traits) ->
             SeqFormatter.e(context, traits.asFloatForm());
       case SCIENTIFIC_NOTATION_UPPERCASE:
         return (FormatContext context, FormatTraits traits) ->
-            SeqFormatter.e(context, traits.asFloatForm()).upperCase();
+            SeqFormatter.e(context, traits.asFloatForm(), true);
       case USE_SHORTEST_PRESENTATION:
         return (FormatContext context, FormatTraits traits) ->
             SeqFormatter.g(context, traits.asFloatForm());
       case USE_SHORTEST_PRESENTATION_UPPERCASE:
         return (FormatContext context, FormatTraits traits) ->
-            SeqFormatter.g(context, traits.asFloatForm()).upperCase();
+            SeqFormatter.g(context, traits.asFloatForm(), true);
       case HEXADECIMAL_FLOATING_POINT:
         return (FormatContext context, FormatTraits traits) ->
             SeqFormatter.a(context, traits.asFloatForm());
       case HEXADECIMAL_FLOATING_POINT_UPPERCASE:
         return (FormatContext context, FormatTraits traits) ->
-            SeqFormatter.a(context, traits.asFloatForm()).upperCase();
+            SeqFormatter.a(context, traits.asFloatForm(), true);
       case STRING:
         return SeqFormatter::s;
       case STRING_UPPERCASE:
@@ -98,27 +103,17 @@ public final class DefaultAppender implements Appender {
   @Override
   public void append(Consumer<? super Seq> collect, Iterator<FormatTraits> traitsIterator) {
     FormatContext context = this.context;
-    if (context.isPrecedingWidth()) {
-      int w = nextInt(traitsIterator);
-      if (w >= 0) {
-        context = context.setWidth(w);
-      } else {
-        context = context.addFlag(Flag.LEFT_JUSTIFY).setWidth(-w);
-      }
-    }
-    if (context.isPrecedingPrecision()) {
-      int p = nextInt(traitsIterator);
-      context = context.setPrecision(p >= 0 ? p : FormatContext.UNSET);
+    if (context.isPrecedingWidth() || context.isPrecedingPrecision()) {
+      int width = context.isPrecedingWidth() ? nextInt(traitsIterator) : context.getWidth();
+      int precision =
+          context.isPrecedingPrecision() ? nextInt(traitsIterator) : context.getPrecision();
+      context = context.resolve(width, precision);
     }
     if (traitsIterator.hasNext()) {
-      collect.accept(format(context, traitsIterator.next()));
+      collect.accept(formatter.apply(context, traitsIterator.next()));
     } else {
       throw new PrintfException("Missing argument for specifier: " + specifier);
     }
-  }
-
-  private Seq format(FormatContext context, FormatTraits traits) {
-    return formatter.apply(context, traits);
   }
 
   public Specifier getSpecifier() {

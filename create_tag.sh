@@ -76,7 +76,7 @@ git fetch "$REMOTE"
 
 # 6. Check if the local branch is synchronized with the remote
 SYNC_STATUS=$(git rev-list --count --left-right "${REMOTE}/${MAIN_BRANCH}...HEAD")
-read -r AHEAD BEHIND <<<"${SYNC_STATUS//$'\t'/ }" # Split the tab-separated output
+read -r BEHIND AHEAD <<<"${SYNC_STATUS//$'\t'/ }" # Split the tab-separated output
 
 if [[ "$BEHIND" -ne 0 ]]; then
     log_error "Your local '$MAIN_BRANCH' branch is behind '${REMOTE}/${MAIN_BRANCH}'. Please pull the latest changes."
@@ -89,11 +89,12 @@ fi
 log_success "Local branch is synchronized with remote."
 
 # 7. Check if the tag already exists
-if git rev-parse --quiet --verify "$TAG_NAME" >/dev/null; then
+if git rev-parse --quiet --verify "refs/tags/$TAG_NAME" >/dev/null; then
   log_error "Tag '$TAG_NAME' already exists locally."
   exit 1
 fi
-if git ls-remote --tags "$REMOTE" | grep -q "refs/tags/$TAG_NAME$"; then
+REMOTE_TAG=$(git ls-remote --tags "$REMOTE" "refs/tags/$TAG_NAME")
+if [[ -n "$REMOTE_TAG" ]]; then
     log_error "Tag '$TAG_NAME' already exists on the remote '$REMOTE'."
     exit 1
 fi

@@ -2,52 +2,51 @@ name: Release to Maven Central
 
 on:
   release:
-    types: [ created ]
+    types: [published]
   workflow_dispatch:
     inputs:
       git_tag:
-        description: 'The Git tag to release from (e.g., v1.2.3)'
+        description: 'Existing release tag (e.g., v1.2.14)'
         required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.event.inputs.git_tag || github.event.release.tag_name }}
+  cancel-in-progress: false
 
 jobs:
   release:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-
+    timeout-minutes: 45
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.git_tag || github.ref }}
-
-      - name: Set up JDK 17, GPG, and Maven Settings
+          ref: refs/tags/${{ github.event.inputs.git_tag || github.event.release.tag_name }}
+      - name: Set up JDK 21, signing and Maven credentials
         uses: actions/setup-java@v4
         with:
-          # Use JDK 17 to build (it can cross-compile to 8 easily).
-          # This ensures compatibility with the latest Maven plugins.
-          java-version: '17'
-          distribution: 'temurin'
-          cache: 'maven'
-
-          # 1. Configure GPG automatically
+          java-version: '21'
+          distribution: temurin
+          cache: maven
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
-          gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
-
-          # 2. Configure settings.xml automatically
+          gpg-passphrase: GPG_PASSPHRASE
           server-id: central
           server-username: MAVEN_CENTRAL_USERNAME
           server-password: MAVEN_CENTRAL_TOKEN
-
-      - name: Publish to Maven Central
+      - name: Check tag against Maven version
         env:
-          # Map the secrets to environment variables so setup-java can inject them
+          RELEASE_TAG: ${{ github.event.inputs.git_tag || github.event.release.tag_name }}
+        run: |
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          mvn -B -ntp help:evaluate -Dexpression=project.version -Doutput=release-version.txt
+          VERSION=$(cat release-version.txt)
+          [[ "$RELEASE_TAG" == "v$VERSION" ]]
+      - name: Verify, sign and publish
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
           MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           MAVEN_CENTRAL_TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN }}
-        run: |
-          # We use 'verify' to build/test/sign, then 'central-publishing:publish' to upload.
-          # We do NOT use 'deploy' because we lack <distributionManagement> in the POM.
-          mvn -B clean verify central-publishing:publish \
-            -Pjdk9+ \
-            -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }}
+        run: mvn -B -ntp clean verify central-publishing:publish -Prelease
