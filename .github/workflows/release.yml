@@ -44,6 +44,22 @@ jobs:
           mvn -B -ntp help:evaluate -Dexpression=project.version -Doutput=release-version.txt
           VERSION=$(cat release-version.txt)
           [[ "$RELEASE_TAG" == "v$VERSION" ]]
+      - name: Verify release signing key
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          mvn -B -ntp help:evaluate -Dexpression=gpg.keyname \
+            -Doutput="$RUNNER_TEMP/release-gpg-key.txt"
+          SIGNING_KEY=$(cat "$RUNNER_TEMP/release-gpg-key.txt")
+          printf '%s\n' 'fast-printf release signing check' > "$RUNNER_TEMP/signing-check.txt"
+          if ! gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 \
+            --local-user "$SIGNING_KEY" --armor --detach-sign \
+            --output "$RUNNER_TEMP/signing-check.asc" "$RUNNER_TEMP/signing-check.txt" \
+            <<< "$GPG_PASSPHRASE"; then
+            echo '::error::Release signing failed. Check key/subkey expiry and signing capability, renew or replace the key, and update GPG_PRIVATE_KEY and GPG_PASSPHRASE.'
+            gpg --batch --list-keys "$SIGNING_KEY"
+            exit 1
+          fi
       - name: Verify, sign and publish
         env:
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
