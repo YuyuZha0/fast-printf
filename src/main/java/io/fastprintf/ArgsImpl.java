@@ -1,5 +1,6 @@
 package io.fastprintf;
 
+import io.fastprintf.jackson.JacksonSupport;
 import io.fastprintf.traits.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -179,6 +180,10 @@ final class ArgsImpl implements Args {
   private ArgsImpl putObject(Object value) {
     if (value instanceof FormatTraits) {
       return addTraits((FormatTraits) value);
+    }
+    FormatTraits jsonTraits = JacksonSupport.wrap(value);
+    if (jsonTraits != null) {
+      return addTraits(jsonTraits);
     }
     return addTraits(value, ObjectTraits::new);
   }

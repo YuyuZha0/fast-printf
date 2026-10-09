@@ -194,6 +194,105 @@ no-boxing builder allocates ~15% less but costs ~18 ns of method-dispatch per ca
 [Design notes on the optional paths](#design-notes-on-the-optional-paths)). Pick based on which axis your workload is
 actually bound on.
 
+### Jackson integration (optional)
+
+Applications using Jackson 2 can pass `JsonNode` arguments directly. Declare
+`com.fasterxml.jackson.core:jackson-databind` in your application, using your Jackson BOM or dependency
+management for its version. The integration is built and tested with Jackson 2.20.1; Jackson 3 uses
+different packages and is not detected by this adapter.
+
+```java
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.fastprintf.FastPrintf;
+
+ObjectMapper mapper = new ObjectMapper();
+JsonNode order = mapper.readTree("{\"name\":\"Alice\",\"amount\":12.3}");
+FastPrintf format = FastPrintf.compile("%s: %.2f"); // Cache and reuse.
+String result = format.format(order.get("name"), order.get("amount"));
+// Alice: 12.30
+```
+
+Availability is checked once per library class loader when the generic-object path is first used.
+When Jackson is available, `JsonNode` arguments use `io.fastprintf.jackson.JsonNodeTraits`; otherwise ordinary objects
+continue to use `ObjectTraits`. Primitive and existing built-in argument paths do not probe Jackson.
+The optional Maven dependency is not inherited by applications, and core formatting works without
+Jackson. On the module path, `requires static com.fasterxml.jackson.databind` makes Jackson optional
+at runtime; an application using the integration should declare `requires com.fasterxml.jackson.databind`.
+
+| JSON node | Formatting behavior |
+| --- | --- |
+| Text | `%s` uses unquoted text; `%c` uses its first character |
+| Number | Numeric specifiers use its value; BigInteger/BigDecimal nodes retain their precision |
+| Boolean | `%s` produces `true` or `false`; numeric conversion is rejected |
+| Null | Uses the existing `NullTraits`, just like Java `null`; `%s`/`%p` produce `null`, numeric conversion is rejected |
+| Object / array | `%s` produces JSON text; numeric conversion is rejected |
+| Missing node | Rejected, so a missing field is not silently treated as zero or null |
+
+Numeric strings are not coerced to numbers. Floating-to-integer conversions truncate; dynamic width
+and precision use Jackson's `intValue()` conversion. `%p` retains a non-null node's original identity.
+Java `null` still uses the usual null-argument handling. If using `get()`, validate required fields
+yourself; use `path()` to obtain a missing node for absent fields. Nodes are not copied, so do not
+mutate a tree concurrently with formatting. For exact parsed decimals, configure Jackson to create
+BigDecimal nodes; the adapter cannot recover precision already lost while parsing into double nodes.
+
+`JsonNode` also implements `Iterable`: `Args.of(node)` selects the existing iterable overload and
+expands its children. To pass one node, use `Args.create().put(node)`, `Args.of((Object) node)`, or
+pass it directly to `formatter.format(node)` as in the example above.
+
+#### Formatting a JSON property with an annotation
+
+Use an application-side serializer with Jackson's `@JsonSerialize`. This example caches a compiled
+format and emits a **JSON string**, leaving quoting and escaping to Jackson:
+
+```java
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import io.fastprintf.FastPrintf;
+import java.io.IOException;
+import java.math.BigDecimal;
+
+public class JacksonExample {
+    public static class Price {
+        @JsonSerialize(using = AmountSerializer.class)
+        public BigDecimal amount = new BigDecimal("12.3");
+    }
+
+    public static class AmountSerializer extends JsonSerializer<BigDecimal> {
+        private static final FastPrintf FORMAT = FastPrintf.compile("%.2f");
+
+        @Override
+        public void serialize(BigDecimal value, JsonGenerator out, SerializerProvider provider)
+                throws IOException {
+            out.writeString(FORMAT.format(value));
+        }
+    }
+
+    public static void main(String[] args) throws IOException {
+        System.out.println(new ObjectMapper().writeValueAsString(new Price()));
+        // {"amount":"12.30"}
+    }
+}
+```
+
+Jackson handles null properties normally. Do not use `writeRawValue` for printf output: padding,
+prefixes and arbitrary text need not be valid JSON numbers. This example only customizes
+serialization; it does not change `@JsonFormat` or provide reverse parsing. If an application needs
+an annotation carrying a pattern, implement Jackson's
+[`ContextualSerializer`](https://github.com/FasterXML/jackson-databind/blob/2.20/src/main/java/com/fasterxml/jackson/databind/ser/ContextualSerializer.java)
+and compile the pattern when creating the per-property serializer, rather than on every write.
+
+#### What does `FormatTraits` mean?
+
+A `FormatTraits` instance is a value-bearing **formatting argument adapter**. Its methods expose the
+representations supported by that value: integer, floating point, text, character, date/time and
+object identity. Here “traits” means those formatting capabilities; it is not a Java language
+feature or a mixin. `Args` selects the adapter before rendering. The existing name is retained for
+API compatibility; `ArgumentAdapter` would also describe its role.
+
 ## Format String Reference
 
 Format string syntax:

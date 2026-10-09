@@ -4,6 +4,8 @@
 
 ### Performance and structure
 
+- Add optional, automatically detected Jackson 2 `JsonNode` argument support and README examples
+  for tree values and annotation-based property serialization. Core formatting still runs without Jackson.
 - Consolidate sign, base prefix, precision, zero padding, and alignment in one numeric layout rule.
 - Resolve dynamic width and precision in one context, sharing immutable flags where possible.
 - Render numeric uppercase markers directly and uppercase only digit segments that need it.

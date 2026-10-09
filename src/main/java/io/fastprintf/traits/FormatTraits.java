@@ -23,8 +23,11 @@ import java.time.temporal.TemporalAccessor;
  * %f} specifier triggers a call to {@link #asFloatForm()}. This "ahead-of-time" type dispatch
  * eliminates runtime overhead and ensures high performance.
  *
- * <p>This is an internal-facing interface. Users interact with it indirectly by passing arguments
- * to {@link FastPrintf}, typically via the {@link Args} class.
+ * <p>"Traits" names the formatting capabilities of an argument. Implementations are value-bearing
+ * argument adapters, not Java language traits or mixins. Most callers use {@link Args} to select an
+ * adapter automatically; on the classpath, custom adapters can also be passed directly to {@link
+ * Args#put(Object)}. Some representation types are internal packages not exported by the JPMS
+ * module.
  *
  * @see Args
  * @see FastPrintf

@@ -1,5 +1,6 @@
 module io.fastprintf {
   requires java.base;
+  requires static com.fasterxml.jackson.databind;
 
   // The Main Entry point (FastPrintf, Args, etc.)
   exports io.fastprintf;
@@ -7,6 +8,7 @@ module io.fastprintf {
   // REQUIRED: Because 'Args' extends 'Iterable<FormatTraits>',
   // this package must be visible to consumers.
   exports io.fastprintf.traits;
+  exports io.fastprintf.jackson;
 
 // HIDDEN PACKAGES (Internal details):
 // io.fastprintf.seq        <- Users don't need to touch the Rope implementation

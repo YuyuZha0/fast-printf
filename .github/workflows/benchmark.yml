@@ -27,7 +27,7 @@ jobs:
             -DskipTests -Djacoco.skip=true -DincludeScope=test \
             -Dmdep.outputFile=target/benchmark-classpath.txt
           java -cp "target/classes:target/test-classes:$(cat target/benchmark-classpath.txt)" \
-            org.openjdk.jmh.Main 'FormattingPipelineBenchmark|DispatchBenchmark|CommonUsageBenchmark' \
+            org.openjdk.jmh.Main 'FormattingPipelineBenchmark|DispatchBenchmark|CommonUsageBenchmark|JacksonBenchmark' \
             -wi 3 -i 5 -w 1s -r 1s -f 2 -prof gc \
             -jvmArgs '-Xms256m -Xmx256m' -rf json -rff target/benchmark.json
       - uses: actions/upload-artifact@v4
