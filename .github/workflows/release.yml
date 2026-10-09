@@ -36,6 +36,22 @@ jobs:
           server-id: central
           server-username: MAVEN_CENTRAL_USERNAME
           server-password: MAVEN_CENTRAL_TOKEN
+      # Maven 3.10.0 leaves maven-metadata-local.xml in the publishing plugin's bundle.
+      # Central rejects that artifact-level metadata as content without a POM.
+      - name: Set up Maven 3.9.16 for publishing
+        env:
+          RELEASE_MAVEN_VERSION: '3.9.16'
+          RELEASE_MAVEN_SHA512: '831a8591fe20c8243b1dbe7d71e3244f31d1665b0804b2e825e38cbbe5ce0cafb8338851f90780735568773e0a6cd07bbec107cda0b896b008b861075358b6f6'
+        run: |
+          set -euo pipefail
+          ARCHIVE="$RUNNER_TEMP/apache-maven.tar.gz"
+          curl --fail --silent --show-error --location --retry 3 \
+            "https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/$RELEASE_MAVEN_VERSION/apache-maven-$RELEASE_MAVEN_VERSION-bin.tar.gz" \
+            --output "$ARCHIVE"
+          printf '%s  %s\n' "$RELEASE_MAVEN_SHA512" "$ARCHIVE" | sha512sum --check -
+          tar -xzf "$ARCHIVE" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/apache-maven-$RELEASE_MAVEN_VERSION/bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/apache-maven-$RELEASE_MAVEN_VERSION/bin/mvn" --version
       - name: Check tag against Maven version
         env:
           RELEASE_TAG: ${{ github.event.inputs.git_tag || github.event.release.tag_name }}
