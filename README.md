@@ -30,14 +30,14 @@ String result = format.format("Alice", 42, 99.5);
 <dependency>
     <groupId>io.github.yuyuzha0</groupId>
     <artifactId>fast-printf</artifactId>
-    <version>1.2.16</version>
+    <version>1.2.17</version>
 </dependency>
 ```
 
 **Gradle**
 
 ```groovy
-implementation 'io.github.yuyuzha0:fast-printf:1.2.16'
+implementation 'io.github.yuyuzha0:fast-printf:1.2.17'
 ```
 
 Keep the compiled formatter in a field and reuse it:
@@ -220,6 +220,10 @@ Text nodes produce unquoted text; number nodes support numeric formatting; objec
 produce JSON text with `%s`. Numeric text uses the same parsing rules as ordinary string arguments:
 integer formats accept signed integers in the `long` range; floating-point formats accept decimal
 and scientific notation. Boolean nodes convert to 1 or 0, like ordinary booleans.
+Integer nodes also support `%t` and `%T`, using the core integer timestamp convention after
+conversion to `long`: values from 0 through 4,294,967,295 represent epoch seconds; larger values
+represent epoch milliseconds. Negative timestamps are rejected. Floating-point and text nodes
+do not support date/time conversion.
 JSON null behaves like Java null. Missing nodes and incompatible
 conversions fail rather than silently supplying a value.
 

@@ -6,7 +6,9 @@ import io.fastprintf.number.FloatForm;
 import io.fastprintf.number.IntForm;
 import io.fastprintf.traits.FormatTraits;
 import io.fastprintf.traits.RefSlot;
+import io.fastprintf.util.Utils;
 import java.math.BigDecimal;
+import java.time.temporal.TemporalAccessor;
 
 /**
  * Optional Jackson 2 tree-model adapter, selected automatically by {@code Args.put(Object)}.
@@ -110,6 +112,16 @@ final class JsonNodeTraits implements FormatTraits {
     } else {
       throw cannotConvertToNumber();
     }
+  }
+
+  @Override
+  public TemporalAccessor asTemporalAccessor() {
+    if (value.isIntegralNumber()) {
+      // Match the core integer traits' seconds/milliseconds convention and long conversion.
+      return Utils.longToInstant(value.longValue());
+    }
+    throw new PrintfException(
+        "JSON %s node cannot be converted to TemporalAccessor", value.getNodeType());
   }
 
   @Override

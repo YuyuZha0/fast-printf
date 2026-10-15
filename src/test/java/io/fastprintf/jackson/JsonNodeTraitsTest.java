@@ -11,6 +11,7 @@ import io.fastprintf.PrintfException;
 import io.fastprintf.traits.NullTraits;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.Instant;
 import org.junit.Test;
 
 public class JsonNodeTraitsTest {
@@ -53,6 +54,69 @@ public class JsonNodeTraitsTest {
     // Float-to-integer conversion retains the core FloatTraits 32-bit integer semantics.
     assertEquals("ffffffff", format("%x", FloatNode.valueOf(-1.75f)));
     assertEquals("2147483647", format("%d", FloatNode.valueOf(1.0e10f)));
+  }
+
+  @Test
+  public void integralNodesSupportTemporalConversion() {
+    for (long value : new long[] {0, 42, 0xFFFFFFFFL, 0x100000000L, Long.MAX_VALUE}) {
+      Instant expected =
+          value <= 0xFFFFFFFFL ? Instant.ofEpochSecond(value) : Instant.ofEpochMilli(value);
+      for (JsonNode node :
+          new JsonNode[] {
+            LongNode.valueOf(value), BigIntegerNode.valueOf(BigInteger.valueOf(value))
+          }) {
+        JsonNodeTraits traits = new JsonNodeTraits(node);
+        assertEquals(expected, traits.asTemporalAccessor());
+        assertSame(node, traits.ref().get());
+        for (String pattern : new String[] {"%t", "%T"}) {
+          assertEquals(FastPrintf.compile(pattern).format(value), format(pattern, node));
+        }
+      }
+    }
+    assertEquals(
+        Instant.ofEpochSecond(42), new JsonNodeTraits(IntNode.valueOf(42)).asTemporalAccessor());
+    assertEquals(
+        Instant.ofEpochSecond(42),
+        new JsonNodeTraits(ShortNode.valueOf((short) 42)).asTemporalAccessor());
+    assertEquals(FastPrintf.compile("%t").format(42), format("%t", IntNode.valueOf(42)));
+  }
+
+  @Test
+  public void temporalConversionRetainsCoreBigIntegerSemantics() {
+    BigInteger value = BigInteger.ONE.shiftLeft(64).add(BigInteger.valueOf(42));
+    JsonNode node = BigIntegerNode.valueOf(value);
+    assertEquals(Instant.ofEpochSecond(42), new JsonNodeTraits(node).asTemporalAccessor());
+    assertEquals(FastPrintf.compile("%t").format(value), format("%t", node));
+  }
+
+  @Test
+  public void rejectsNegativeTimestampsAndNonIntegralTemporalNodes() {
+    for (JsonNode node :
+        new JsonNode[] {
+          IntNode.valueOf(-1),
+          LongNode.valueOf(Long.MIN_VALUE),
+          BigIntegerNode.valueOf(BigInteger.valueOf(-1))
+        }) {
+      IllegalArgumentException error =
+          assertThrows(IllegalArgumentException.class, () -> format("%t", node));
+      assertTrue(error.getMessage().contains("must not be negative"));
+    }
+    for (JsonNode node :
+        new JsonNode[] {
+          FloatNode.valueOf(42),
+          DoubleNode.valueOf(42),
+          DecimalNode.valueOf(new BigDecimal("42")),
+          TextNode.valueOf("42"),
+          TextNode.valueOf("2026-10-15"),
+          BooleanNode.TRUE,
+          JsonNodeFactory.instance.objectNode(),
+          JsonNodeFactory.instance.arrayNode(),
+          BinaryNode.valueOf(new byte[] {42}),
+          new POJONode(42)
+        }) {
+      PrintfException error = assertThrows(PrintfException.class, () -> format("%t", node));
+      assertTrue(error.getMessage().contains("TemporalAccessor"));
+    }
   }
 
   @Test
