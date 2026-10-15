@@ -36,6 +36,26 @@ public class JsonNodeTraitsTest {
   }
 
   @Test
+  public void primitiveNumericNodesMatchTheirJavaTypes() {
+    Object[] values = {65, Long.MAX_VALUE, -1.75f, 1.0e10f, 12.75d};
+    JsonNode[] nodes = {
+      IntNode.valueOf(65),
+      LongNode.valueOf(Long.MAX_VALUE),
+      FloatNode.valueOf(-1.75f),
+      FloatNode.valueOf(1.0e10f),
+      DoubleNode.valueOf(12.75)
+    };
+    for (int i = 0; i < nodes.length; i++) {
+      for (String pattern : new String[] {"%d", "%u", "%x", "%.2f", "%g", "%a"}) {
+        assertEquals(FastPrintf.compile(pattern).format(values[i]), format(pattern, nodes[i]));
+      }
+    }
+    // Float-to-integer conversion retains the core FloatTraits 32-bit integer semantics.
+    assertEquals("ffffffff", format("%x", FloatNode.valueOf(-1.75f)));
+    assertEquals("2147483647", format("%d", FloatNode.valueOf(1.0e10f)));
+  }
+
+  @Test
   public void preservesBigNumberPrecision() {
     BigInteger integer = new BigInteger("123456789012345678901234567890");
     assertEquals(integer.toString(), format("%d", BigIntegerNode.valueOf(integer)));
@@ -63,34 +83,142 @@ public class JsonNodeTraitsTest {
     assertEquals("null", format("%p", node));
     assertThrows(PrintfException.class, () -> format("%d", node));
     assertThrows(PrintfException.class, () -> format("%f", node));
-    JsonNodeTraits explicit = new JsonNodeTraits(node);
-    assertNull(explicit.asObject());
-    assertEquals("null", FastPrintf.compile("%p").format(explicit));
+    assertTrue(Args.exactlyOne(node).iterator().next().isNull());
+    PrintfException error = assertThrows(PrintfException.class, () -> new JsonNodeTraits(node));
+    assertEquals("Missing/Null JSON node cannot be formatted", error.getMessage());
   }
 
   @Test
-  public void rejectsSilentNumericCoercionAndMissingNodes() {
+  public void rejectsInvalidNumericConversionsAndMissingNodes() {
     for (JsonNode node :
         new JsonNode[] {
-          TextNode.valueOf("12"),
-          BooleanNode.TRUE,
-          NullNode.getInstance(),
           JsonNodeFactory.instance.objectNode(),
-          JsonNodeFactory.instance.arrayNode()
+          JsonNodeFactory.instance.arrayNode(),
+          BinaryNode.valueOf(new byte[] {1, 2}),
+          new POJONode(42)
         }) {
       JsonNodeTraits traits = new JsonNodeTraits(node);
-      assertThrows(PrintfException.class, traits::asIntForm);
-      assertThrows(PrintfException.class, traits::asFloatForm);
-      assertThrows(PrintfException.class, traits::asInt);
+      for (PrintfException error :
+          new PrintfException[] {
+            assertThrows(PrintfException.class, traits::asIntForm),
+            assertThrows(PrintfException.class, traits::asFloatForm),
+            assertThrows(PrintfException.class, traits::asInt),
+            assertThrows(PrintfException.class, traits::asChar)
+          }) {
+        assertEquals(
+            "JSON " + node.getNodeType() + " node cannot be converted to a number",
+            error.getMessage());
+      }
     }
     assertThrows(PrintfException.class, () -> Args.create().put(MissingNode.getInstance()));
+    assertEquals(
+        "Missing/Null JSON node cannot be formatted",
+        assertThrows(PrintfException.class, () -> new JsonNodeTraits(MissingNode.getInstance()))
+            .getMessage());
+  }
+
+  @Test
+  public void numericTextMatchesOrdinaryStringArguments() {
+    for (String text :
+        new String[] {
+          "0", "+42", "-42", "00042", Long.toString(Long.MIN_VALUE), Long.toString(Long.MAX_VALUE)
+        }) {
+      for (String pattern : new String[] {"%d", "%u", "%#x", "%o", "%.2f", "%e", "%g"}) {
+        assertEquals(
+            FastPrintf.compile(pattern).format(text), format(pattern, TextNode.valueOf(text)));
+      }
+    }
+    for (String text :
+        new String[] {
+          "12.75", "-0.0", "1.25e3", " 1.25 ", "0x1.8p1", "NaN", "Infinity", "-Infinity"
+        }) {
+      for (String pattern : new String[] {"%.2f", "%e", "%g", "%a"}) {
+        assertEquals(
+            FastPrintf.compile(pattern).format(text), format(pattern, TextNode.valueOf(text)));
+      }
+    }
+    assertEquals("12", format("%s", TextNode.valueOf("12")));
+    assertEquals("1", format("%c", TextNode.valueOf("12")));
+  }
+
+  @Test
+  public void rejectsMalformedTextAndIntegerOverflow() {
+    for (String text : new String[] {"", " ", "null", "true", "12x"}) {
+      JsonNodeTraits traits = new JsonNodeTraits(TextNode.valueOf(text));
+      for (PrintfException error :
+          new PrintfException[] {
+            assertThrows(PrintfException.class, traits::asIntForm),
+            assertThrows(PrintfException.class, traits::asFloatForm),
+            assertThrows(PrintfException.class, traits::asInt)
+          }) {
+        assertTrue(error.getCause() instanceof NumberFormatException);
+        assertTrue(error.getMessage().contains("\"" + text + "\""));
+      }
+    }
+    for (String text :
+        new String[] {"1.5", "1e2", " 12 ", "9223372036854775808", "-9223372036854775809"}) {
+      assertTrue(
+          assertThrows(PrintfException.class, () -> format("%d", TextNode.valueOf(text))).getCause()
+              instanceof NumberFormatException);
+    }
+    for (String text : new String[] {"2147483648", "-2147483649"}) {
+      assertTrue(
+          assertThrows(
+                      PrintfException.class,
+                      () -> new JsonNodeTraits(TextNode.valueOf(text)).asInt())
+                  .getCause()
+              instanceof NumberFormatException);
+    }
+    assertEquals(Integer.MIN_VALUE, new JsonNodeTraits(TextNode.valueOf("-2147483648")).asInt());
+    assertEquals(Integer.MAX_VALUE, new JsonNodeTraits(TextNode.valueOf("2147483647")).asInt());
+  }
+
+  @Test
+  public void floatingTextRetainsDoubleOverflowAndUnderflowSemantics() {
+    assertEquals("Infinity", format("%f", TextNode.valueOf("1e309")));
+    assertEquals("-Infinity", format("%f", TextNode.valueOf("-1e309")));
+    assertEquals("0.000000", format("%f", TextNode.valueOf("1e-4000")));
+    assertEquals("-0.000000", format("%f", TextNode.valueOf("-1e-4000")));
+  }
+
+  @Test
+  public void dynamicFieldsPropagateConversionFailures() {
+    for (String pattern : new String[] {"%*f", "%.*f"}) {
+      for (String text : new String[] {"invalid", "2147483648", "-2147483649"}) {
+        PrintfException error =
+            assertThrows(
+                PrintfException.class,
+                () -> FastPrintf.compile(pattern).format(TextNode.valueOf(text), 1.25));
+        assertTrue(error.getCause() instanceof NumberFormatException);
+        assertTrue(error.getMessage().contains(text));
+      }
+    }
+  }
+
+  @Test
+  public void supportsBooleanNumbersAndTextDynamicFields() {
+    for (boolean value : new boolean[] {true, false}) {
+      JsonNode node = BooleanNode.valueOf(value);
+      for (String pattern : new String[] {"%d", "%f", "%g"}) {
+        assertEquals(FastPrintf.compile(pattern).format(value), format(pattern, node));
+      }
+      assertEquals(value ? 1 : 0, new JsonNodeTraits(node).asInt());
+      assertEquals(value ? '\u0001' : '\u0000', new JsonNodeTraits(node).asChar());
+      assertEquals(value ? "1.3" : "1", FastPrintf.compile("%.*f").format(node, 1.25));
+    }
+    assertEquals(
+        "  1.25",
+        FastPrintf.compile("%*.*f")
+            .format(TextNode.valueOf("6"), TextNode.valueOf("2"), TextNode.valueOf("1.25")));
   }
 
   @Test
   public void supportsCharactersAndDynamicFields() {
     assertEquals("A", format("%c", IntNode.valueOf(65)));
     assertEquals("a", format("%c", TextNode.valueOf("abc")));
-    assertThrows(PrintfException.class, () -> format("%c", TextNode.valueOf("")));
+    assertEquals(
+        "Empty JSON string cannot be converted to char",
+        assertThrows(PrintfException.class, () -> format("%c", TextNode.valueOf(""))).getMessage());
     assertEquals(
         "  1.25",
         FastPrintf.compile("%*.*f")
@@ -108,13 +236,41 @@ public class JsonNodeTraitsTest {
   }
 
   @Test
+  public void numericConversionsKeepOriginalNodeReference() {
+    JsonNode[] nodes = {TextNode.valueOf("42"), BooleanNode.TRUE, BooleanNode.FALSE};
+    String[] expected = {"42", "1", "0"};
+    for (int i = 0; i < nodes.length; i++) {
+      JsonNode node = nodes[i];
+      JsonNodeTraits traits = new JsonNodeTraits(node);
+      String identity =
+          node.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(node));
+      assertSame(node, traits.ref().get());
+      traits.asIntForm();
+      traits.asFloatForm();
+      traits.asInt();
+      assertFalse(traits.ref().isPrimitive());
+      assertSame(node, traits.ref().get());
+      assertSame(node, traits.asObject());
+      assertEquals(identity, FastPrintf.compile("%p").format(traits));
+      assertEquals(node.asText(), traits.asString());
+      assertEquals(expected[i], FastPrintf.compile("%d").format(traits));
+    }
+    JsonNode invalid = TextNode.valueOf("not a number");
+    JsonNodeTraits traits = new JsonNodeTraits(invalid);
+    assertThrows(PrintfException.class, traits::asIntForm);
+    assertThrows(PrintfException.class, traits::asFloatForm);
+    assertThrows(PrintfException.class, traits::asInt);
+    assertSame(invalid, traits.ref().get());
+    assertSame(invalid, traits.asObject());
+  }
+
+  @Test
   public void preservesOriginalNodeIdentity() {
     JsonNode node = TextNode.valueOf("value");
     JsonNodeTraits traits = new JsonNodeTraits(node);
     assertSame(node, traits.ref().get());
     assertSame(node, traits.asObject());
     assertFalse(traits.isNull());
-    assertTrue(new JsonNodeTraits(NullNode.getInstance()).isNull());
     assertEquals(
         node.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(node)),
         format("%p", node));

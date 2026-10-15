@@ -11,65 +11,105 @@ import java.math.BigDecimal;
 /**
  * Optional Jackson 2 tree-model adapter, selected automatically by {@code Args.put(Object)}.
  *
- * <p>Text nodes provide unquoted text; containers provide JSON. Only numeric nodes support numeric
- * conversions: strings and booleans are not silently coerced to numbers. Decimal and big-integer
- * nodes retain their precision. The original node is retained for object identity and is not
- * copied; callers must not mutate it concurrently with formatting. JSON null follows Java null
- * semantics, including object identity. Missing nodes are rejected.
+ * <p>Text nodes provide unquoted text; containers provide JSON. Text and boolean nodes use the same
+ * numeric conversions as ordinary string and boolean arguments. Decimal and big-integer nodes
+ * retain their precision. The original node is retained for object identity and is not copied;
+ * callers must not mutate it concurrently with formatting. The automatic adapter routes JSON null
+ * to {@code NullTraits}; this class only accepts non-null, non-missing nodes.
  */
-public final class JsonNodeTraits implements FormatTraits {
+final class JsonNodeTraits implements FormatTraits {
   private final JsonNode value;
 
-  public JsonNodeTraits(JsonNode value) {
+  /**
+   * Wraps a non-null JSON value while retaining the original node as its reference.
+   *
+   * @throws PrintfException if the node is a JSON null or missing node
+   */
+  JsonNodeTraits(JsonNode value) {
     this.value = value;
-    if (value.isMissingNode()) {
-      throw new PrintfException("Missing JSON node cannot be formatted");
+    if (value.isMissingNode() || value.isNull()) {
+      throw new PrintfException("Missing/Null JSON node cannot be formatted");
     }
   }
 
-  @Override
-  public boolean isNull() {
-    return value.isNull();
+  private PrintfException cannotConvertToNumber() {
+    return new PrintfException("JSON %s node cannot be converted to a number", value.getNodeType());
   }
 
-  private void requireNumber() {
-    if (!value.isNumber()) {
-      throw new PrintfException(
-          "JSON %s node cannot be converted to a number", value.getNodeType());
-    }
+  private PrintfException cannotParseNumber(String target, NumberFormatException cause) {
+    return new PrintfException(
+        cause, "Cannot convert JSON text node \"%s\" to %s", value.textValue(), target);
   }
 
   @Override
   public IntForm asIntForm() {
-    requireNumber();
-    switch (value.numberType()) {
-      case INT:
-        return IntForm.valueOf(value.intValue());
-      case BIG_INTEGER:
-        return IntForm.valueOf(value.bigIntegerValue());
-      case BIG_DECIMAL:
-        return IntForm.valueOf(value.decimalValue().toBigInteger());
-      default:
-        return IntForm.valueOf(value.longValue());
+    if (value.isNumber()) {
+      switch (value.numberType()) {
+        case INT:
+          return IntForm.valueOf(value.intValue());
+        case FLOAT:
+          return IntForm.valueOf((int) value.floatValue());
+        case BIG_INTEGER:
+          return IntForm.valueOf(value.bigIntegerValue());
+        case BIG_DECIMAL:
+          return IntForm.valueOf(value.decimalValue().toBigInteger());
+        default:
+          // LONG and DOUBLE both convert through longValue(); keep FLOAT's 32-bit form above.
+          return IntForm.valueOf(value.longValue());
+      }
+    } else if (value.isTextual()) {
+      try {
+        return IntForm.valueOf(Long.parseLong(value.textValue()));
+      } catch (NumberFormatException e) {
+        throw cannotParseNumber("int", e);
+      }
+    } else if (value.isBoolean()) {
+      return IntForm.valueOf(value.booleanValue() ? 1 : 0);
+    } else {
+      throw cannotConvertToNumber();
     }
   }
 
   @Override
   public FloatForm asFloatForm() {
-    requireNumber();
-    if (value.isBigDecimal()) {
-      return FloatForm.valueOf(value.decimalValue());
+    if (value.isNumber()) {
+      switch (value.numberType()) {
+        case BIG_INTEGER:
+          return FloatForm.valueOf(new BigDecimal(value.bigIntegerValue()));
+        case BIG_DECIMAL:
+          return FloatForm.valueOf(value.decimalValue());
+        default:
+          // Primitive numeric types all use FloatForm's double overload.
+          return FloatForm.valueOf(value.doubleValue());
+      }
+    } else if (value.isTextual()) {
+      try {
+        return FloatForm.valueOf(Double.parseDouble(value.textValue()));
+      } catch (NumberFormatException e) {
+        throw cannotParseNumber("float", e);
+      }
+    } else if (value.isBoolean()) {
+      return FloatForm.valueOf(value.booleanValue() ? 1.0 : 0.0);
+    } else {
+      throw cannotConvertToNumber();
     }
-    if (value.isBigInteger()) {
-      return FloatForm.valueOf(new BigDecimal(value.bigIntegerValue()));
-    }
-    return FloatForm.valueOf(value.doubleValue());
   }
 
   @Override
   public int asInt() {
-    requireNumber();
-    return value.intValue();
+    if (value.isNumber()) {
+      return value.intValue();
+    } else if (value.isTextual()) {
+      try {
+        return Integer.parseInt(value.textValue());
+      } catch (NumberFormatException e) {
+        throw cannotParseNumber("int", e);
+      }
+    } else if (value.isBoolean()) {
+      return value.booleanValue() ? 1 : 0;
+    } else {
+      throw cannotConvertToNumber();
+    }
   }
 
   @Override
@@ -86,11 +126,11 @@ public final class JsonNodeTraits implements FormatTraits {
       }
       return text.charAt(0);
     }
-    return FormatTraits.super.asChar();
+    return (char) asInt();
   }
 
   @Override
   public RefSlot ref() {
-    return value.isNull() ? RefSlot.ofNull() : RefSlot.of(value);
+    return RefSlot.of(value);
   }
 }
