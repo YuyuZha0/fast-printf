@@ -3,9 +3,12 @@ package io.fastprintf.traits;
 import io.fastprintf.Args;
 import io.fastprintf.FastPrintf;
 import io.fastprintf.PrintfException;
+import io.fastprintf.jackson.JacksonSupport;
 import io.fastprintf.number.FloatForm;
 import io.fastprintf.number.IntForm;
 import io.fastprintf.seq.Seq;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.temporal.TemporalAccessor;
 
 /**
@@ -35,6 +38,50 @@ import java.time.temporal.TemporalAccessor;
  * @see FloatForm
  */
 public interface FormatTraits {
+
+  /**
+   * Converts one value using the same runtime dispatch for mutable and fixed-size argument
+   * containers. Boxed primitives retain their reference identity; existing traits are reused.
+   * Arrays and iterables are not expanded, and Jackson values are adapted only when Jackson is
+   * available.
+   */
+  static FormatTraits convert(Object value) {
+    if (value == null) {
+      return NullTraits.getInstance();
+    } else if (value instanceof Boolean) {
+      return new BooleanTraits((Boolean) value, RefSlot.of(value));
+    } else if (value instanceof Character) {
+      return new CharacterTraits((Character) value, RefSlot.of(value));
+    } else if (value instanceof Byte) {
+      return new ByteTraits((Byte) value, RefSlot.of(value));
+    } else if (value instanceof Short) {
+      return new ShortTraits((Short) value, RefSlot.of(value));
+    } else if (value instanceof Integer) {
+      return new IntTraits((Integer) value, RefSlot.of(value));
+    } else if (value instanceof Long) {
+      return new LongTraits((Long) value, RefSlot.of(value));
+    } else if (value instanceof Float) {
+      return new FloatTraits((Float) value, RefSlot.of(value));
+    } else if (value instanceof Double) {
+      return new DoubleTraits((Double) value, RefSlot.of(value));
+    } else if (value instanceof CharSequence) {
+      return new CharSequenceTraits((CharSequence) value);
+    } else if (value instanceof BigInteger) {
+      return new BigIntegerTraits((BigInteger) value);
+    } else if (value instanceof BigDecimal) {
+      return new BigDecimalTraits((BigDecimal) value);
+    } else if (value instanceof TemporalAccessor) {
+      return new TemporalAccessorTraits((TemporalAccessor) value);
+    } else if (value instanceof FormatTraits) {
+      return (FormatTraits) value;
+    } else {
+      FormatTraits jsonTraits = JacksonSupport.wrap(value);
+      if (jsonTraits != null) {
+        return jsonTraits;
+      }
+      return new ObjectTraits(value);
+    }
+  }
 
   /**
    * Indicates whether the underlying argument is {@code null}.

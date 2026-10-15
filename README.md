@@ -33,7 +33,7 @@ Add the dependency (Maven):
 <dependency>
     <groupId>io.github.yuyuzha0</groupId>
     <artifactId>fast-printf</artifactId>
-    <version>1.2.14</version>
+    <version>1.2.15</version>
 </dependency>
 ```
 
@@ -136,14 +136,14 @@ Reuse can help in tight loops, but performance depends on memory locality. See
 <dependency>
     <groupId>io.github.yuyuzha0</groupId>
     <artifactId>fast-printf</artifactId>
-    <version>1.2.14</version>
+    <version>1.2.15</version>
 </dependency>
 ```
 
 **Gradle:**
 
 ```groovy
-implementation 'io.github.yuyuzha0:fast-printf:1.2.14'
+implementation 'io.github.yuyuzha0:fast-printf:1.2.15'
 ```
 
 ## Usage
@@ -242,48 +242,55 @@ pass it directly to `formatter.format(node)` as in the example above.
 
 #### Formatting a JSON property with an annotation
 
-Use an application-side serializer with Jackson's `@JsonSerialize`. This example caches a compiled
-format and emits a **JSON string**, leaving quoting and escaping to Jackson:
+Since 1.2.15, use `@PrintfFormat` on a field or getter to emit a **JSON string**, with quoting and
+escaping handled by Jackson. Register `FastPrintfModule` to enable the annotation and share compiled
+patterns across properties:
 
 ```java
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import io.fastprintf.FastPrintf;
+import io.fastprintf.jackson.FastPrintfModule;
+import io.fastprintf.jackson.PrintfFormat;
 import java.io.IOException;
 import java.math.BigDecimal;
 
 public class JacksonExample {
     public static class Price {
-        @JsonSerialize(using = AmountSerializer.class)
+        @PrintfFormat("%.2f")
         public BigDecimal amount = new BigDecimal("12.3");
     }
 
-    public static class AmountSerializer extends JsonSerializer<BigDecimal> {
-        private static final FastPrintf FORMAT = FastPrintf.compile("%.2f");
-
-        @Override
-        public void serialize(BigDecimal value, JsonGenerator out, SerializerProvider provider)
-                throws IOException {
-            out.writeString(FORMAT.format(value));
-        }
-    }
-
     public static void main(String[] args) throws IOException {
-        System.out.println(new ObjectMapper().writeValueAsString(new Price()));
+        ObjectMapper mapper = new ObjectMapper().registerModule(new FastPrintfModule());
+        System.out.println(mapper.writeValueAsString(new Price()));
         // {"amount":"12.30"}
     }
 }
 ```
 
-Jackson handles null properties normally. Do not use `writeRawValue` for printf output: padding,
-prefixes and arbitrary text need not be valid JSON numbers. This example only customizes
-serialization; it does not change `@JsonFormat` or provide reverse parsing. If an application needs
-an annotation carrying a pattern, implement Jackson's
-[`ContextualSerializer`](https://github.com/FasterXML/jackson-databind/blob/2.20/src/main/java/com/fasterxml/jackson/databind/ser/ContextualSerializer.java)
-and compile the pattern when creating the per-property serializer, rather than on every write.
+With `FastPrintfModule` registered, `@PrintfFormat` selects `FastPrintfSerializer`. No additional
+`@JsonSerialize` annotation is needed. Explicitly selecting `FastPrintfSerializer` is redundant but
+allowed; selecting a different serializer on the same property is a configuration error, including
+through a mix-in. Properties without `@PrintfFormat` retain their usual Jackson behavior.
+The pattern is mandatory; there is no implicit `%s` fallback.
+With the module, identical patterns share a `FastPrintf` instance through a thread-safe cache owned
+by that module. The cache retains distinct annotation
+patterns for the lifetime of the module and its annotation introspector. Reusing one module across mappers shares
+that cache; separate module instances have separate caches. Register the module before using a mapper.
+Neither pattern compilation nor cache lookup occurs on each value write.
+The module supplies serializer instances; `FastPrintfSerializer` has no no-argument constructor
+and cannot be instantiated by a standalone `@JsonSerialize` declaration. Without module registration,
+Jackson ignores `@PrintfFormat` and uses its usual serializers, including any explicit `@JsonSerialize`.
+
+Each property supplies **one argument** to the pattern. For example, use `%.2f` for a decimal,
+`%#x` for an integer, or `%t{yyyy-MM-dd}` for a supported date/time value. Patterns requiring extra
+arguments, such as `%*.*f`, cannot obtain those arguments from this annotation. Invalid patterns
+and incompatible value types fail serialization rather than silently falling back.
+
+Java null properties follow Jackson's normal null serialization and inclusion rules; unannotated
+properties keep their usual serializers. Jackson mix-in annotations are supported. This feature
+affects serialization only: it does not redefine `@JsonFormat`, change JSON numbers into formatted
+numeric tokens, or provide reverse parsing. No Jackson dependency is needed when using core
+fast-printf without this integration.
 
 #### What does `FormatTraits` mean?
 
@@ -394,7 +401,7 @@ pre-1.2.14 baseline. Codecov requires 95% project and patch coverage. Add regres
 tests for correctness fixes and compare JMH latency **and** allocation before retaining performance
 changes. Prefer shared rules and clear code; special-case fast paths need substantial measured gains.
 
-After merging, run `bash create_tag.sh v1.2.14` from a clean, synchronized `main`, then publish a
+After merging, run `bash create_tag.sh v1.2.15` from a clean, synchronized `main`, then publish a
 GitHub Release for that tag. The release workflow validates the Maven version, verifies and signs
 the artifacts, and publishes to Maven Central. Pushing the tag alone does not publish artifacts.
 

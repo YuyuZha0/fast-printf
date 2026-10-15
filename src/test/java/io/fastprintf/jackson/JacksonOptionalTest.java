@@ -48,9 +48,17 @@ public class JacksonOptionalTest {
           "fallback 42",
           api.getMethod("format", Object[].class)
               .invoke(formatter, new Object[] {new Object[] {value, 42}}));
+      Class<?> argsApi = isolated.loadClass("io.fastprintf.Args");
+      Object single = argsApi.getMethod("exactlyOne", Object.class).invoke(null, value);
+      Object singleFormatter = api.getMethod("compile", String.class).invoke(null, "%s");
+      assertEquals("fallback", api.getMethod("format", argsApi).invoke(singleFormatter, single));
       assertTrue(requestedClasses.contains("com.fasterxml.jackson.databind.JsonNode"));
       assertFalse(requestedClasses.contains("io.fastprintf.jackson.JacksonSupport$Adapter"));
       assertFalse(requestedClasses.contains("io.fastprintf.jackson.JsonNodeTraits"));
+      assertFalse(requestedClasses.contains("io.fastprintf.jackson.FastPrintfModule"));
+      assertFalse(requestedClasses.contains("io.fastprintf.jackson.FastPrintfSerializer"));
+      assertFalse(requestedClasses.contains("io.fastprintf.jackson.FastPrintfSerializerFactory"));
+      assertFalse(requestedClasses.contains("io.fastprintf.jackson.PrintfFormat"));
     }
   }
 }

@@ -1,6 +1,16 @@
 # Changelog
 
-## 1.2.14 (unreleased)
+## 1.2.15 (unreleased)
+
+- Add Jackson 2 `@PrintfFormat` for formatting fields and getters as JSON strings, with
+  per-property compiled serializers, normal null handling, and mix-in support.
+- Require `FastPrintfModule` registration to share compiled `FastPrintf` instances by
+  pattern within a module. A module-owned factory uses the thread-safe cache when creating serializers, not per value.
+- Keep Jackson optional and retain the Java 8 runtime baseline.
+- With the module registered, let `@PrintfFormat` select its serializer and reject conflicting
+  explicit serializers. Without the module, Jackson ignores `@PrintfFormat`.
+
+## 1.2.14
 
 ### Performance and structure
 
