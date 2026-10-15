@@ -3,134 +3,27 @@
 [![Java CI](https://github.com/YuyuZha0/fast-printf/actions/workflows/maven.yml/badge.svg)](https://github.com/YuyuZha0/fast-printf/actions/workflows/maven.yml)
 [![codecov](https://codecov.io/github/YuyuZha0/fast-printf/graph/badge.svg?token=UPPTCS4DRS)](https://codecov.io/github/YuyuZha0/fast-printf)
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.yuyuzha0/fast-printf.svg?style=flat-square)](https://search.maven.org/artifact/io.github.yuyuzha0/fast-printf)
-[![License](https://img.shields.io/badge/License-GPL--2.0--with--classpath--exception-blue.svg?style=flat-square)](https://openjdk.java.net/legal/gplv2+ce.html)
+[![License](https://img.shields.io/badge/License-GPL--2.0--with--classpath--exception-blue.svg?style=flat-square)](LICENSE)
 
-A fast, allocation-light, `glibc`-style `printf` for Java 8+.
-
-**Compile once, format many times.** fast-printf trades a one-time parsing cost for a tight, type-specialised
-formatting loop. The 1.2.13 mixed-log benchmark measured **1.8–6.8× faster than `String.format()`**
-(depending on JDK) and **~50% less allocation** per call. See [Performance](#performance) for workload and version details. Designed for hot paths — high-throughput logging, text-protocol serialization, real-time systems —
-where `String.format()` shows up in a profile or GC trace.
-
-## Contents
-
-- [Quick Start](#quick-start)
-- [Why fast-printf?](#why-fast-printf)
-- [Performance](#performance)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Format String Reference](#format-string-reference)
-- [How It Works](#how-it-works)
-- [Differences from `String.format()`](#differences-from-stringformat)
-- [Contributing](#contributing)
-- [License](#license)
-
-## Quick Start
-
-Add the dependency (Maven):
-
-```xml
-<dependency>
-    <groupId>io.github.yuyuzha0</groupId>
-    <artifactId>fast-printf</artifactId>
-    <version>1.2.15</version>
-</dependency>
-```
-
-Compile once, format many times:
+Fast, reusable `printf` formatting for Java 8+. **Compile a format once, then reuse it.**
 
 ```java
-import io.fastprintf.FastPrintf;
-
-private static final FastPrintf F = FastPrintf.compile("User %s (id=%d) scored %.2f");
-
-String s = F.format("Alice", 42, 99.5);
-// → "User Alice (id=42) scored 99.50"
+FastPrintf format = FastPrintf.compile("User %s (id=%d) scored %.2f");
+String result = format.format("Alice", 42, 99.5);
+// User Alice (id=42) scored 99.50
 ```
 
-That's the whole API for typical use. The rest of this document covers the no-boxing `Args` builder, the format-string
-syntax, and the design trade-offs.
+- **Built for repeated formatting:** reusable, thread-safe formatters with low allocation overhead.
+- **Familiar printf syntax:** numbers, text, padding, precision, and date/time patterns.
+- **Flexible arguments:** convenient varargs, primitive `Args` methods that avoid boxing, and a fixed single-argument container.
+- **Optional Jackson 2 integration:** format `JsonNode` values or annotate JSON properties with `@PrintfFormat`.
+- **No required runtime dependencies:** core formatting works without Jackson.
 
-## Why fast-printf?
+[Get started](#get-started) · [Performance](#performance) · [Usage](#usage) · [Jackson](#jackson-integration) · [Format reference](#format-reference)
 
-* 🚀 **Faster than `String.format()`** on every JDK we measured — **~6.8×** on JDK 8, **~5×** on JDK 11, **~4.5×** on
-  JDK 17, **~1.8–2.2×** on JDK 21 (whose rewritten `Formatter` closed most of the gap). See
-  [Performance](#performance) for the full chart and table.
-* 🗑️ **~50% less allocation** than `String.format` on a typical log-line — a rope-like internal data structure avoids
-  intermediate strings and `char[]` copies, cutting young-gen GC pressure in hot loops.
-* ⚙️ **Glibc-compatible syntax.** Follows the familiar C / C++ `printf` rules rather than `java.util.Formatter`'s
-  Java-specific quirks (`%S` upper-cases the string, `%p` prints object identity, etc.).
-* 💡 **Modern float formatting on every JDK.** Backports the Schubfach engine from OpenJDK 21, so `double` / `float`
-  output is shortest-correctly-rounded even on Java 8.
-* ⛓️ **No-boxing fluent API** for primitive-heavy call sites: `Args.create().putInt(...).putDouble(...)` skips the
-  `Integer.valueOf` / `Double.valueOf` allocations that varargs forces.
-* 🧩 **Zero runtime dependencies.** Compatible with Java 8 and newer.
+## Get started
 
-**Reach for it when** you have a hot `String.format` call site — high-throughput logging, text-protocol serialization
-(CSV / log lines / metrics), or any latency-sensitive code where formatting shows up in a profile or GC trace.
-For everyday formatting where the bytes-per-second don't matter, the standard `String.format()` is fine.
-
-## Performance
-
-Version 1.2.14 consolidates numeric layout, resolves dynamic fields once, and avoids uppercasing
-complete numeric ropes. Changes are evaluated with isolated JMH workloads and the mixed-log benchmark.
-Correctness fixes are listed in [the changelog](CHANGELOG.md).
-
-### Historical 1.2.13 comparison with String.format
-
-The following cross-JDK tables describe **1.2.13**, not the current release. They are retained as
-historical measurements and should not be compared directly with results from a different run.
-
-Benchmarked with `CommonUsageBenchmark` (JMH 1.37, `@Fork(2)`, Corretto on a single M-series box). The format string
-`[%s] %s id=%d latency=%.3fms` is a realistic log-line case mixing literal text with `%s`, `%d`, and `%.Nf`; the same
-string is fed to both `FastPrintf.compile(...)` and `String.format(...)` — no per-side translation or workarounds.
-
-<p align="center">
-  <img src="docs/perf-cross-jdk.svg" alt="CommonUsageBenchmark cross-JDK results: fastPrintf varargs and ThreadLocal cache stay roughly flat (~200 ns) across JDK 8/11/17/21, while String.format drops from ~1450 ns on JDK 8 to ~404 ns on JDK 21." width="760">
-</p>
-
-### Cross-JDK numbers
-
-| Path                                         | JDK 8         | JDK 11         | JDK 17        | JDK 21      |
-|----------------------------------------------|--------------:|---------------:|--------------:|------------:|
-| `fastPrintf` (varargs)                       | ~214 ns       | ~216 ns        | ~200 ns       | ~221 ns     |
-| `fastPrintf` (`Args` builder, no-boxing)     | ~326 ns       | ~251 ns        | ~247 ns       | ~247 ns     |
-| `fastPrintf` (with `ThreadLocal` cache)      | ~244 ns       | ~199 ns        | ~197 ns       | ~186 ns     |
-| `String.format`                              | **~1450 ns**  | **~1069 ns**   | **~886 ns**   | **~404 ns** |
-| **Speedup — varargs vs `String.format`**     | **~6.77×**    | **~4.95×**     | **~4.43×**    | **~1.83×**  |
-| **Speedup — TL cache vs `String.format`**    | **~5.94×**    | **~5.38×**     | **~4.50×**    | **~2.17×**  |
-
-These results describe this workload and JVM configuration. They do not establish the cause of
-cross-JDK differences or predict every application's behavior.
-
-### Allocation profile (JDK 21)
-
-Time isn't the whole story. Allocation bytes-per-op, measured with `-prof gc`:
-
-| Path                                         | Time     | Allocation |
-|----------------------------------------------|---------:|-----------:|
-| **`fastPrintf` (varargs)**                   | **~221 ns** |  696 B/op |
-| `fastPrintf` (`Args` builder, no-boxing)     |     ~247 ns |  592 B/op |
-| `fastPrintf` (with `ThreadLocal` cache)      |     ~186 ns |  608 B/op |
-| `String.format`                              |     ~404 ns | 1280 B/op |
-
-fast-printf allocates roughly **half** the bytes `String.format` does on this workload — and on JDK 21, where the
-nanoseconds gap is narrowest, the GC-pressure gap is what carries the win in production code.
-
-### Design notes on the optional paths
-
-**The `Args` builder (no-boxing).** Avoids primitive boxing, but still constructs argument traits.
-Its allocation and latency trade-offs depend on the workload and JVM; lower B/op alone does not
-establish better p99 latency.
-
-**`enableThreadLocalCache()`.** Reuses the builder's backing buffer across calls. It supports
-recursive calls from object formatting and releases its in-use state even if formatting fails.
-Reuse can help in tight loops, but performance depends on memory locality. See
-`ComplexFormatLocalityBenchmark` and benchmark your own workload before enabling it.
-
-## Installation
-
-**Maven:**
+**Maven**
 
 ```xml
 <dependency>
@@ -140,279 +33,255 @@ Reuse can help in tight loops, but performance depends on memory locality. See
 </dependency>
 ```
 
-**Gradle:**
+**Gradle**
 
 ```groovy
 implementation 'io.github.yuyuzha0:fast-printf:1.2.15'
 ```
 
-## Usage
-
-The core idea is to compile a format string once into a `FastPrintf` instance and reuse it for all subsequent formatting
-operations. Instances are immutable and thread-safe.
+Keep the compiled formatter in a field and reuse it:
 
 ```java
-import io.fastprintf.Args;
 import io.fastprintf.FastPrintf;
 
 public class Example {
-    // Compile once and reuse. The FastPrintf instance is immutable and thread-safe.
-    private static final FastPrintf FORMATTER =
+    private static final FastPrintf FORMAT =
             FastPrintf.compile("User %s (id=%d) scored %.2f");
 
     public static void main(String[] args) {
-        // 1. Using varargs — simple and convenient
-        String r1 = FORMATTER.format("Alice", 42, 99.5);
-        System.out.println(r1);
-        // → User Alice (id=42) scored 99.50
-
-        // 2. Using the fluent Args builder — no primitive boxing
-        Args primitiveArgs = Args.create()
-                .putString("Alice")
-                .putInt(42)
-                .putDouble(99.5);
-        String r2 = FORMATTER.format(primitiveArgs);
-        System.out.println(r2);
-        // → User Alice (id=42) scored 99.50
+        System.out.println(FORMAT.format("Alice", 42, 99.5));
+        // User Alice (id=42) scored 99.50
     }
 }
 ```
 
-For richer formatting — uppercase strings (`%S`), zero-padding (`%05d`), hex (`%#08X`), date/time (`%t{...}`), etc. —
-see the [Format String Reference](#format-string-reference) below.
+## Performance
 
-### Convenience vs. maximum performance
+fast-printf avoids parsing the pattern on every call. It is intended for repeated formatting in
+logging, text serialization, and other hot paths.
 
-| Style                                         | Boxing?          | Optimises for         | When to use                                                                          |
-|-----------------------------------------------|------------------|-----------------------|--------------------------------------------------------------------------------------|
-| `FORMATTER.format(123, "test")` (varargs)     | Yes (primitives) | CPU throughput        | Most call sites; readability wins.                                                   |
-| `Args.of(123, "test")`                        | Yes (primitives) | CPU throughput        | Same as varargs; useful when you build args incrementally.                           |
-| `Args.create().putInt(123).putString("test")` | **No**           | Allocation rate / GC  | Hot serialization or logging paths where young-gen pressure / p99 latency dominates. |
+![Time per formatted log line on JDK 8, 11, 17, and 21; lower is better.](docs/perf-cross-jdk.svg)
 
-All three produce identical output. The choice is **CPU throughput vs allocation rate**, not "good vs better": the
-no-boxing builder allocates ~15% less but costs ~18 ns of method-dispatch per call (see
-[Design notes on the optional paths](#design-notes-on-the-optional-paths)). Pick based on which axis your workload is
-actually bound on.
+In this run, fast-printf was **1.9–4.4× faster** than `String.format` across JDK 8–21.
+On JDK 21, it allocated **696 B/op versus 1,280 B/op** — about **46% less**.
 
-### Jackson integration (optional)
+Measured with [CommonUsageBenchmark](src/test/java/io/fastprintf/benchmark/CommonUsageBenchmark.java)
+using `[%s] %s id=%d latency=%.3fms`, rotating input values, and a reused fast-printf formatter.
+Both implementations receive the same format string. These results describe this workload;
+measure your own patterns and argument types before choosing a tuning option.
 
-Applications using Jackson 2 can pass `JsonNode` arguments directly. Declare
-`com.fasterxml.jackson.core:jackson-databind` in your application, using your Jackson BOM or dependency
-management for its version. The integration is built and tested with Jackson 2.20.1; Jackson 3 uses
-different packages and is not detected by this adapter.
+<details>
+<summary>Benchmark environment and reproduction</summary>
 
-```java
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.fastprintf.FastPrintf;
+Measured on macOS ARM64 with Corretto JDK 8, 11, 17, and 21, JMH 1.37, two forks,
+three 1-second warmups, four 1-second measurements, a 256 MB heap, and the GC profiler.
+All JDKs use JMH's full blackhole mode and an English/US locale.
 
-ObjectMapper mapper = new ObjectMapper();
-JsonNode order = mapper.readTree("{\"name\":\"Alice\",\"amount\":12.3}");
-FastPrintf format = FastPrintf.compile("%s: %.2f"); // Cache and reuse.
-String result = format.format(order.get("name"), order.get("amount"));
-// Alice: 12.30
+From a checkout, using the JDK you want to measure:
+
+```sh
+mvn -q test-compile dependency:build-classpath -DincludeScope=test \
+    -Dmdep.outputFile=target/benchmark-classpath.txt
+java -Djmh.blackhole.autoDetect=false \
+    -cp "target/classes:target/test-classes:$(cat target/benchmark-classpath.txt)" \
+    org.openjdk.jmh.Main 'CommonUsageBenchmark.(fastPrintfVarargs|jdkPrintf)' \
+    -f 2 -wi 3 -i 4 -w 1s -r 1s -prof gc \
+    -jvmArgs "-Xms256m -Xmx256m -Duser.language=en -Duser.country=US -Djmh.blackhole.autoDetect=false"
 ```
 
-Availability is checked once per library class loader when the generic-object path is first used.
-When Jackson is available, `JsonNode` arguments use `io.fastprintf.jackson.JsonNodeTraits`; otherwise ordinary objects
-continue to use `ObjectTraits`. Primitive and existing built-in argument paths do not probe Jackson.
-The optional Maven dependency is not inherited by applications, and core formatting works without
-Jackson. On the module path, `requires static com.fasterxml.jackson.databind` makes Jackson optional
-at runtime; an application using the integration should declare `requires com.fasterxml.jackson.databind`.
+</details>
 
-| JSON node | Formatting behavior |
-| --- | --- |
-| Text | `%s` uses unquoted text; `%c` uses its first character |
-| Number | Numeric specifiers use its value; BigInteger/BigDecimal nodes retain their precision |
-| Boolean | `%s` produces `true` or `false`; numeric conversion is rejected |
-| Null | Uses the existing `NullTraits`, just like Java `null`; `%s`/`%p` produce `null`, numeric conversion is rejected |
-| Object / array | `%s` produces JSON text; numeric conversion is rejected |
-| Missing node | Rejected, so a missing field is not silently treated as zero or null |
+## Usage
 
-Numeric strings are not coerced to numbers. Floating-to-integer conversions truncate; dynamic width
-and precision use Jackson's `intValue()` conversion. `%p` retains a non-null node's original identity.
-Java `null` still uses the usual null-argument handling. If using `get()`, validate required fields
-yourself; use `path()` to obtain a missing node for absent fields. Nodes are not copied, so do not
-mutate a tree concurrently with formatting. For exact parsed decimals, configure Jackson to create
-BigDecimal nodes; the adapter cannot recover precision already lost while parsing into double nodes.
+### Choose how to supply arguments
 
-`JsonNode` also implements `Iterable`: `Args.of(node)` selects the existing iterable overload and
-expands its children. To pass one node, use `Args.create().put(node)`, `Args.of((Object) node)`, or
-pass it directly to `formatter.format(node)` as in the example above.
+Varargs are the simplest option:
 
-#### Formatting a JSON property with an annotation
+```java
+FastPrintf format = FastPrintf.compile("%s: %d items, total %.2f");
+String result = format.format("order", 3, 12.5);
+// order: 3 items, total 12.50
+```
 
-Since 1.2.15, use `@PrintfFormat` on a field or getter to emit a **JSON string**, with quoting and
-escaping handled by Jackson. Register `FastPrintfModule` to enable the annotation and share compiled
-patterns across properties:
+Use `Args` when building arguments incrementally or avoiding primitive boxing:
+
+```java
+import io.fastprintf.Args;
+
+Args args = Args.create()
+        .putString("order")
+        .putInt(3)
+        .putDouble(12.5);
+String result = format.format(args);
+```
+
+Use `Args.of(values)` to expand an array or iterable into arguments. Use `Args.exactlyOne(value)`
+to pass an array, iterable, or other value as **one argument**:
+
+```java
+FastPrintf listFormat = FastPrintf.compile("Values: %s");
+String result = listFormat.format(Args.exactlyOne(new int[] {1, 2, 3}));
+// Values: [1, 2, 3]
+```
+
+`Args.exactlyOne` accepts null and returns a reusable container that cannot be appended to.
+Argument containers retain references to their values; they do not copy mutable objects.
+
+### Write into an existing buffer
+
+```java
+FastPrintf format = FastPrintf.compile("id=%d");
+StringBuilder output = new StringBuilder("record: ");
+format.format(output, Args.exactlyOne(42));
+// output contains "record: id=42"
+```
+
+The same overload accepts any `Appendable`, including a `Writer`.
+
+### Format dates and times
+
+```java
+import java.time.LocalDate;
+
+FastPrintf dateFormat = FastPrintf.compile("Date: %t{yyyy-MM-dd}");
+String result = dateFormat.format(LocalDate.of(2026, 10, 15));
+// Date: 2026-10-15
+```
+
+`%t{...}` uses a Java `DateTimeFormatter` pattern. Without a pattern, `%t` uses an ISO format
+appropriate to the value's type.
+
+### Tune repeated calls
+
+```java
+FastPrintf format = FastPrintf.compile("id=%d")
+        .setStringBuilderInitialCapacity(64)
+        .enableThreadLocalCache();
+```
+
+These options set the initial output-buffer capacity and enable per-thread buffer reuse.
+They return configured formatter instances. Buffer reuse is off by default; its benefit depends
+on the workload. Primitive `Args` methods avoid boxing but are not necessarily faster than varargs.
+
+## Jackson integration
+
+Add Jackson 2's `com.fasterxml.jackson.core:jackson-databind` to your application, using your
+Jackson dependency management for the version. Jackson is optional: the core API works without it.
+This integration targets Jackson 2, not Jackson 3.
+
+### Format JSON properties
+
+Annotate a field or getter and register `FastPrintfModule` before using the mapper:
 
 ```java
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.fastprintf.jackson.FastPrintfModule;
 import io.fastprintf.jackson.PrintfFormat;
-import java.io.IOException;
 import java.math.BigDecimal;
 
-public class JacksonExample {
-    public static class Price {
-        @PrintfFormat("%.2f")
-        public BigDecimal amount = new BigDecimal("12.3");
-    }
-
-    public static void main(String[] args) throws IOException {
-        ObjectMapper mapper = new ObjectMapper().registerModule(new FastPrintfModule());
-        System.out.println(mapper.writeValueAsString(new Price()));
-        // {"amount":"12.30"}
-    }
+public class Price {
+    @PrintfFormat("%.2f")
+    public BigDecimal amount = new BigDecimal("12.3");
 }
+
+ObjectMapper mapper = new ObjectMapper().registerModule(new FastPrintfModule());
+String json = mapper.writeValueAsString(new Price());
+// {"amount":"12.30"}
 ```
 
-With `FastPrintfModule` registered, `@PrintfFormat` selects `FastPrintfSerializer`. No additional
-`@JsonSerialize` annotation is needed. Explicitly selecting `FastPrintfSerializer` is redundant but
-allowed; selecting a different serializer on the same property is a configuration error, including
-through a mix-in. Properties without `@PrintfFormat` retain their usual Jackson behavior.
-The pattern is mandatory; there is no implicit `%s` fallback.
-With the module, identical patterns share a `FastPrintf` instance through a thread-safe cache owned
-by that module. The cache retains distinct annotation
-patterns for the lifetime of the module and its annotation introspector. Reusing one module across mappers shares
-that cache; separate module instances have separate caches. Register the module before using a mapper.
-Neither pattern compilation nor cache lookup occurs on each value write.
-The module supplies serializer instances; `FastPrintfSerializer` has no no-argument constructor
-and cannot be instantiated by a standalone `@JsonSerialize` declaration. Without module registration,
-Jackson ignores `@PrintfFormat` and uses its usual serializers, including any explicit `@JsonSerialize`.
+- The result is a **JSON string**, with quoting and escaping handled by Jackson.
+- Each property supplies one argument. Use a fixed pattern such as `%.2f`, `%#x`, or `%t{yyyy-MM-dd}`.
+- Java null values follow Jackson's normal null handling and inclusion rules. Mix-ins are supported.
+- Without module registration, Jackson ignores `@PrintfFormat` and uses its usual serializers.
+- With the module registered, a conflicting `@JsonSerialize(using = ...)` is a configuration error.
 
-Each property supplies **one argument** to the pattern. For example, use `%.2f` for a decimal,
-`%#x` for an integer, or `%t{yyyy-MM-dd}` for a supported date/time value. Patterns requiring extra
-arguments, such as `%*.*f`, cannot obtain those arguments from this annotation. Invalid patterns
-and incompatible value types fail serialization rather than silently falling back.
+No additional `@JsonSerialize` is needed. This feature affects serialization only; it does not
+change `@JsonFormat` or provide deserialization.
 
-Java null properties follow Jackson's normal null serialization and inclusion rules; unannotated
-properties keep their usual serializers. Jackson mix-in annotations are supported. This feature
-affects serialization only: it does not redefine `@JsonFormat`, change JSON numbers into formatted
-numeric tokens, or provide reverse parsing. No Jackson dependency is needed when using core
-fast-printf without this integration.
+### Format JsonNode values
 
-#### What does `FormatTraits` mean?
+Passing JSON tree values to a formatter does **not** require registering the module:
 
-A `FormatTraits` instance is a value-bearing **formatting argument adapter**. Its methods expose the
-representations supported by that value: integer, floating point, text, character, date/time and
-object identity. Here “traits” means those formatting capabilities; it is not a Java language
-feature or a mixin. `Args` selects the adapter before rendering. The existing name is retained for
-API compatibility; `ArgumentAdapter` would also describe its role.
+```java
+import com.fasterxml.jackson.databind.JsonNode;
 
-## Format String Reference
+JsonNode order = mapper.readTree("{\"name\":\"Alice\",\"amount\":12.3}");
+FastPrintf format = FastPrintf.compile("%s: %.2f");
+String result = format.format(order.get("name"), order.get("amount"));
+// Alice: 12.30
+```
 
-Format string syntax:
-`%[flags][width][.precision]specifier[{date-time-pattern}]`
+Text nodes produce unquoted text; number nodes support numeric formatting; object and array nodes
+produce JSON text with `%s`. JSON null behaves like Java null. Missing nodes and incompatible
+conversions fail rather than silently supplying a value.
 
-### Custom date/time formatting
+For a single node, `Args.exactlyOne(node)` avoids expanding its children through the iterable
+`Args.of` overload. On the Java module path, applications using Jackson should declare
+`requires com.fasterxml.jackson.databind;`.
 
-The `%t` / `%T` specifiers accept an inline `DateTimeFormatter` pattern.
+## Format reference
 
-* **Syntax**: `%t{pattern}`
-* **Example**: `%t{yyyy-MM-dd'T'HH:mm:ss.SSSZ}`
-* **Default**: If no pattern is provided (`%t`), an appropriate ISO formatter is chosen based on the argument type
-  (e.g. `ISO_OFFSET_DATE_TIME` for a `ZonedDateTime`).
+```text
+%[flags][width][.precision]specifier
+```
 
-### Specifiers
+| Specifier | Output |
+| --- | --- |
+| `%d`, `%i` | Signed decimal integer |
+| `%u`, `%o`, `%x`, `%X` | Unsigned decimal, octal, or hexadecimal integer |
+| `%f`, `%F` | Decimal floating point |
+| `%e`, `%E` | Scientific notation |
+| `%g`, `%G` | Decimal or scientific notation, chosen by magnitude and precision |
+| `%a`, `%A` | Hexadecimal floating point |
+| `%s`, `%S` | Text, or uppercase text |
+| `%c` | Character |
+| `%t`, `%T` | Date/time, optionally followed by `{pattern}` |
+| `%p` | Object identity; rejected for arguments supplied through primitive `Args` methods |
+| `%n` | Consume an argument without printing it |
+| `%%` | Literal percent sign |
 
-| Specifier  | Output                                                                                  | Example                      |
-|:----------:|-----------------------------------------------------------------------------------------|------------------------------|
-| `d` or `i` | Signed decimal integer                                                                  | `392`                        |
-|    `u`     | Unsigned decimal integer                                                                | `7235`                       |
-|    `o`     | Unsigned octal                                                                          | `610`                        |
-|    `x`     | Unsigned hexadecimal integer (lowercase)                                                | `7fa`                        |
-|    `X`     | Unsigned hexadecimal integer (uppercase)                                                | `7FA`                        |
-| `f` / `F`  | Decimal floating point                                                                  | `392.65`                     |
-|    `e`     | Scientific notation (lowercase `e`)                                                     | `3.9265e+2`                  |
-|    `E`     | Scientific notation (uppercase `E`)                                                     | `3.9265E+2`                  |
-| `g` / `G`  | Shortest representation of `%e` or `%f`                                                 | `392.65`                     |
-| `a` / `A`  | Hexadecimal floating point (lowercase/uppercase `p`)                                    | `-0xc.90fep-2`               |
-|    `c`     | Character                                                                               | `a`                          |
-|    `s`     | String of characters (from `Object.toString()`)                                         | `sample`                     |
-|    `S`     | String of characters, **converted to uppercase**                                        | `SAMPLE`                     |
-| `t` / `T`  | Date/Time string (case affects final string output)                                     | `2023-12-31T23:59:59+01:00`  |
-|    `p`     | Object "pointer" (class name + identity hash). Throws an exception for primitive types. | `java.lang.Integer@707f7052` |
-|    `n`     | Nothing printed. The argument is consumed.                                              |                              |
-|    `%`     | A literal `%` character                                                                 | `%`                          |
+| Flag | Meaning |
+| --- | --- |
+| `-` | Left-align within the field width |
+| `+` | Include a sign for positive numbers |
+| Space | Prefix positive numbers with a space; overridden by `+` |
+| `0` | Pad with zeros; ignored with `-` or an explicit integer precision |
+| `#` | Alternate form, such as a hexadecimal prefix or a retained decimal point |
 
-### Flags
+Width sets the minimum field size. Precision controls decimal places for `%f`/`%e`, significant
+digits for `%g`, minimum digits for integers, and maximum characters for strings.
+Use `*` or `.*` to read width or precision from preceding arguments:
 
-|    Flag     | Description                                                                                                                                                                              |
-|:-----------:|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-|     `-`     | Left-aligns the result within the field width.                                                                                                                                           |
-|     `+`     | Forces the result to be prefixed with a sign (`+` or `-`), even for positive numbers. Overrides the space flag.                                                                          |
-| ` ` (space) | Prefixes positive numbers with a space. Ignored if the `+` flag is present.                                                                                                              |
-|     `#`     | Alternate form:<br>• `o` → prefixes with `0`<br>• `x` / `X` → prefixes with `0x` / `0X`<br>• `f`, `e`, `g` → forces a decimal point<br>• `g` / `G` → prevents stripping of trailing zeros |
-|     `0`     | Pads the output with leading zeros (instead of spaces) to meet the specified width. Ignored if `-` is present or if precision is specified for an integer.                               |
+```java
+FastPrintf format = FastPrintf.compile("%*.*f");
+String result = format.format(8, 2, 12.3);
+// "   12.30"
+```
 
-### Width and precision
+### Differences from String.format
 
-| Field        | Description                                                                                                                                                                                                                                                              |
-|:-------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `width`      | Minimum characters to print. Padded with spaces (or zeros with `0` flag). Never truncates. `*` reads width from the next `int` argument.                                                                                                                                 |
-| `.precision` | For each type:<br>• **Integers** — minimum number of digits (zero-padded)<br>• **Floats (`f`, `e`)** — digits after the decimal point<br>• **Floats (`g`)** — max significant digits<br>• **Strings (`s`, `S`)** — max characters to print<br>`.*` reads precision from the next `int` argument. |
+fast-printf uses C-style printf conventions with Java-specific extensions; it is not a drop-in
+replacement for every `String.format` pattern:
 
-## How It Works
-
-The performance of `fast-printf` comes from four architectural pillars:
-
-1. **Ahead-of-time compiler.** `FastPrintf.compile()` parses the format string once into a list of optimised
-   `Appender` objects. Parsing never re-runs.
-2. **Zero-copy string building.** An internal rope-like `Seq` data structure concatenates formatted parts with
-   lightweight wrappers instead of copying characters. The final `String` is rendered in a single pass.
-3. **Ahead-of-time argument processing.** The `Args` object converts arguments into a list of `FormatTraits` —
-   specialised, type-aware handlers. This eliminates `instanceof` checks and reflection from the formatting loop.
-4. **Backported float engine.** Incorporates OpenJDK 21's `DoubleToDecimal` (the "Schubfach" algorithm) so `double` /
-   `float` output is correctly rounded and shortest-possible on every supported JDK.
-
-### Modern float formatting on every JDK
-
-`String.format()` on JDKs prior to 18 has known issues converting `double` / `float` to decimal: the output is not
-always the shortest, correctly-rounded representation, which can introduce subtle accuracy bugs in scientific or
-financial code. fast-printf backports the modern Schubfach-based engine from OpenJDK 21, so that correctness
-guarantee — and the performance that comes with it — is available even on Java 8.
-
-## Differences from `String.format()`
-
-fast-printf intentionally differs from Java's `String.format` to align with `glibc` conventions and to keep the
-formatting loop tight:
-
-* **Glibc vs Java `Formatter` conventions.** Follows `glibc` `printf`. For example, `%S` upper-cases the string —
-  unlike Java's behaviour, which is tied to `Formattable`.
-* **`%p` (pointer) specifier.** Provides the C-style `%p` specifier to print an object's identity. Not available in
-  `String.format()`. The implementation is type-safe and throws on a primitive argument, preventing auto-boxing bugs.
-* **No argument indexing.** `%2$s` and friends are not supported; arguments are consumed sequentially for performance.
-* **No locale support.** Formatting is locale-agnostic for performance (`.` is always the decimal separator).
+- Arguments are consumed sequentially; indexed arguments such as `%2$s` are not supported.
+- Formatting is locale-independent, with `.` as the decimal separator.
+- Date/time uses `%t{pattern}`, rather than Java Formatter's date/time suffixes.
+- `%n` consumes an argument; it does not emit a newline. Use `\n` or `System.lineSeparator()` explicitly.
+- `%p` prints Java object identity, not a memory address.
 
 ## Contributing
 
-Use **JDK 21** for the default development build; CI also verifies JDK 8, 11, and 17.
+Issues and pull requests are welcome at the [project repository](https://github.com/YuyuZha0/fast-printf).
+Use JDK 21 for the default development build:
 
 ```sh
 mvn -B verify -Dgpg.skip=true
 ```
 
-Use the manual `Performance benchmarks` workflow to collect JMH timing and allocation results
-on JDK 8 and 21. It uploads the raw JSON as workflow artifacts.
-
-The JDK 21 build enforces JaCoCo line, branch, and instruction coverage floors based on the
-pre-1.2.14 baseline. Codecov requires 95% project and patch coverage. Add regression
-tests for correctness fixes and compare JMH latency **and** allocation before retaining performance
-changes. Prefer shared rules and clear code; special-case fast paths need substantial measured gains.
-
-After merging, run `bash create_tag.sh v1.2.15` from a clean, synchronized `main`, then publish a
-GitHub Release for that tag. The release workflow validates the Maven version, verifies and signs
-the artifacts, and publishes to Maven Central. Pushing the tag alone does not publish artifacts.
-
-Found a bug or have an idea? File it at the
-[issue tracker](https://github.com/YuyuZha0/fast-printf/issues). Pull requests welcome.
+Include regression tests for fixes and benchmark performance changes. See [CHANGELOG.md](CHANGELOG.md)
+for release history.
 
 ## License
 
-`fast-printf` is licensed under the **GNU General Public License v2 with Classpath Exception**, the same license used by
-the OpenJDK.
-
-This choice of license is deliberate, as this library includes internal utility classes that are derivative works of
-OpenJDK (specifically for high-fidelity floating-point formatting). These backported files retain their original
-copyright headers and are governed by the terms of the GPLv2+CE, and thus the library as a whole adopts this license.
+[GNU General Public License v2 with Classpath Exception](LICENSE).
+OpenJDK-derived sources retain their original copyright and license notices.

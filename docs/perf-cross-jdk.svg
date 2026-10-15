@@ -1,99 +1,60 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 470"
-     font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-     role="img" aria-labelledby="chart-title chart-desc">
-  <title id="chart-title">CommonUsageBenchmark — cross-JDK results, ns/op (lower is better)</title>
-  <desc id="chart-desc">Grouped bar chart comparing fastPrintf varargs, fastPrintf with ThreadLocal cache, and String.format across JDK 8, 11, 17, and 21. String.format times decrease sharply with newer JDKs while fastPrintf times stay roughly flat.</desc>
-
-  <rect width="760" height="470" fill="#fafafa"/>
-
-  <text x="380" y="28" text-anchor="middle" font-size="16" font-weight="600" fill="#111">
-    CommonUsageBenchmark — ns/op (lower is better)
-  </text>
-
-  <!-- Legend -->
-  <g transform="translate(150, 48)" font-size="12" fill="#333">
-    <rect width="12" height="12" fill="#2563eb"/>
-    <text x="18" y="10">fastPrintf (varargs)</text>
-    <rect x="170" width="12" height="12" fill="#16a34a"/>
-    <text x="188" y="10">fastPrintf (ThreadLocal cache)</text>
-    <rect x="380" width="12" height="12" fill="#dc2626"/>
-    <text x="398" y="10">String.format</text>
-  </g>
-
-  <!-- Y-axis gridlines -->
-  <g stroke="#e5e5e5" stroke-width="1">
-    <line x1="100" y1="80"  x2="700" y2="80"/>
-    <line x1="100" y1="133" x2="700" y2="133"/>
-    <line x1="100" y1="187" x2="700" y2="187"/>
-    <line x1="100" y1="240" x2="700" y2="240"/>
-    <line x1="100" y1="293" x2="700" y2="293"/>
-    <line x1="100" y1="347" x2="700" y2="347"/>
-  </g>
-  <line x1="100" y1="400" x2="700" y2="400" stroke="#666" stroke-width="1"/>
-
-  <!-- Y-axis labels -->
-  <g text-anchor="end" font-size="11" fill="#666">
-    <text x="92" y="84">1500</text>
-    <text x="92" y="137">1250</text>
-    <text x="92" y="191">1000</text>
-    <text x="92" y="244">750</text>
-    <text x="92" y="297">500</text>
-    <text x="92" y="351">250</text>
-    <text x="92" y="404">0</text>
-  </g>
-  <text x="36" y="240" text-anchor="middle" font-size="11" fill="#666"
-        transform="rotate(-90, 36, 240)">ns/op</text>
-
-  <!-- X-axis group labels -->
-  <g text-anchor="middle" font-size="13" fill="#222" font-weight="500">
-    <text x="175" y="422">JDK 8</text>
-    <text x="325" y="422">JDK 11</text>
-    <text x="475" y="422">JDK 17</text>
-    <text x="625" y="422">JDK 21</text>
-  </g>
-
-  <!-- JDK 8 group (centre 175) -->
-  <rect x="125" y="355" width="30" height="45"  fill="#2563eb"/>
-  <rect x="160" y="348" width="30" height="52"  fill="#16a34a"/>
-  <rect x="195" y="91"  width="30" height="309" fill="#dc2626"/>
-
-  <!-- JDK 11 group (centre 325) -->
-  <rect x="275" y="354" width="30" height="46"  fill="#2563eb"/>
-  <rect x="310" y="358" width="30" height="42"  fill="#16a34a"/>
-  <rect x="345" y="172" width="30" height="228" fill="#dc2626"/>
-
-  <!-- JDK 17 group (centre 475) -->
-  <rect x="425" y="357" width="30" height="43"  fill="#2563eb"/>
-  <rect x="460" y="358" width="30" height="42"  fill="#16a34a"/>
-  <rect x="495" y="211" width="30" height="189" fill="#dc2626"/>
-
-  <!-- JDK 21 group (centre 625) -->
-  <rect x="575" y="353" width="30" height="47"  fill="#2563eb"/>
-  <rect x="610" y="360" width="30" height="40"  fill="#16a34a"/>
-  <rect x="645" y="314" width="30" height="86"  fill="#dc2626"/>
-
-  <!-- Value labels on top of each bar -->
-  <g text-anchor="middle" font-size="10" fill="#333">
-    <!-- JDK 8 -->
-    <text x="140" y="350">214</text>
-    <text x="175" y="343">244</text>
-    <text x="210" y="86">1450</text>
-    <!-- JDK 11 -->
-    <text x="290" y="349">216</text>
-    <text x="325" y="353">199</text>
-    <text x="360" y="167">1069</text>
-    <!-- JDK 17 -->
-    <text x="440" y="352">200</text>
-    <text x="475" y="353">197</text>
-    <text x="510" y="206">886</text>
-    <!-- JDK 21 -->
-    <text x="590" y="348">221</text>
-    <text x="625" y="355">186</text>
-    <text x="660" y="309">404</text>
-  </g>
-
-  <!-- Footer note -->
-  <text x="380" y="455" text-anchor="middle" font-size="10" fill="#888">
-    Corretto, same M-series machine · JMH 1.37 · @Fork(2) · pooled args
-  </text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 480" role="img" aria-labelledby="chart-title chart-desc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+  <title id="chart-title">Repeated formatting across JDKs</title>
+  <desc id="chart-desc">Average time per log line, lower is better. fast-printf versus String.format: JDK 8, 160 versus 632 ns; JDK 11, 137 versus 600 ns; JDK 17, 135 versus 324 ns; JDK 21, 138 versus 265 ns. Error bars show JMH's reported confidence intervals. Measured from commit 0ebd03d using CommonUsageBenchmark on macOS ARM64, Corretto, JMH 1.37, two forks, three one-second warmups and four one-second measurements, full blackhole mode, 256 MB heap, English/US locale.</desc>
+  <rect width="860" height="480" rx="12" fill="#f8fafc"/>
+  <text x="32" y="38" font-size="23" font-weight="700" fill="#0f172a">Repeated formatting across JDKs</text>
+  <text x="32" y="64" font-size="14" fill="#475569">Time per log line · ns/op · lower is better</text>
+  <rect x="32" y="84" width="14" height="14" rx="3" fill="#0f766e"/>
+  <text x="54" y="96" font-size="14" fill="#334155">fast-printf (varargs)</text>
+  <rect x="240" y="84" width="14" height="14" rx="3" fill="#64748b"/>
+  <text x="262" y="96" font-size="14" fill="#334155">String.format</text>
+  <line x1="112.0" y1="119" x2="112.0" y2="393" stroke="#e2e8f0"/>
+  <text x="112.0" y="414" text-anchor="middle" font-size="12" fill="#64748b">0</text>
+  <line x1="194.0" y1="119" x2="194.0" y2="393" stroke="#e2e8f0"/>
+  <text x="194.0" y="414" text-anchor="middle" font-size="12" fill="#64748b">100</text>
+  <line x1="276.0" y1="119" x2="276.0" y2="393" stroke="#e2e8f0"/>
+  <text x="276.0" y="414" text-anchor="middle" font-size="12" fill="#64748b">200</text>
+  <line x1="358.0" y1="119" x2="358.0" y2="393" stroke="#e2e8f0"/>
+  <text x="358.0" y="414" text-anchor="middle" font-size="12" fill="#64748b">300</text>
+  <line x1="440.0" y1="119" x2="440.0" y2="393" stroke="#e2e8f0"/>
+  <text x="440.0" y="414" text-anchor="middle" font-size="12" fill="#64748b">400</text>
+  <line x1="522.0" y1="119" x2="522.0" y2="393" stroke="#e2e8f0"/>
+  <text x="522.0" y="414" text-anchor="middle" font-size="12" fill="#64748b">500</text>
+  <line x1="604.0" y1="119" x2="604.0" y2="393" stroke="#e2e8f0"/>
+  <text x="604.0" y="414" text-anchor="middle" font-size="12" fill="#64748b">600</text>
+  <line x1="686.0" y1="119" x2="686.0" y2="393" stroke="#e2e8f0"/>
+  <text x="686.0" y="414" text-anchor="middle" font-size="12" fill="#64748b">700</text>
+  <text x="32" y="157" font-size="15" font-weight="600" fill="#334155">JDK 8</text>
+  <rect x="112" y="130" width="131.49" height="18" rx="3" fill="#0f766e"/>
+  <path d="M 241.92 139 H 245.07 M 241.92 135 V 143 M 245.07 135 V 143" stroke="#0f172a" fill="none"/>
+  <text x="255.07" y="144" font-size="13" fill="#0f172a">160</text>
+  <rect x="112" y="155" width="518.39" height="18" rx="3" fill="#64748b"/>
+  <path d="M 624.55 164 H 636.24 M 624.55 160 V 168 M 636.24 160 V 168" stroke="#0f172a" fill="none"/>
+  <text x="646.24" y="169" font-size="13" fill="#0f172a">632</text>
+  <text x="738" y="157" font-size="15" font-weight="600" fill="#0f766e">3.9× faster</text>
+  <text x="32" y="225" font-size="15" font-weight="600" fill="#334155">JDK 11</text>
+  <rect x="112" y="198" width="112.41" height="18" rx="3" fill="#0f766e"/>
+  <path d="M 223.37 207 H 225.45 M 223.37 203 V 211 M 225.45 203 V 211" stroke="#0f172a" fill="none"/>
+  <text x="235.45" y="212" font-size="13" fill="#0f172a">137</text>
+  <rect x="112" y="223" width="491.71" height="18" rx="3" fill="#64748b"/>
+  <path d="M 598.68 232 H 608.73 M 598.68 228 V 236 M 608.73 228 V 236" stroke="#0f172a" fill="none"/>
+  <text x="618.73" y="237" font-size="13" fill="#0f172a">600</text>
+  <text x="738" y="225" font-size="15" font-weight="600" fill="#0f766e">4.4× faster</text>
+  <text x="32" y="293" font-size="15" font-weight="600" fill="#334155">JDK 17</text>
+  <rect x="112" y="266" width="110.62" height="18" rx="3" fill="#0f766e"/>
+  <path d="M 221.25 275 H 223.99 M 221.25 271 V 279 M 223.99 271 V 279" stroke="#0f172a" fill="none"/>
+  <text x="233.99" y="280" font-size="13" fill="#0f172a">135</text>
+  <rect x="112" y="291" width="265.35" height="18" rx="3" fill="#64748b"/>
+  <path d="M 371.84 300 H 382.87 M 371.84 296 V 304 M 382.87 296 V 304" stroke="#0f172a" fill="none"/>
+  <text x="392.87" y="305" font-size="13" fill="#0f172a">324</text>
+  <text x="738" y="293" font-size="15" font-weight="600" fill="#0f766e">2.4× faster</text>
+  <text x="32" y="361" font-size="15" font-weight="600" fill="#334155">JDK 21</text>
+  <rect x="112" y="334" width="113.0" height="18" rx="3" fill="#0f766e"/>
+  <path d="M 219.66 343 H 230.33 M 219.66 339 V 347 M 230.33 339 V 347" stroke="#0f172a" fill="none"/>
+  <text x="240.33" y="348" font-size="13" fill="#0f172a">138</text>
+  <rect x="112" y="359" width="217.31" height="18" rx="3" fill="#64748b"/>
+  <path d="M 325.91 368 H 332.71 M 325.91 364 V 372 M 332.71 364 V 372" stroke="#0f172a" fill="none"/>
+  <text x="342.71" y="373" font-size="13" fill="#0f172a">265</text>
+  <text x="738" y="361" font-size="15" font-weight="600" fill="#0f766e">1.9× faster</text>
+  <text x="32" y="451" font-size="12" fill="#64748b">Mixed text, integer and decimal formatting · Reused formatter · Corretto on macOS ARM64</text>
 </svg>
