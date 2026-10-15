@@ -44,7 +44,12 @@ public class PrintfFormatTest {
   @Test
   public void requiresModuleAndExplicitPattern() throws Exception {
     ObjectMapper plain = new ObjectMapper();
-    assertTrue(plain.readTree(plain.writeValueAsString(new Price())).get("amount").isNumber());
+    try {
+      plain.writeValueAsString(new Price());
+      fail("PrintfFormat requires module registration");
+    } catch (JsonMappingException expected) {
+      assertTrue(expected.getMessage().contains("no default (no arg) constructor"));
+    }
     for (ObjectMapper mapper : mappers()) {
       try {
         mapper.writeValueAsString(new DefaultValue());
@@ -173,10 +178,35 @@ public class PrintfFormatTest {
     }
   }
 
+  public static class UnformattedCustomValue {
+    @JsonSerialize(using = CustomSerializer.class)
+    public BigDecimal value = BigDecimal.ONE;
+  }
+
+  public abstract static class ConflictingMixin {
+    @JsonSerialize(using = CustomSerializer.class)
+    public BigDecimal amount;
+  }
+
   @Test
-  public void preservesExplicitCustomSerializerPrecedence() throws Exception {
+  public void rejectsConflictingSerializers() throws Exception {
     for (ObjectMapper mapper : mappers()) {
-      assertEquals("{\"value\":\"custom\"}", mapper.writeValueAsString(new CustomValue()));
+      assertEquals(
+          "{\"value\":\"custom\"}", mapper.writeValueAsString(new UnformattedCustomValue()));
+      try {
+        mapper.writeValueAsString(new CustomValue());
+        fail("Conflicting serializer should fail");
+      } catch (JsonMappingException expected) {
+        assertTrue(expected.getMessage().contains("@PrintfFormat conflicts"));
+        assertTrue(expected.getMessage().contains(CustomSerializer.class.getName()));
+      }
+      mapper.addMixIn(Price.class, ConflictingMixin.class);
+      try {
+        mapper.writeValueAsString(new Price());
+        fail("Conflicting mix-in serializer should fail");
+      } catch (JsonMappingException expected) {
+        assertTrue(expected.getMessage().contains("@PrintfFormat conflicts"));
+      }
     }
   }
 

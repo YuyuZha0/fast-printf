@@ -17,7 +17,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
  * <p>Properties enabling the thread-local builder or specifying its initial capacity receive their
  * own formatter and bypass this cache.
  *
- * <p>Without this module, Jackson does not interpret {@link PrintfFormat}.
+ * <p>The module supplies the serializer instances required by {@link PrintfFormat}.
  */
 public final class FastPrintfModule extends SimpleModule {
   private final FastPrintfSerializerFactory factory = new FastPrintfSerializerFactory();
@@ -46,6 +46,12 @@ public final class FastPrintfModule extends SimpleModule {
       PrintfFormat format = annotated.getAnnotation(PrintfFormat.class);
       if (annotation != null && annotation.using() != JsonSerializer.None.class) {
         if (annotation.using() != FastPrintfSerializer.class) {
+          if (format != null) {
+            throw new IllegalArgumentException(
+                "@PrintfFormat conflicts with @JsonSerialize(using = "
+                    + annotation.using().getName()
+                    + "): expected FastPrintfSerializer");
+          }
           return null;
         }
         if (format == null) {

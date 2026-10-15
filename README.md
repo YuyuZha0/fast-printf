@@ -267,15 +267,19 @@ public class JacksonExample {
 }
 ```
 
-`@PrintfFormat` requires `FastPrintfModule`: without registration, Jackson ignores the annotation
-and uses its usual serializers. The pattern is mandatory; there is no implicit `%s` fallback.
+`@PrintfFormat` selects `FastPrintfSerializer` and requires `FastPrintfModule`. No additional
+`@JsonSerialize` annotation is needed. Explicitly selecting `FastPrintfSerializer` is redundant but
+allowed; selecting a different serializer on the same property is a configuration error, including
+through a mix-in. Properties without `@PrintfFormat` retain their usual Jackson behavior.
+The pattern is mandatory; there is no implicit `%s` fallback.
 With the module, identical patterns share a `FastPrintf` instance through a thread-safe cache owned
 by that module. The cache retains distinct annotation
 patterns for the lifetime of the module and its annotation introspector. Reusing one module across mappers shares
 that cache; separate module instances have separate caches. Register the module before using a mapper.
 Neither pattern compilation nor cache lookup occurs on each value write.
 The module supplies serializer instances; `FastPrintfSerializer` has no no-argument constructor
-and cannot be instantiated by a standalone `@JsonSerialize` declaration.
+and cannot be instantiated by a standalone `@JsonSerialize` declaration. Without module registration,
+an ordinary `@PrintfFormat` property fails with Jackson's missing-constructor error.
 
 For a property that benefits from a reusable builder or a known output size, configure the annotation:
 
