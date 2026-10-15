@@ -3,6 +3,7 @@ package io.fastprintf.jackson;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import io.fastprintf.Args;
 import io.fastprintf.FastPrintf;
 import java.io.IOException;
 
@@ -21,6 +22,7 @@ public final class FastPrintfSerializer extends StdSerializer<Object> {
   @Override
   public void serialize(Object value, JsonGenerator gen, SerializerProvider provider)
       throws IOException {
-    gen.writeString(formatter.format(value));
+    // A property supplies one argument. Avoid building the general-purpose argument list per write.
+    gen.writeString(formatter.format(Args.exactlyOne(value)));
   }
 }

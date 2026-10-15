@@ -137,6 +137,23 @@ public interface Args extends Iterable<FormatTraits> {
   }
 
   /**
+   * Creates a fixed-size container holding exactly one argument, including {@code null}.
+   *
+   * <p>Unlike {@link #of(Object...)} and {@link #of(Iterable)}, arrays and iterables are treated as
+   * the argument itself, not as a sequence of arguments. The value is converted once using the same
+   * rules as {@link #put(Object)}. The referenced object is not copied or made immutable.
+   *
+   * <p>All {@code put} methods on the returned container throw {@link
+   * UnsupportedOperationException}. Its values list and iterators do not support mutation.
+   *
+   * @param value the single argument, or {@code null}
+   * @return a reusable, non-appendable argument container
+   */
+  static Args exactlyOne(Object value) {
+    return new OneArg(FormatTraits.convert(value));
+  }
+
+  /**
    * Returns an unmodifiable list of the original objects that were added to this container.
    *
    * @return a {@link List} of the original argument values.
@@ -324,9 +341,9 @@ public interface Args extends Iterable<FormatTraits> {
   /**
    * Appends a generic {@link Object} argument to the list.
    *
-   * <p>This method performs runtime type inspection to dispatch to the most specific {@code put}
-   * method (e.g., calling {@code putInt} if the object is an {@code Integer}). This is the
-   * general-purpose method used by the static factory methods.
+   * <p>This method performs runtime type inspection to select the appropriate {@link FormatTraits}
+   * implementation while preserving boxed object identity. This is the general-purpose conversion
+   * used by the static factory methods.
    *
    * @param value the object to add.
    * @return this {@code Args} instance for method chaining.

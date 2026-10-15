@@ -1,6 +1,5 @@
 package io.fastprintf;
 
-import io.fastprintf.jackson.JacksonSupport;
 import io.fastprintf.traits.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -8,8 +7,6 @@ import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 final class ArgsImpl implements Args {
@@ -33,31 +30,6 @@ final class ArgsImpl implements Args {
     return this;
   }
 
-  private <T> ArgsImpl addTraits(
-      T value, BiFunction<? super T, ? super RefSlot, ? extends FormatTraits> factory) {
-    if (value == null) {
-      return putNull();
-    }
-    return addTraits(factory.apply(value, RefSlot.of(value)));
-  }
-
-  private <T> ArgsImpl addTraits(T value, Function<? super T, ? extends FormatTraits> factory) {
-    if (value == null) {
-      return putNull();
-    }
-    return addTraits(factory.apply(value));
-  }
-
-  private <T> ArgsImpl addTraitsNonNull(
-      T value, BiFunction<? super T, ? super RefSlot, ? extends FormatTraits> factory) {
-    return addTraits(factory.apply(value, RefSlot.of(value)));
-  }
-
-  private <T> ArgsImpl addTraitsNonNull(
-      T value, Function<? super T, ? extends FormatTraits> factory) {
-    return addTraits(factory.apply(value));
-  }
-
   @Override
   public List<Object> values() {
     List<Object> values = new ArrayList<>(traits.size());
@@ -79,7 +51,8 @@ final class ArgsImpl implements Args {
 
   @Override
   public ArgsImpl putBooleanOrNull(Boolean value) {
-    return addTraits(value, BooleanTraits::new);
+    return addTraits(
+        value != null ? new BooleanTraits(value, RefSlot.of(value)) : NullTraits.getInstance());
   }
 
   @Override
@@ -89,7 +62,8 @@ final class ArgsImpl implements Args {
 
   @Override
   public ArgsImpl putCharOrNull(Character value) {
-    return addTraits(value, CharacterTraits::new);
+    return addTraits(
+        value != null ? new CharacterTraits(value, RefSlot.of(value)) : NullTraits.getInstance());
   }
 
   @Override
@@ -99,7 +73,8 @@ final class ArgsImpl implements Args {
 
   @Override
   public ArgsImpl putByteOrNull(Byte value) {
-    return addTraits(value, ByteTraits::new);
+    return addTraits(
+        value != null ? new ByteTraits(value, RefSlot.of(value)) : NullTraits.getInstance());
   }
 
   @Override
@@ -109,7 +84,8 @@ final class ArgsImpl implements Args {
 
   @Override
   public ArgsImpl putShortOrNull(Short value) {
-    return addTraits(value, ShortTraits::new);
+    return addTraits(
+        value != null ? new ShortTraits(value, RefSlot.of(value)) : NullTraits.getInstance());
   }
 
   @Override
@@ -119,7 +95,8 @@ final class ArgsImpl implements Args {
 
   @Override
   public ArgsImpl putIntOrNull(Integer value) {
-    return addTraits(value, IntTraits::new);
+    return addTraits(
+        value != null ? new IntTraits(value, RefSlot.of(value)) : NullTraits.getInstance());
   }
 
   @Override
@@ -129,7 +106,8 @@ final class ArgsImpl implements Args {
 
   @Override
   public ArgsImpl putLongOrNull(Long value) {
-    return addTraits(value, LongTraits::new);
+    return addTraits(
+        value != null ? new LongTraits(value, RefSlot.of(value)) : NullTraits.getInstance());
   }
 
   @Override
@@ -139,7 +117,8 @@ final class ArgsImpl implements Args {
 
   @Override
   public ArgsImpl putFloatOrNull(Float value) {
-    return addTraits(value, FloatTraits::new);
+    return addTraits(
+        value != null ? new FloatTraits(value, RefSlot.of(value)) : NullTraits.getInstance());
   }
 
   @Override
@@ -149,43 +128,33 @@ final class ArgsImpl implements Args {
 
   @Override
   public ArgsImpl putDoubleOrNull(Double value) {
-    return addTraits(value, DoubleTraits::new);
+    return addTraits(
+        value != null ? new DoubleTraits(value, RefSlot.of(value)) : NullTraits.getInstance());
   }
 
   @Override
   public ArgsImpl putCharSequence(CharSequence value) {
-    return addTraits(value, CharSequenceTraits::new);
+    return addTraits(value != null ? new CharSequenceTraits(value) : NullTraits.getInstance());
   }
 
   @Override
   public ArgsImpl putBigInteger(BigInteger value) {
-    return addTraits(value, BigIntegerTraits::new);
+    return addTraits(value != null ? new BigIntegerTraits(value) : NullTraits.getInstance());
   }
 
   @Override
   public ArgsImpl putBigDecimal(BigDecimal value) {
-    return addTraits(value, BigDecimalTraits::new);
+    return addTraits(value != null ? new BigDecimalTraits(value) : NullTraits.getInstance());
   }
 
   @Override
   public ArgsImpl putDateTime(TemporalAccessor value) {
-    return addTraits(value, TemporalAccessorTraits::new);
+    return addTraits(value != null ? new TemporalAccessorTraits(value) : NullTraits.getInstance());
   }
 
   @Override
   public Iterator<FormatTraits> iterator() {
     return traits.iterator();
-  }
-
-  private ArgsImpl putObject(Object value) {
-    if (value instanceof FormatTraits) {
-      return addTraits((FormatTraits) value);
-    }
-    FormatTraits jsonTraits = JacksonSupport.wrap(value);
-    if (jsonTraits != null) {
-      return addTraits(jsonTraits);
-    }
-    return addTraits(value, ObjectTraits::new);
   }
 
   @Override
@@ -195,35 +164,7 @@ final class ArgsImpl implements Args {
 
   @Override
   public Args put(Object value) {
-    if (value == null) {
-      return putNull();
-    } else if (value instanceof Boolean) {
-      return addTraitsNonNull((Boolean) value, BooleanTraits::new);
-    } else if (value instanceof Character) {
-      return addTraitsNonNull((Character) value, CharacterTraits::new);
-    } else if (value instanceof Byte) {
-      return addTraitsNonNull((Byte) value, ByteTraits::new);
-    } else if (value instanceof Short) {
-      return addTraitsNonNull((Short) value, ShortTraits::new);
-    } else if (value instanceof Integer) {
-      return addTraitsNonNull((Integer) value, IntTraits::new);
-    } else if (value instanceof Long) {
-      return addTraitsNonNull((Long) value, LongTraits::new);
-    } else if (value instanceof Float) {
-      return addTraitsNonNull((Float) value, FloatTraits::new);
-    } else if (value instanceof Double) {
-      return addTraitsNonNull((Double) value, DoubleTraits::new);
-    } else if (value instanceof CharSequence) {
-      return addTraitsNonNull((CharSequence) value, CharSequenceTraits::new);
-    } else if (value instanceof BigInteger) {
-      return addTraitsNonNull((BigInteger) value, BigIntegerTraits::new);
-    } else if (value instanceof BigDecimal) {
-      return addTraitsNonNull((BigDecimal) value, BigDecimalTraits::new);
-    } else if (value instanceof TemporalAccessor) {
-      return addTraitsNonNull((TemporalAccessor) value, TemporalAccessorTraits::new);
-    } else {
-      return putObject(value);
-    }
+    return addTraits(FormatTraits.convert(value));
   }
 
   @Override

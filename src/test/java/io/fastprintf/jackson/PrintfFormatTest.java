@@ -25,6 +25,31 @@ import java.util.concurrent.Future;
 import org.junit.Test;
 
 public class PrintfFormatTest {
+  public static class ContainerValue {
+    @PrintfFormat("%s")
+    public Object value;
+  }
+
+  @Test
+  public void formatsContainersAsOnePropertyArgument() throws Exception {
+    ObjectMapper mapper = new ObjectMapper().registerModule(new FastPrintfModule());
+    Object[] values = {
+      new String[] {"a", "b"},
+      java.util.Arrays.asList("a", "b"),
+      new int[] {1, 2},
+      mapper.readTree("[1,2]"),
+      mapper.readTree("42")
+    };
+    String[] expected = {"[a, b]", "[a, b]", "[1, 2]", "[1,2]", "42"};
+    ContainerValue property = new ContainerValue();
+    for (int i = 0; i < values.length; i++) {
+      property.value = values[i];
+      assertEquals(
+          expected[i],
+          mapper.readTree(mapper.writeValueAsString(property)).get("value").textValue());
+    }
+  }
+
   public static class ExplicitSerializer {
     @PrintfFormat("%.2f")
     @JsonSerialize(using = FastPrintfSerializer.class)
