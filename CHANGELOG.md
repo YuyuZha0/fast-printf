@@ -6,8 +6,6 @@
   per-property compiled serializers, normal null handling, and mix-in support.
 - Require `FastPrintfModule` registration to share compiled `FastPrintf` instances by
   pattern within a module. A module-owned factory uses the thread-safe cache when creating serializers, not per value.
-- Allow per-property thread-local builder reuse and initial capacity through `@PrintfFormat`;
-  properties using either option receive a dedicated formatter outside the module's pattern cache.
 - Keep Jackson optional and retain the Java 8 runtime baseline.
 - With the module registered, let `@PrintfFormat` select its serializer and reject conflicting
   explicit serializers. Without the module, Jackson ignores `@PrintfFormat`.

@@ -10,16 +10,12 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
-import com.fasterxml.jackson.databind.ser.PropertyWriter;
-import com.fasterxml.jackson.databind.ser.std.BeanSerializerBase;
 import io.fastprintf.FastPrintf;
 import io.fastprintf.PrintfSyntaxException;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -66,65 +62,6 @@ public class PrintfFormatTest {
     ObjectMapper mapper = new ObjectMapper().registerModule(new FastPrintfModule());
     assertEquals("{\"value\":\"12.30\"}", mapper.writeValueAsString(new ExplicitSerializer()));
     assertEquals("{\"value\":\"12.30\"}", mapper.writeValueAsString(new DefaultJsonSerialize()));
-  }
-
-  public static class ConfiguredPrice {
-    @PrintfFormat(value = "%.2f", enableThreadLocalCache = true)
-    public BigDecimal threadLocal = new BigDecimal("12.3");
-
-    @PrintfFormat(value = "%.2f", stringBuilderInitialCapacity = 64)
-    public BigDecimal capacity = new BigDecimal("12.3");
-
-    @PrintfFormat(value = "%.2f", enableThreadLocalCache = true, stringBuilderInitialCapacity = 64)
-    public BigDecimal both = new BigDecimal("12.3");
-  }
-
-  public static class InvalidCapacity {
-    @PrintfFormat(value = "%s", stringBuilderInitialCapacity = 0)
-    public String value = "text";
-  }
-
-  @Test
-  public void configuresIndependentFormatters() throws Exception {
-    FastPrintfModule module = new FastPrintfModule();
-    for (ObjectMapper mapper : new ObjectMapper[] {new ObjectMapper().registerModule(module)}) {
-      String json = mapper.writeValueAsString(new ConfiguredPrice());
-      assertEquals("{\"threadLocal\":\"12.30\",\"capacity\":\"12.30\",\"both\":\"12.30\"}", json);
-      assertEquals(json, mapper.writeValueAsString(new ConfiguredPrice()));
-      BeanSerializerBase serializer =
-          (BeanSerializerBase)
-              mapper.getSerializerProviderInstance().findValueSerializer(ConfiguredPrice.class);
-      Iterator<PropertyWriter> properties = serializer.properties();
-      while (properties.hasNext()) {
-        BeanPropertyWriter property = (BeanPropertyWriter) properties.next();
-        Object formatter = field(property.getSerializer(), "formatter");
-        assertEquals(
-            !property.getName().equals("capacity"), field(formatter, "threadLocalBuilder") != null);
-        if (!property.getName().equals("threadLocal")) {
-          assertEquals(64, field(formatter, "stringBuilderInitialCapacity"));
-        }
-      }
-    }
-    assertTrue(cache(module).isEmpty());
-    ObjectMapper mapper = new ObjectMapper().registerModule(module);
-    mapper.writeValueAsString(new Price());
-    FastPrintf shared = cache(module).get("%.2f");
-    mapper.writeValueAsString(new ConfiguredPrice());
-    assertSame(shared, cache(module).get("%.2f"));
-    assertNull(field(shared, "threadLocalBuilder"));
-    assertEquals(2, cache(module).size());
-  }
-
-  @Test
-  public void rejectsInvalidCapacity() throws Exception {
-    for (ObjectMapper mapper : mappers()) {
-      try {
-        mapper.writeValueAsString(new InvalidCapacity());
-        fail("Non-positive capacity should fail");
-      } catch (IllegalArgumentException | JsonMappingException expected) {
-        assertTrue(expected.getMessage().contains("capacity"));
-      }
-    }
   }
 
   private static Object field(Object object, String name) throws Exception {

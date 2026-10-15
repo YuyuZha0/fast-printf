@@ -9,18 +9,7 @@ final class FastPrintfSerializerFactory {
   private final ConcurrentMap<String, FastPrintf> formatters = new ConcurrentHashMap<>();
 
   FastPrintfSerializer create(PrintfFormat annotation) {
-    boolean threadLocal = annotation.enableThreadLocalCache();
-    int capacity = annotation.stringBuilderInitialCapacity();
-    FastPrintf formatter =
-        threadLocal || capacity != -1
-            ? FastPrintf.compile(annotation.value())
-            : formatters.computeIfAbsent(annotation.value(), FastPrintf::compile);
-    if (threadLocal) {
-      formatter = formatter.enableThreadLocalCache();
-    }
-    if (capacity != -1) {
-      formatter = formatter.setStringBuilderInitialCapacity(capacity);
-    }
+    FastPrintf formatter = formatters.computeIfAbsent(annotation.value(), FastPrintf::compile);
     return new FastPrintfSerializer(formatter);
   }
 }

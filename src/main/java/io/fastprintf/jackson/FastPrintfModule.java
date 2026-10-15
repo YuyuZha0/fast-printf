@@ -14,9 +14,6 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
  * and its introspector. It is thread-safe and is only consulted during serializer creation, not on
  * each serialization. Sharing a module instance between mappers also shares its cache.
  *
- * <p>Properties enabling the thread-local builder or specifying its initial capacity receive their
- * own formatter and bypass this cache.
- *
  * <p>The module supplies the serializer instances required by {@link PrintfFormat}.
  */
 public final class FastPrintfModule extends SimpleModule {

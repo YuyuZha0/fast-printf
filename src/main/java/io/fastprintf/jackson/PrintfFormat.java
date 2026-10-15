@@ -20,16 +20,4 @@ import java.lang.annotation.Target;
 public @interface PrintfFormat {
   /** Returns the format pattern, compiled when creating the property serializer. */
   String value();
-
-  /**
-   * Enables the formatter's per-thread reusable builder. Defaults to {@code false}. Enabling this
-   * option bypasses the module's shared pattern cache.
-   */
-  boolean enableThreadLocalCache() default false;
-
-  /**
-   * Sets the initial builder capacity to a positive number, or {@code -1} to use the formatter's
-   * default. Specifying a capacity bypasses the module's shared pattern cache.
-   */
-  int stringBuilderInitialCapacity() default -1;
 }

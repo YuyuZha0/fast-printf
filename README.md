@@ -281,19 +281,6 @@ The module supplies serializer instances; `FastPrintfSerializer` has no no-argum
 and cannot be instantiated by a standalone `@JsonSerialize` declaration. Without module registration,
 Jackson ignores `@PrintfFormat` and uses its usual serializers, including any explicit `@JsonSerialize`.
 
-For a property that benefits from a reusable builder or a known output size, configure the annotation:
-
-```java
-@PrintfFormat(value = "%.2f", enableThreadLocalCache = true, stringBuilderInitialCapacity = 64)
-public BigDecimal amount;
-```
-
-`enableThreadLocalCache` defaults to `false`; `stringBuilderInitialCapacity` defaults to `-1`
-(the formatter's default), or accepts a positive capacity. Enabling the thread-local builder or
-specifying a capacity creates a dedicated formatter for that property and bypasses the module's
-pattern cache. The configured formatter is still reused by its property serializer. Defaults keep
-using the shared pattern cache. Benchmark thread-local reuse against your application's workload.
-
 Each property supplies **one argument** to the pattern. For example, use `%.2f` for a decimal,
 `%#x` for an integer, or `%t{yyyy-MM-dd}` for a supported date/time value. Patterns requiring extra
 arguments, such as `%*.*f`, cannot obtain those arguments from this annotation. Invalid patterns
