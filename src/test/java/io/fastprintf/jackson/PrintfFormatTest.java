@@ -25,6 +25,17 @@ import java.util.concurrent.Future;
 import org.junit.Test;
 
 public class PrintfFormatTest {
+  public static class NumericTextValue {
+    @PrintfFormat("%.2f")
+    public JsonNode value = com.fasterxml.jackson.databind.node.TextNode.valueOf("12.3");
+  }
+
+  @Test
+  public void formatsNumericTextNodeProperty() throws Exception {
+    ObjectMapper mapper = new ObjectMapper().registerModule(new FastPrintfModule());
+    assertEquals("{\"value\":\"12.30\"}", mapper.writeValueAsString(new NumericTextValue()));
+  }
+
   public static class ContainerValue {
     @PrintfFormat("%s")
     public Object value;

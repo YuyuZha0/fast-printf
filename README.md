@@ -29,14 +29,14 @@ String result = format.format("Alice", 42, 99.5);
 <dependency>
     <groupId>io.github.yuyuzha0</groupId>
     <artifactId>fast-printf</artifactId>
-    <version>1.2.15</version>
+    <version>1.2.16</version>
 </dependency>
 ```
 
 **Gradle**
 
 ```groovy
-implementation 'io.github.yuyuzha0:fast-printf:1.2.15'
+implementation 'io.github.yuyuzha0:fast-printf:1.2.16'
 ```
 
 Keep the compiled formatter in a field and reuse it:
@@ -212,7 +212,10 @@ String result = format.format(order.get("name"), order.get("amount"));
 ```
 
 Text nodes produce unquoted text; number nodes support numeric formatting; object and array nodes
-produce JSON text with `%s`. JSON null behaves like Java null. Missing nodes and incompatible
+produce JSON text with `%s`. Numeric text uses the same parsing rules as ordinary string arguments:
+integer formats accept signed integers in the `long` range; floating-point formats accept decimal
+and scientific notation. Boolean nodes convert to 1 or 0, like ordinary booleans.
+JSON null behaves like Java null. Missing nodes and incompatible
 conversions fail rather than silently supplying a value.
 
 For a single node, `Args.exactlyOne(node)` avoids expanding its children through the iterable

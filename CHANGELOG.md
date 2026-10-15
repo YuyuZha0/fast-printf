@@ -1,6 +1,12 @@
 # Changelog
 
-## 1.2.15 (unreleased)
+## 1.2.16 (unreleased)
+
+- Allow JSON text nodes to use the same numeric conversions as ordinary string arguments, including
+  numeric text for dynamic width and precision. Boolean nodes convert to 1 or 0 like Java booleans.
+- Preserve numeric-node precision and reject malformed text instead of silently converting it to zero.
+
+## 1.2.15
 
 - Add Jackson 2 `@PrintfFormat` for formatting fields and getters as JSON strings, with
   per-property compiled serializers, normal null handling, and mix-in support.

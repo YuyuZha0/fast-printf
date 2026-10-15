@@ -20,6 +20,7 @@ public class JacksonBenchmark {
   private FastPrintf formatter;
   private JsonNode[] names;
   private JsonNode[] amounts;
+  private JsonNode[] numericText;
   private Args[] prepared;
   private int index;
 
@@ -28,11 +29,17 @@ public class JacksonBenchmark {
     formatter = FastPrintf.compile("%s: %.2f");
     names = new JsonNode[1024];
     amounts = new JsonNode[1024];
+    numericText = new JsonNode[1024];
     prepared = new Args[1024];
     for (int i = 0; i < names.length; i++) {
       names[i] = TextNode.valueOf("name-" + i);
       amounts[i] = DecimalNode.valueOf(BigDecimal.valueOf(i * 1234567L, 3));
+      numericText[i] = TextNode.valueOf(amounts[i].decimalValue().toPlainString());
       prepared[i] = Args.of(names[i], amounts[i]);
+      String expected = formatter.format(names[i].textValue(), numericText[i].textValue());
+      if (!expected.equals(formatter.format(names[i], numericText[i]))) {
+        throw new AssertionError("Different numeric-text output at " + i);
+      }
     }
   }
 
@@ -40,6 +47,18 @@ public class JacksonBenchmark {
   public String automaticNodes() {
     int i = index++ & 1023;
     return formatter.format(names[i], amounts[i]);
+  }
+
+  @Benchmark
+  public String automaticNumericText() {
+    int i = index++ & 1023;
+    return formatter.format(names[i], numericText[i]);
+  }
+
+  @Benchmark
+  public String manualNumericText() {
+    int i = index++ & 1023;
+    return formatter.format(names[i].textValue(), numericText[i].textValue());
   }
 
   @Benchmark
