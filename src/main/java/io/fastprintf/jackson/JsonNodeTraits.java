@@ -47,17 +47,14 @@ final class JsonNodeTraits implements FormatTraits {
       switch (value.numberType()) {
         case INT:
           return IntForm.valueOf(value.intValue());
-        case LONG:
-          return IntForm.valueOf(value.longValue());
         case FLOAT:
           return IntForm.valueOf((int) value.floatValue());
-        case DOUBLE:
-          return IntForm.valueOf((long) value.doubleValue());
         case BIG_INTEGER:
           return IntForm.valueOf(value.bigIntegerValue());
         case BIG_DECIMAL:
           return IntForm.valueOf(value.decimalValue().toBigInteger());
         default:
+          // LONG and DOUBLE both convert through longValue(); keep FLOAT's 32-bit form above.
           return IntForm.valueOf(value.longValue());
       }
     } else if (value.isTextual()) {
