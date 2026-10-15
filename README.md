@@ -15,6 +15,7 @@ String result = format.format("Alice", 42, 99.5);
 
 - **Built for repeated formatting:** reusable, thread-safe formatters with low allocation overhead.
 - **Familiar printf syntax:** numbers, text, padding, precision, and date/time patterns.
+- **Modern floating-point conversion on Java 8+:** backported OpenJDK Schubfach conversion and decimal formatting for `%f`, `%e`, and `%g`.
 - **Flexible arguments:** convenient varargs, primitive `Args` methods that avoid boxing, and a fixed single-argument container.
 - **Optional Jackson 2 integration:** format `JsonNode` values or annotate JSON properties with `@PrintfFormat`.
 - **No required runtime dependencies:** core formatting works without Jackson.
@@ -59,6 +60,10 @@ public class Example {
 
 fast-printf avoids parsing the pattern on every call. It is intended for repeated formatting in
 logging, text serialization, and other hot paths.
+
+Floating-point formatting uses a backport of OpenJDK's Schubfach-based conversion and decimal
+rounding support. This brings the newer conversion algorithm to Java 8+ without requiring a JVM
+upgrade; `%f`, `%e`, and `%g` apply the requested precision to the converted decimal value.
 
 ![Time per formatted log line on JDK 8, 11, 17, and 21; lower is better.](docs/perf-cross-jdk.svg)
 
