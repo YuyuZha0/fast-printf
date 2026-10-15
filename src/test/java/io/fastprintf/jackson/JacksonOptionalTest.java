@@ -51,6 +51,10 @@ public class JacksonOptionalTest {
       assertTrue(requestedClasses.contains("com.fasterxml.jackson.databind.JsonNode"));
       assertFalse(requestedClasses.contains("io.fastprintf.jackson.JacksonSupport$Adapter"));
       assertFalse(requestedClasses.contains("io.fastprintf.jackson.JsonNodeTraits"));
+      assertFalse(requestedClasses.contains("io.fastprintf.jackson.FastPrintfModule"));
+      assertFalse(requestedClasses.contains("io.fastprintf.jackson.FastPrintfSerializer"));
+      assertFalse(requestedClasses.contains("io.fastprintf.jackson.FastPrintfSerializerFactory"));
+      assertFalse(requestedClasses.contains("io.fastprintf.jackson.PrintfFormat"));
     }
   }
 }
