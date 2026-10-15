@@ -44,12 +44,11 @@ public class PrintfFormatTest {
   @Test
   public void requiresModuleAndExplicitPattern() throws Exception {
     ObjectMapper plain = new ObjectMapper();
-    try {
-      plain.writeValueAsString(new Price());
-      fail("PrintfFormat requires module registration");
-    } catch (JsonMappingException expected) {
-      assertTrue(expected.getMessage().contains("no default (no arg) constructor"));
-    }
+    assertEquals(
+        "{\"amount\":12.3,\"precise\":12.3,\"tax\":1.2,\"quantity\":2}",
+        plain.writeValueAsString(new Price()));
+    assertEquals("{\"value\":42}", plain.writeValueAsString(new InvalidPattern()));
+    assertEquals("{\"value\":\"custom\"}", plain.writeValueAsString(new CustomValue()));
     for (ObjectMapper mapper : mappers()) {
       try {
         mapper.writeValueAsString(new DefaultValue());

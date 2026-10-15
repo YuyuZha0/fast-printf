@@ -9,8 +9,8 @@
 - Allow per-property thread-local builder reuse and initial capacity through `@PrintfFormat`;
   properties using either option receive a dedicated formatter outside the module's pattern cache.
 - Keep Jackson optional and retain the Java 8 runtime baseline.
-- Let `@PrintfFormat` select its serializer directly; reject conflicting explicit serializers and
-  fail serialization when the module needed to construct its serializer is missing.
+- With the module registered, let `@PrintfFormat` select its serializer and reject conflicting
+  explicit serializers. Without the module, Jackson ignores `@PrintfFormat`.
 
 ## 1.2.14
 

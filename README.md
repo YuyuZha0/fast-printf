@@ -267,7 +267,7 @@ public class JacksonExample {
 }
 ```
 
-`@PrintfFormat` selects `FastPrintfSerializer` and requires `FastPrintfModule`. No additional
+With `FastPrintfModule` registered, `@PrintfFormat` selects `FastPrintfSerializer`. No additional
 `@JsonSerialize` annotation is needed. Explicitly selecting `FastPrintfSerializer` is redundant but
 allowed; selecting a different serializer on the same property is a configuration error, including
 through a mix-in. Properties without `@PrintfFormat` retain their usual Jackson behavior.
@@ -279,7 +279,7 @@ that cache; separate module instances have separate caches. Register the module 
 Neither pattern compilation nor cache lookup occurs on each value write.
 The module supplies serializer instances; `FastPrintfSerializer` has no no-argument constructor
 and cannot be instantiated by a standalone `@JsonSerialize` declaration. Without module registration,
-an ordinary `@PrintfFormat` property fails with Jackson's missing-constructor error.
+Jackson ignores `@PrintfFormat` and uses its usual serializers, including any explicit `@JsonSerialize`.
 
 For a property that benefits from a reusable builder or a known output size, configure the annotation:
 
