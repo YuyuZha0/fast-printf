@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.17
+
+- Support date/time formatting of integer JSON nodes using the core integer timestamp convention.
+  Floating-point and text nodes remain unsupported for date/time conversion.
+
 ## 1.2.16
 
 - Allow JSON text nodes to use the same numeric conversions as ordinary string arguments, including
