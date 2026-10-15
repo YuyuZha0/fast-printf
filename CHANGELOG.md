@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.2.16 (unreleased)
+## 1.2.16
 
 - Allow JSON text nodes to use the same numeric conversions as ordinary string arguments, including
   numeric text for dynamic width and precision. Boolean nodes convert to 1 or 0 like Java booleans.
